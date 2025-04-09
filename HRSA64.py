@@ -253,6 +253,8 @@ else:
                     updated_sheet = updated_sheet.applymap(
                         lambda x: x.strftime("%Y-%m-%d") if isinstance(x, (datetime, pd.Timestamp)) else x
                     )
+                    # Replace NaN with empty strings to ensure JSON compatibility
+                    updated_sheet = updated_sheet.fillna("")
                     worksheet1.update([updated_sheet.columns.values.tolist()] + updated_sheet.values.tolist())
                     st.success("✅ Submission successful!")
                 except Exception as e:
