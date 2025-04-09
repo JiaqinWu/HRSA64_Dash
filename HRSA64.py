@@ -238,7 +238,12 @@ else:
                     "TA Description":ta_description,
                     "Priority": priority_status,
                     "Submit Date": datetime.today().strftime("%Y-%m-%d"),
-                    "Status": "Submitted"
+                    "Status": "Submitted",
+                    "Assigned Date": pd.NA,
+                    "Close Date": pd.NA,
+                    "Assigned Coach": pd.NA,
+                    "Coordinator Comment": pd.NA,
+                    "Staff Comment": pd.NA
                 }
                 new_data = pd.DataFrame([new_row])
 
