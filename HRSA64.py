@@ -245,6 +245,9 @@ else:
                 try:
                     # Append new data to Google Sheet
                     updated_sheet = pd.concat([df, new_data], ignore_index=True)
+                    updated_sheet = updated_sheet.applymap(
+                        lambda x: x.strftime("%Y-%m-%d") if isinstance(x, (datetime, pd.Timestamp)) else x
+                    )
                     worksheet1.update([updated_sheet.columns.values.tolist()] + updated_sheet.values.tolist())
                     st.success("✅ Submission successful!")
                 except Exception as e:
