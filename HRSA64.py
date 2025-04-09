@@ -234,7 +234,7 @@ else:
                     'Email Address': email,
                     "Phone Number": phone,
                     "TA Type": type_TA,
-                    "Targeted Due Date": due_date,
+                    "Targeted Due Date": due_date.strftime("%Y-%m-%d"),
                     "TA Description":ta_description,
                     "Priority": priority_status,
                     "Submit Date": datetime.today().strftime("%Y-%m-%d"),
