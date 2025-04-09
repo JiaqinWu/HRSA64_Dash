@@ -233,6 +233,7 @@ else:
                     'Title/Position': title,
                     'Email Address': email,
                     "Phone Number": phone,
+                    "Focus Area": focus_area,
                     "TA Type": type_TA,
                     "Targeted Due Date": due_date.strftime("%Y-%m-%d"),
                     "TA Description":ta_description,
@@ -366,7 +367,12 @@ else:
                             updated_df.loc[selected_request_index, "Status"] = "In Progress"
                             updated_df.loc[selected_request_index, "Assigned Date"] = datetime.today().strftime("%Y-%m-%d")
 
-                            # Push full updated DataFrame to Google Sheets
+                            updated_df = updated_df.applymap(
+                                lambda x: x.strftime("%Y-%m-%d") if isinstance(x, (pd.Timestamp, datetime)) else x
+                            )
+                            #updated_df = updated_df.fillna("") 
+
+                            # Push to Google Sheet
                             worksheet1.update([updated_df.columns.values.tolist()] + updated_df.values.tolist())
 
                             st.success(f"Coach {selected_coach} assigned! Status updated to 'In Progress'.")
