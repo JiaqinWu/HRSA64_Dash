@@ -7,6 +7,7 @@ from datetime import datetime, timedelta
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 import json
+import time
 
 scope = ["https://spreadsheets.google.com/feeds", 'https://www.googleapis.com/auth/spreadsheets', "https://www.googleapis.com/auth/drive.file", "https://www.googleapis.com/auth/drive"]
 #creds = ServiceAccountCredentials.from_json_keyfile_name('client_secret.json', scope)
@@ -376,6 +377,7 @@ else:
                             worksheet1.update([updated_df.columns.values.tolist()] + updated_df.values.tolist())
 
                             st.success(f"Coach {selected_coach} assigned! Status updated to 'In Progress'.")
+                            time.sleep(2)
                             st.rerun()
 
                         except Exception as e:
@@ -451,7 +453,7 @@ else:
                         # Display filtered table
                         st.dataframe(filtered_df[[
                             "Jurisdiction", "Organization", "Name", "Title/Position", "Email Address", "Phone Number",
-                            "Focus Area", "TA Type", "Assigned Date", "Targeted Due Date","Expected Duration (Days)","Priority", "Assigned Coach", "TA Description"
+                            "Focus Area", "TA Type", "Assigned Date", "Targeted Due Date","Expected Duration (Days)","Priority", "Assigned Coach", "TA Description", "Coordinator Comment"
                         ]].sort_values(by="Expected Duration (Days)").reset_index(drop=True))
 
                         # Select request by index (row number in submitted_requests)
@@ -478,6 +480,7 @@ else:
                                 worksheet1.update([updated_df.columns.values.tolist()] + updated_df.values.tolist())
 
                                 st.success("💬 Comment saved and synced with Google Sheets.")
+                                time.sleep(2)
                                 st.rerun()
 
                             except Exception as e:
@@ -586,7 +589,7 @@ else:
                 # Display clean table (exclude PriorityOrder column)
                 st.dataframe(staff_df[[
                     "Jurisdiction", "Organization", "Name", "Title/Position", "Email Address", "Phone Number",
-                    "Focus Area", "TA Type", "Assigned Date", "Targeted Due Date", "Priority", "TA Description"
+                    "Focus Area", "TA Type", "Assigned Date", "Targeted Due Date", "Priority", "TA Description","Coordinator Comment"
                 ]].reset_index(drop=True))
 
                 # Select request by index (row number in submitted_requests)
@@ -609,10 +612,16 @@ else:
                         updated_df.loc[global_index, "Status"] = "Completed"
                         updated_df.loc[global_index, "Close Date"] = datetime.today().strftime("%Y-%m-%d")
 
+                        updated_df = updated_df.applymap(
+                            lambda x: x.strftime("%Y-%m-%d") if isinstance(x, (pd.Timestamp, datetime)) else x
+                        )
+                        #updated_df = updated_df.fillna("") 
+
                         # Push to Google Sheet
                         worksheet1.update([updated_df.columns.values.tolist()] + updated_df.values.tolist())
 
                         st.success("Request marked as completed and synced to Google Sheet.")
+                        time.sleep(2)
                         st.rerun()
 
                     except Exception as e:
@@ -687,7 +696,8 @@ else:
                     # Display filtered table
                     st.dataframe(filtered_df2[[
                         "Jurisdiction", "Organization", "Name", "Title/Position", "Email Address", "Phone Number",
-                        "Focus Area", "TA Type", "Assigned Date", "Targeted Due Date","Expected Duration (Days)","Priority", "Assigned Coach", "TA Description"
+                        "Focus Area", "TA Type", "Assigned Date", "Targeted Due Date","Expected Duration (Days)","Priority", "Assigned Coach", "TA Description",
+                        "Coordinator Comment", "Staff Comment"
                     ]].sort_values(by="Expected Duration (Days)").reset_index(drop=True))
 
                     # Select request by index (row number in submitted_requests)
@@ -715,7 +725,8 @@ else:
                             # Push to Google Sheets
                             worksheet1.update([updated_df.columns.values.tolist()] + updated_df.values.tolist())
 
-                            st.success("💬 Comment saved successfully to 'Staff Comment'.")
+                            st.success("💬 Comment saved successfully!.")
+                            time.sleep(2)
                             st.rerun()
 
                         except Exception as e:
