@@ -1,0 +1,5 @@
+streamlit==1.31.0
+millify
+gsheetsdb==0.1.13.1
+gspread
+oauth2client
