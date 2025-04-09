@@ -546,7 +546,7 @@ else:
                         st.dataframe(filtered_df1[[
                             "Jurisdiction", "Organization", "Name", "Title/Position", "Email Address", "Phone Number",
                             "Focus Area", "TA Type", "Assigned Date", "Targeted Due Date", "Close Date", "Expected Duration (Days)",
-                            'Actual Duration (Days)', "Priority", "Assigned Coach", "TA Description"
+                            'Actual Duration (Days)', "Priority", "Assigned Coach", "TA Description", "Coordinator Comment", "Staff Comment"
                         ]].reset_index(drop=True))
 
             elif st.session_state.role == "Assignee/Staff":
