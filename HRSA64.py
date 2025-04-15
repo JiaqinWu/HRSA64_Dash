@@ -227,7 +227,7 @@ else:
 
         ta_description = st.text_area("TA Description *", placeholder='Enter text', height=150) 
         document = st.file_uploader(
-            "Upload any files or attachments that are relevant to this request."
+            "Upload any files or attachments that are relevant to this request.",accept_multiple_files=True
         )
         priority_status = st.selectbox(
                 "Priority Status *",
@@ -265,19 +265,30 @@ else:
 
             formatted_phone = clean_and_format_us_phone(phone)
 
-            drive_link = ""
+
+            drive_links = ""
             if document:
                 try:
-                    folder_id = "1Q9dMMdyfEGWFVv2_CbHbJVMHXOST3OYf"  
-                    drive_link = upload_file_to_drive(
-                        file=document,
-                        filename=document.name,
-                        folder_id=folder_id,
-                        creds_dict=st.secrets["gcp_service_account"]  
-                    )
-                    st.success(f"File uploaded to Google Drive: [View File]({drive_link})")
+                    folder_id = "1Q9dMMdyfEGWFVv2_CbHbJVMHXOST3OYf"  # your actual folder ID
+
+                    links = []
+                    for file in document:
+                        # Rename file as: GU0001_filename.pdf
+                        renamed_filename = f"{new_ticket_id}_{file.name}"
+
+                        link = upload_file_to_drive(
+                            file=file,
+                            filename=renamed_filename,
+                            folder_id=folder_id,
+                            creds_dict=st.secrets["gcp_service_account"]
+                        )
+                        links.append(link)
+
+                    drive_links = ", ".join(links)
+                    st.success("📎 File(s) uploaded to Google Drive.")    #(f"File uploaded to Google Drive: [View File]({drive_link})")
+
                 except Exception as e:
-                    st.error(f"Error uploading file to Google Drive: {str(e)}")
+                    st.error(f"Error uploading file(s) to Google Drive: {str(e)}")
 
 
             # Required field checks
@@ -322,7 +333,7 @@ else:
                     "Assigned Coach": pd.NA,
                     "Coordinator Comment": pd.NA,
                     "Staff Comment": pd.NA,
-                    "Document": drive_link
+                    "Document": drive_links
                 }
                 new_data = pd.DataFrame([new_row])
 
