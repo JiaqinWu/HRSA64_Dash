@@ -422,7 +422,7 @@ else:
 
                 # --- Pie 2: Requests in Past Month
                 with col5:
-                    st.markdown("#### 📅 Requests with Due within One Month by Coach")
+                    st.markdown("#### 📅 Due in 30 Days by Coach")
                     if not request_pastmonth.empty:
                         chart_data = request_pastmonth['Assigned Coach'].value_counts().reset_index()
                         chart_data.columns = ['Assigned Coach', 'Count']
@@ -433,7 +433,7 @@ else:
                         ).properties(width=250, height=250)
                         st.altair_chart(pie2, use_container_width=True)
                     else:
-                        st.info("No recent requests to show.")
+                        st.info("No requests with coming dues to show.")
                     
 
                 staff_list = ["MM", "KK", "LL"]
