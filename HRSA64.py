@@ -268,7 +268,7 @@ else:
             drive_link = ""
             if document:
                 try:
-                    folder_id = "https://drive.google.com/drive/folders/1Q9dMMdyfEGWFVv2_CbHbJVMHXOST3OYf"  
+                    folder_id = "1Q9dMMdyfEGWFVv2_CbHbJVMHXOST3OYf"  
                     drive_link = upload_file_to_drive(
                         file=document,
                         filename=document.name,
