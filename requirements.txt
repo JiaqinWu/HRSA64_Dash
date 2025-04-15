@@ -5,3 +5,4 @@ gsheetsdb==0.1.13.1
 gspread
 oauth2client
 altair
+googleapiclient
