@@ -329,7 +329,7 @@ else:
                 col4, col5 = st.columns(2)
                 # --- Pie 1: In Progress
                 with col4:
-                    st.markdown("### 🟡 In Progress Requests by Coach")
+                    st.markdown("#### 🟡 In Progress Requests by Coach")
                     if not inprogress.empty:
                         chart_data = inprogress['Assigned Coach'].value_counts().reset_index()
                         chart_data.columns = ['Assigned Coach', 'Count']
@@ -344,7 +344,7 @@ else:
 
                 # --- Pie 2: Requests in Past Month
                 with col5:
-                    st.markdown("### 📅 Past Month Requests by Coach")
+                    st.markdown("#### 📅 Past Month Requests by Coach")
                     if not request_pastmonth.empty:
                         chart_data = request_pastmonth['Assigned Coach'].value_counts().reset_index()
                         chart_data.columns = ['Assigned Coach', 'Count']
@@ -359,6 +359,68 @@ else:
                     
 
                 staff_list = ["MM", "KK", "LL"]
+                selected_staff = st.selectbox("Select a staff to view their requests", staff_list)
+
+                # Convert date columns
+                df["Assigned Date"] = pd.to_datetime(df["Assigned Date"], errors="coerce")
+                df["Targeted Due Date"] = pd.to_datetime(df["Targeted Due Date"], errors="coerce")
+                df["Submit Date"] = pd.to_datetime(df["Submit Date"], errors="coerce")
+
+                # Date ranges
+                today = datetime.today()
+                last_month = today - timedelta(days=30)
+                next_month = today + timedelta(days=30)
+
+                # Filter staff-specific data
+                staff_dff = df[df["Assigned Coach"] == selected_staff].copy()
+
+                # --- Metrics
+                in_progress_count = staff_dff[staff_dff["Status"] == "In Progress"].shape[0]
+                due_soon_count = staff_dff[
+                    (staff_dff["Status"] == "In Progress") & 
+                    (staff_dff["Targeted Due Date"] <= next_month)
+                ].shape[0]
+                completed_recently = staff_dff[
+                    (staff_dff["Status"] == "Completed") & 
+                    (staff_dff["Submit Date"] >= last_month)
+                ].shape[0]
+
+                # --- Metric Display
+                col1, col2, col3 = st.columns(3)
+                col1.metric("🟡 In Progress", in_progress_count)
+                col2.metric("📅 Due in 30 Days", due_soon_count)
+                col3.metric("✅ Completed (Last 30 Days)", completed_recently)
+
+                # --- Detailed Table
+                st.markdown("### 📋 Detailed Request List")
+                display_cols = [
+                    "Ticket ID", "Jurisdiction", "Organization", "Name", "Focus Area", "TA Type",
+                    "Targeted Due Date", "Priority", "Status", "TA Description"
+                ]
+
+                # Sort by due date
+                staff_dff = staff_dff.sort_values(by="Targeted Due Date")
+
+                # Format dates for display
+                staff_dff["Targeted Due Date"] = staff_dff["Targeted Due Date"].dt.strftime("%Y-%m-%d")
+
+                st.dataframe(staff_dff[display_cols].reset_index(drop=True))
+
+                # --- Optional: Priority Breakdown Chart
+                priority_chart_data = staff_dff["Priority"].value_counts().reset_index()
+                priority_chart_data.columns = ["Priority", "Count"]
+
+                if not priority_chart_data.empty:
+                    st.markdown("### 🎯 Priority Breakdown")
+                    chart = alt.Chart(priority_chart_data).mark_bar().encode(
+                        x=alt.X("Priority", sort=["Critical", "High", "Normal", "Low"]),
+                        y="Count",
+                        color="Priority",
+                        tooltip=["Priority", "Count"]
+                    ).properties(width=400)
+                    st.altair_chart(chart, use_container_width=True)
+
+
 
                 # Filter submitted requests
                 submitted_requests = df[df["Status"] == "Submitted"].copy()
