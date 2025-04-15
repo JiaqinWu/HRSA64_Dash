@@ -392,34 +392,46 @@ else:
                 col3.metric("✅ Completed (Last 30 Days)", completed_recently)
 
                 # --- Detailed Table
-                st.markdown("### 📋 Detailed Request List")
+                st.markdown("#### 📋 Detailed Request List")
+
+                # --- Status filter
+                status_options = ["In Progress", "Completed"]
+                selected_status = st.multiselect(
+                    "Filter by request status",
+                    options=status_options,
+                    default=["In Progress"]
+                )
+
+                # Apply filters: staff and status
+                staff_dfff = staff_dff[staff_dff["Status"].isin(selected_status)].copy()
+
                 display_cols = [
                     "Ticket ID", "Jurisdiction", "Organization", "Name", "Focus Area", "TA Type",
                     "Targeted Due Date", "Priority", "Status", "TA Description"
                 ]
 
                 # Sort by due date
-                staff_dff = staff_dff.sort_values(by="Targeted Due Date")
+                staff_dfff = staff_dfff.sort_values(by="Targeted Due Date")
 
                 # Format dates for display
-                staff_dff["Targeted Due Date"] = staff_dff["Targeted Due Date"].dt.strftime("%Y-%m-%d")
+                staff_dfff["Targeted Due Date"] = staff_dfff["Targeted Due Date"].dt.strftime("%Y-%m-%d")
 
-                st.dataframe(staff_dff[display_cols].reset_index(drop=True))
+                st.dataframe(staff_dfff[display_cols].reset_index(drop=True))
 
-                # --- Optional: Priority Breakdown Chart
-                priority_chart_data = staff_dff["Priority"].value_counts().reset_index()
+                # Priority Breakdown Chart
+                priority_order = ["Critical", "High", "Normal", "Low"]
+                priority_chart_data = staff_dfff["Priority"].value_counts().reset_index()
                 priority_chart_data.columns = ["Priority", "Count"]
 
                 if not priority_chart_data.empty:
                     st.markdown("### 🎯 Priority Breakdown")
-                    chart = alt.Chart(priority_chart_data).mark_bar().encode(
-                        x=alt.X("Priority", sort=["Critical", "High", "Normal", "Low"]),
-                        y="Count",
-                        color="Priority",
+                    chart = alt.Chart(priority_chart_data).mark_bar(size=40).encode(
+                        x=alt.X("Priority:N", sort=priority_order, title="Priority Level"),
+                        y=alt.Y("Count:Q", title="Number of In-Progress Requests"),
+                        color=alt.Color("Priority:N", sort=priority_order),
                         tooltip=["Priority", "Count"]
-                    ).properties(width=400)
+                    ).properties(height=300)
                     st.altair_chart(chart, use_container_width=True)
-
 
 
                 # Filter submitted requests
