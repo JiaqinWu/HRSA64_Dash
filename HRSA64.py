@@ -395,6 +395,11 @@ else:
                 col3.metric(label="# of Requests from past month", value= millify(pastmonth_request, precision=2))
                 style_metric_cards(border_left_color="#DBF227")
 
+                # Convert date columns
+                df["Assigned Date"] = pd.to_datetime(df["Assigned Date"], errors="coerce")
+                df["Targeted Due Date"] = pd.to_datetime(df["Targeted Due Date"], errors="coerce")
+                df["Submit Date"] = pd.to_datetime(df["Submit Date"], errors="coerce")
+
                 inprogress = df[df['Status'] == 'In Progress']
                 next_month = today + timedelta(days=30)
                 request_pastmonth = df[(df["Targeted Due Date"] <= next_month)&(df['Status'] == 'In Progress')]
@@ -434,15 +439,10 @@ else:
                 staff_list = ["MM", "KK", "LL"]
                 selected_staff = st.selectbox("Select a staff to view their requests", staff_list)
 
-                # Convert date columns
-                df["Assigned Date"] = pd.to_datetime(df["Assigned Date"], errors="coerce")
-                df["Targeted Due Date"] = pd.to_datetime(df["Targeted Due Date"], errors="coerce")
-                df["Submit Date"] = pd.to_datetime(df["Submit Date"], errors="coerce")
 
                 # Date ranges
                 today = datetime.today()
                 last_month = today - timedelta(days=30)
-                next_month = today + timedelta(days=30)
 
                 # Filter staff-specific data
                 staff_dff = df[df["Assigned Coach"] == selected_staff].copy()
