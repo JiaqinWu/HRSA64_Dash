@@ -268,12 +268,12 @@ else:
             drive_link = ""
             if document:
                 try:
-                    folder_id = "YOUR_GOOGLE_DRIVE_FOLDER_ID"  # ⬅️ Replace with your actual Drive folder ID
+                    folder_id = "https://drive.google.com/drive/folders/1Q9dMMdyfEGWFVv2_CbHbJVMHXOST3OYf"  
                     drive_link = upload_file_to_drive(
                         file=document,
                         filename=document.name,
                         folder_id=folder_id,
-                        creds_dict=st.secrets["gcp_service_account"]  # Already loaded
+                        creds_dict=st.secrets["gcp_service_account"]  
                     )
                     st.success(f"File uploaded to Google Drive: [View File]({drive_link})")
                 except Exception as e:
