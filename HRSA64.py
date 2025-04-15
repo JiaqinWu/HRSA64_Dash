@@ -396,7 +396,8 @@ else:
                 style_metric_cards(border_left_color="#DBF227")
 
                 inprogress = df[df['Status'] == 'In Progress']
-                request_pastmonth = df[(df['Submit Date'] >= last_month)&(df['Status'].isin(['In Progress','Completed']))]
+                next_month = today + timedelta(days=30)
+                request_pastmonth = df[(df["Targeted Due Date"] <= next_month)&(df['Status'] == 'In Progress')]
 
                 col4, col5 = st.columns(2)
                 # --- Pie 1: In Progress
@@ -416,7 +417,7 @@ else:
 
                 # --- Pie 2: Requests in Past Month
                 with col5:
-                    st.markdown("#### 📅 Past Month Requests by Coach")
+                    st.markdown("#### 📅 Requests with Due within One Month by Coach")
                     if not request_pastmonth.empty:
                         chart_data = request_pastmonth['Assigned Coach'].value_counts().reset_index()
                         chart_data.columns = ['Assigned Coach', 'Count']
