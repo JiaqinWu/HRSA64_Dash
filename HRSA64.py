@@ -9,6 +9,11 @@ from oauth2client.service_account import ServiceAccountCredentials
 import altair as alt
 import json
 import time
+from google.oauth2.service_account import Credentials
+from googleapiclient.discovery import build
+from googleapiclient.http import MediaIoBaseUpload
+import io
+
 
 scope = ["https://spreadsheets.google.com/feeds", 'https://www.googleapis.com/auth/spreadsheets', "https://www.googleapis.com/auth/drive.file", "https://www.googleapis.com/auth/drive"]
 #creds = ServiceAccountCredentials.from_json_keyfile_name('client_secret.json', scope)
@@ -34,6 +39,41 @@ creds_json = json.dumps(credentials)
 # Load credentials and authorize gspread
 creds = ServiceAccountCredentials.from_json_keyfile_dict(json.loads(creds_json), scope)
 client = gspread.authorize(creds)
+
+def upload_file_to_drive(file, filename, folder_id, creds_dict):
+    # Convert Streamlit secret dict into Google Credentials object
+    drive_creds = Credentials.from_service_account_info(creds_dict, scopes=[
+        "https://www.googleapis.com/auth/drive"
+    ])
+    
+    # Build the Drive API service
+    drive_service = build('drive', 'v3', credentials=drive_creds)
+
+    # Prepare file metadata
+    file_metadata = {
+        'name': filename,
+        'parents': [folder_id]
+    }
+
+    # Read uploaded file and prepare media
+    media = MediaIoBaseUpload(io.BytesIO(file.read()), mimetype=file.type)
+
+    # Upload file
+    uploaded = drive_service.files().create(
+        body=file_metadata,
+        media_body=media,
+        fields='id'
+    ).execute()
+
+    # Make the file public
+    drive_service.permissions().create(
+        fileId=uploaded['id'],
+        body={'type': 'anyone', 'role': 'reader'}
+    ).execute()
+
+    # Return the sharable link
+    return f"https://drive.google.com/file/d/{uploaded['id']}/view"
+
 
 # Example usage: Fetch data from Google Sheets
 try:
@@ -183,7 +223,12 @@ else:
                 value=None
             )
 
+            
+
         ta_description = st.text_area("TA Description *", placeholder='Enter text', height=150) 
+        document = st.file_uploader(
+            "Upload any files or attachments that are relevant to this request."
+        )
         priority_status = st.selectbox(
                 "Priority Status *",
                 ["Critical","High","Normal","Low"],
@@ -219,6 +264,21 @@ else:
             errors = []
 
             formatted_phone = clean_and_format_us_phone(phone)
+
+            drive_link = ""
+            if document:
+                try:
+                    folder_id = "YOUR_GOOGLE_DRIVE_FOLDER_ID"  # ⬅️ Replace with your actual Drive folder ID
+                    drive_link = upload_file_to_drive(
+                        file=document,
+                        filename=document.name,
+                        folder_id=folder_id,
+                        creds_dict=st.secrets["gcp_service_account"]  # Already loaded
+                    )
+                    st.success(f"File uploaded to Google Drive: [View File]({drive_link})")
+                except Exception as e:
+                    st.error(f"Error uploading file to Google Drive: {str(e)}")
+
 
             # Required field checks
             if not name: errors.append("Name is required.")
@@ -261,7 +321,8 @@ else:
                     "Close Date": pd.NA,
                     "Assigned Coach": pd.NA,
                     "Coordinator Comment": pd.NA,
-                    "Staff Comment": pd.NA
+                    "Staff Comment": pd.NA,
+                    "Document": drive_link
                 }
                 new_data = pd.DataFrame([new_row])
 
@@ -417,21 +478,6 @@ else:
                 staff_dfff["Targeted Due Date"] = staff_dfff["Targeted Due Date"].dt.strftime("%Y-%m-%d")
 
                 st.dataframe(staff_dfff[display_cols].reset_index(drop=True))
-
-                # Priority Breakdown Chart
-                priority_order = ["Critical", "High", "Normal", "Low"]
-                priority_chart_data = staff_dfff["Priority"].value_counts().reset_index()
-                priority_chart_data.columns = ["Priority", "Count"]
-
-                if not priority_chart_data.empty:
-                    st.markdown("### 🎯 Priority Breakdown")
-                    chart = alt.Chart(priority_chart_data).mark_bar(size=40).encode(
-                        x=alt.X("Priority:N", sort=priority_order, title="Priority Level"),
-                        y=alt.Y("Count:Q", title="Number of In-Progress Requests"),
-                        color=alt.Color("Priority:N", sort=priority_order),
-                        tooltip=["Priority", "Count"]
-                    ).properties(height=300)
-                    st.altair_chart(chart, use_container_width=True)
 
 
                 # Filter submitted requests
