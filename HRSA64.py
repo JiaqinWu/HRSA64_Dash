@@ -479,7 +479,7 @@ else:
 
                 display_cols = [
                     "Ticket ID", "Jurisdiction", "Organization", "Name", "Focus Area", "TA Type",
-                    "Targeted Due Date", "Priority", "Status", "TA Description"
+                    "Targeted Due Date", "Priority", "Status", "TA Description","Document"
                 ]
 
                 # Sort by due date
@@ -522,7 +522,7 @@ else:
                     # Display clean table (exclude PriorityOrder column)
                     st.dataframe(submitted_requests_sorted[[
                         "Ticket ID","Jurisdiction", "Organization", "Name", "Title/Position", "Email Address", "Phone Number",
-                        "Focus Area", "TA Type", "Submit Date", "Targeted Due Date", "Priority", "TA Description"
+                        "Focus Area", "TA Type", "Submit Date", "Targeted Due Date", "Priority", "TA Description","Document"
                     ]].reset_index(drop=True))
 
                     # Select request by index (row number in submitted_requests)
@@ -639,7 +639,8 @@ else:
                         # Display filtered table
                         st.dataframe(filtered_df[[
                             "Ticket ID","Jurisdiction", "Organization", "Name", "Title/Position", "Email Address", "Phone Number",
-                            "Focus Area", "TA Type", "Assigned Date", "Targeted Due Date","Expected Duration (Days)","Priority", "Assigned Coach", "TA Description", "Coordinator Comment"
+                            "Focus Area", "TA Type", "Assigned Date", "Targeted Due Date","Expected Duration (Days)","Priority",
+                            "Assigned Coach", "TA Description","Document","Coordinator Comment"
                         ]].sort_values(by="Expected Duration (Days)").reset_index(drop=True))
 
                         # Select request by index (row number in submitted_requests)
@@ -731,8 +732,9 @@ else:
                         # Display filtered table
                         st.dataframe(filtered_df1[[
                             "Ticket ID","Jurisdiction", "Organization", "Name", "Title/Position", "Email Address", "Phone Number",
-                            "Focus Area", "TA Type", "Assigned Date", "Targeted Due Date", "Close Date", "Expected Duration (Days)",
-                            'Actual Duration (Days)', "Priority", "Assigned Coach", "TA Description", "Coordinator Comment", "Staff Comment"
+                            "Focus Area", "TA Type", "Priority", "Assigned Coach", "TA Description","Document","Assigned Date",
+                            "Targeted Due Date", "Close Date", "Expected Duration (Days)",
+                            'Actual Duration (Days)', "Coordinator Comment", "Staff Comment"
                         ]].reset_index(drop=True))
 
             elif st.session_state.role == "Assignee/Staff":
@@ -778,7 +780,7 @@ else:
                 # Display clean table (exclude PriorityOrder column)
                 st.dataframe(staff_df[[
                     "Ticket ID","Jurisdiction", "Organization", "Name", "Title/Position", "Email Address", "Phone Number",
-                    "Focus Area", "TA Type", "Assigned Date", "Targeted Due Date", "Priority", "TA Description","Coordinator Comment"
+                    "Focus Area", "TA Type", "Assigned Date", "Targeted Due Date", "Priority", "TA Description","Document","Coordinator Comment"
                 ]].reset_index(drop=True))
 
                 # Select request by index (row number in submitted_requests)
@@ -886,7 +888,7 @@ else:
                     st.dataframe(filtered_df2[[
                         "Ticket ID","Jurisdiction", "Organization", "Name", "Title/Position", "Email Address", "Phone Number",
                         "Focus Area", "TA Type", "Assigned Date", "Targeted Due Date","Expected Duration (Days)","Priority", "Assigned Coach", "TA Description",
-                        "Coordinator Comment", "Staff Comment"
+                        "Document","Coordinator Comment", "Staff Comment"
                     ]].sort_values(by="Expected Duration (Days)").reset_index(drop=True))
 
                     # Select request by index (row number in submitted_requests)
