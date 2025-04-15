@@ -6,6 +6,7 @@ from streamlit_extras.metric_cards import style_metric_cards # beautify metric c
 from datetime import datetime, timedelta
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
+import altair as alt
 import json
 import time
 
@@ -44,6 +45,13 @@ except Exception as e:
 
 df['Submit Date'] = pd.to_datetime(df['Submit Date'], errors='coerce')
 df["Phone Number"] = df["Phone Number"].astype(str)
+
+# Extract last Ticket ID from the existing sheet
+last_ticket = df["Ticket ID"].dropna().astype(str).str.extract(r"GU(\d+)", expand=False).astype(int).max()
+next_ticket_number = 1 if pd.isna(last_ticket) else last_ticket + 1
+new_ticket_id = f"GU{next_ticket_number:04d}"
+
+
 def format_phone(phone_str):
     # Remove non-digit characters
     digits = re.sub(r'\D', '', phone_str)
@@ -124,8 +132,8 @@ else:
 
     # --- Requester: No login needed
     if st.session_state.role == "Requester":
-        st.header("📥 NASTAD Technical Assistance Form")
-        st.write("Please complete this form to request Technical Assistance from NASTAD's Health Care Access and Health Systems Integration teams. We will review your request and will be in touch within 1-2 business days. You will receive an email from a TA Coordinator to schedule a time to gather more details about your needs. Once we have this information, we will assign a TA Lead to support you.")
+        st.header("📥 Georgetown University Technical Assistance Form ")
+        st.write("Please complete this form to request Technical Assistance from Georgetown University's Technical Assistance Provider (GU-TAP) team. We will review your request and will be in touch within 1-2 business days. You will receive an email from a TA Coordinator to schedule a time to gather more details about your needs. Once we have this information, we will assign a TA Lead to support you.")
         # Add requester form here
         col1, col2 = st.columns(2)
         with col1:
@@ -228,6 +236,7 @@ else:
                 # Add logic here to save to Google Sheet or database (add two more column "Submit Date" and "Status" marked as "Submitted" too)
                 # Prepare the new row
                 new_row = {
+                    'Ticket ID': new_ticket_id,
                     'Jurisdiction': location,
                     'Organization': organization,
                     'Name': name,
@@ -304,6 +313,41 @@ else:
                 col3.metric(label="# of Requests from past month", value= millify(pastmonth_request, precision=2))
                 style_metric_cards(border_left_color="#DBF227")
 
+                inprogress = df[df['Status'] == 'In Progress']
+                request_pastmonth = df[(df['Submit Date'] >= last_month)&(df['Status'].isin(['In Progress','Completed']))]
+
+                col4, col5 = st.columns(2)
+                # --- Pie 1: In Progress
+                with col4:
+                    st.markdown("### 🟡 In Progress Requests by Coach")
+                    if not inprogress.empty:
+                        chart_data = inprogress['Assigned Coach'].value_counts().reset_index()
+                        chart_data.columns = ['Assigned Coach', 'Count']
+                        pie1 = alt.Chart(chart_data).mark_arc(innerRadius=50).encode(
+                            theta=alt.Theta(field="Count", type="quantitative"),
+                            color=alt.Color(field="Assigned Coach", type="nominal"),
+                            tooltip=["Assigned Coach", "Count"]
+                        ).properties(width=250, height=250)
+                        st.altair_chart(pie1, use_container_width=True)
+                    else:
+                        st.info("No in-progress requests to show.")
+
+                # --- Pie 2: Requests in Past Month
+                with col5:
+                    st.markdown("### 📅 Past Month Requests by Coach")
+                    if not request_pastmonth.empty:
+                        chart_data = request_pastmonth['Assigned Coach'].value_counts().reset_index()
+                        chart_data.columns = ['Assigned Coach', 'Count']
+                        pie2 = alt.Chart(chart_data).mark_arc(innerRadius=50).encode(
+                            theta=alt.Theta(field="Count", type="quantitative"),
+                            color=alt.Color(field="Assigned Coach", type="nominal"),
+                            tooltip=["Assigned Coach", "Count"]
+                        ).properties(width=250, height=250)
+                        st.altair_chart(pie2, use_container_width=True)
+                    else:
+                        st.info("No recent requests to show.")
+                    
+
                 staff_list = ["MM", "KK", "LL"]
 
                 # Filter submitted requests
@@ -336,16 +380,16 @@ else:
 
                     # Display clean table (exclude PriorityOrder column)
                     st.dataframe(submitted_requests_sorted[[
-                        "Jurisdiction", "Organization", "Name", "Title/Position", "Email Address", "Phone Number",
+                        "Ticket ID","Jurisdiction", "Organization", "Name", "Title/Position", "Email Address", "Phone Number",
                         "Focus Area", "TA Type", "Submit Date", "Targeted Due Date", "Priority", "TA Description"
                     ]].reset_index(drop=True))
 
                     # Select request by index (row number in submitted_requests)
-                    request_indices = submitted_requests.index.tolist()
+                    request_indices = submitted_requests_sorted.index.tolist()
                     selected_request_index = st.selectbox(
                         "Select a request to assign",
                         options=request_indices,
-                        format_func=lambda idx: f"{submitted_requests.at[idx, 'Name']} | {submitted_requests.at[idx, 'Jurisdiction']}",
+                        format_func=lambda idx: f"{submitted_requests_sorted.at[idx, 'Ticket ID']} | {submitted_requests_sorted.at[idx, 'Name']} | {submitted_requests_sorted.at[idx, 'Jurisdiction']}",
                     )
 
                     # Select coach
@@ -440,6 +484,7 @@ else:
                                 options=in_progress_df["Focus Area"].unique(),
                                 default=in_progress_df["Focus Area"].unique(), key='in3'
                             )
+                        
 
                         # Apply filters
                         filtered_df = in_progress_df[
@@ -452,7 +497,7 @@ else:
 
                         # Display filtered table
                         st.dataframe(filtered_df[[
-                            "Jurisdiction", "Organization", "Name", "Title/Position", "Email Address", "Phone Number",
+                            "Ticket ID","Jurisdiction", "Organization", "Name", "Title/Position", "Email Address", "Phone Number",
                             "Focus Area", "TA Type", "Assigned Date", "Targeted Due Date","Expected Duration (Days)","Priority", "Assigned Coach", "TA Description", "Coordinator Comment"
                         ]].sort_values(by="Expected Duration (Days)").reset_index(drop=True))
 
@@ -461,7 +506,7 @@ else:
                         selected_request_index1 = st.selectbox(
                             "Select a request to comment",
                             options=request_indices1,
-                            format_func=lambda idx: f"{filtered_df.at[idx, 'Name']} | {filtered_df.at[idx, 'Jurisdiction']}",
+                            format_func=lambda idx: f"{filtered_df.at[idx, 'Ticket ID']} | {filtered_df.at[idx, 'Name']} | {filtered_df.at[idx, 'Jurisdiction']}",
                         )
 
                         # Input + submit comment
@@ -544,7 +589,7 @@ else:
 
                         # Display filtered table
                         st.dataframe(filtered_df1[[
-                            "Jurisdiction", "Organization", "Name", "Title/Position", "Email Address", "Phone Number",
+                            "Ticket ID","Jurisdiction", "Organization", "Name", "Title/Position", "Email Address", "Phone Number",
                             "Focus Area", "TA Type", "Assigned Date", "Targeted Due Date", "Close Date", "Expected Duration (Days)",
                             'Actual Duration (Days)', "Priority", "Assigned Coach", "TA Description", "Coordinator Comment", "Staff Comment"
                         ]].reset_index(drop=True))
@@ -591,7 +636,7 @@ else:
 
                 # Display clean table (exclude PriorityOrder column)
                 st.dataframe(staff_df[[
-                    "Jurisdiction", "Organization", "Name", "Title/Position", "Email Address", "Phone Number",
+                    "Ticket ID","Jurisdiction", "Organization", "Name", "Title/Position", "Email Address", "Phone Number",
                     "Focus Area", "TA Type", "Assigned Date", "Targeted Due Date", "Priority", "TA Description","Coordinator Comment"
                 ]].reset_index(drop=True))
 
@@ -600,7 +645,7 @@ else:
                 selected_request_index = st.selectbox(
                     "Select a request to marked as completed",
                     options=request_indices,
-                    format_func=lambda idx: f"{staff_df.at[idx, 'Name']} | {staff_df.at[idx, 'Jurisdiction']}",
+                    format_func=lambda idx: f"{staff_df.at[idx, 'Ticket ID']} | {staff_df.at[idx, 'Name']} | {staff_df.at[idx, 'Jurisdiction']}",
                 )
           
 
@@ -698,7 +743,7 @@ else:
 
                     # Display filtered table
                     st.dataframe(filtered_df2[[
-                        "Jurisdiction", "Organization", "Name", "Title/Position", "Email Address", "Phone Number",
+                        "Ticket ID","Jurisdiction", "Organization", "Name", "Title/Position", "Email Address", "Phone Number",
                         "Focus Area", "TA Type", "Assigned Date", "Targeted Due Date","Expected Duration (Days)","Priority", "Assigned Coach", "TA Description",
                         "Coordinator Comment", "Staff Comment"
                     ]].sort_values(by="Expected Duration (Days)").reset_index(drop=True))
@@ -708,7 +753,7 @@ else:
                     selected_request_index1 = st.selectbox(
                         "Select a request to comment",
                         options=request_indices2,
-                        format_func=lambda idx: f"{filtered_df2.at[idx, 'Name']} | {filtered_df2.at[idx, 'Jurisdiction']}",
+                        format_func=lambda idx: f"{filtered_df2.at[idx, 'Ticket ID']} | {filtered_df2.at[idx, 'Name']} | {filtered_df2.at[idx, 'Jurisdiction']}",
                     )
 
                     # Input comment
