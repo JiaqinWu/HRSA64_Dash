@@ -209,9 +209,16 @@ else:
         # --- Submit logic
         if st.button("Submit"):
             email_pattern = r'^[\w\.-]+@[\w\.-]+\.\w+$'
-            phone_pattern = r'^\+?[\d\s\-\(\)]{7,20}$'
+            def clean_and_format_us_phone(phone_input):
+                digits = re.sub(r'\D', '', phone_input)
+                if len(digits) == 10:
+                    return f"({digits[:3]}) {digits[3:6]}-{digits[6:]}"
+                else:
+                    return None
 
             errors = []
+
+            formatted_phone = clean_and_format_us_phone(phone)
 
             # Required field checks
             if not name: errors.append("Name is required.")
@@ -220,8 +227,8 @@ else:
             if not location: errors.append("Location must be selected.")
             if not email or not re.match(email_pattern, email):
                 errors.append("Please enter a valid email address.")
-            if not phone or not re.match(phone_pattern, phone):
-                errors.append("Please enter a valid phone number.")
+            if not phone or not formatted_phone:
+                errors.append("Please enter a valid U.S. phone number (10 digits).")
             if not focus_area: errors.append("TA Focus Area must be selected.")
             if not type_TA: errors.append("TA Style must be selected.")
             if not due_date: errors.append("Target Due Date is required.")
@@ -242,7 +249,7 @@ else:
                     'Name': name,
                     'Title/Position': title,
                     'Email Address': email,
-                    "Phone Number": phone,
+                    "Phone Number": formatted_phone,
                     "Focus Area": focus_area,
                     "TA Type": type_TA,
                     "Targeted Due Date": due_date.strftime("%Y-%m-%d"),
@@ -268,6 +275,9 @@ else:
                     updated_sheet = updated_sheet.fillna("")
                     worksheet1.update([updated_sheet.columns.values.tolist()] + updated_sheet.values.tolist())
                     st.success("✅ Submission successful!")
+                    time.sleep(6)
+                    st.rerun()
+
                 except Exception as e:
                     st.error(f"Error updating Google Sheets: {str(e)}")
                 
