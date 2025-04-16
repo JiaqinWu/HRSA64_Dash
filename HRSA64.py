@@ -555,7 +555,7 @@ else:
                             updated_df.loc[selected_request_index, "Assigned Date"] = datetime.today().strftime("%Y-%m-%d")
 
                             updated_df = updated_df.applymap(
-                                lambda x: x.strftime("%Y-%m-%d") if isinstance(x, (pd.Timestamp, datetime)) else x
+                                lambda x: x.strftime("%Y-%m-%d") if isinstance(x, (pd.Timestamp, datetime)) and not pd.isna(x) else x
                             )
                             #updated_df = updated_df.fillna("") 
 
