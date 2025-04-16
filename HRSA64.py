@@ -557,7 +557,7 @@ else:
                             updated_df = updated_df.applymap(
                                 lambda x: x.strftime("%Y-%m-%d") if isinstance(x, (pd.Timestamp, datetime)) and not pd.isna(x) else x
                             )
-                            #updated_df = updated_df.fillna("") 
+                            updated_df = updated_df.fillna("") 
 
                             # Push to Google Sheet
                             worksheet1.update([updated_df.columns.values.tolist()] + updated_df.values.tolist())
