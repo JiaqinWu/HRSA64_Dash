@@ -422,7 +422,6 @@ else:
                                 to_email=email,
                                 subject=subject,
                                 body=body,
-                                creds_dict=st.secrets["gcp_service_account"]
                             )
                         except Exception as e:
                             st.warning(f"⚠️ Failed to email {email}: {e}")
