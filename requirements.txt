@@ -6,3 +6,4 @@ gspread
 oauth2client
 altair
 google-api-python-client
+mailjet_rest
