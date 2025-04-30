@@ -410,10 +410,10 @@ else:
 
                     📎 Attachments: {drive_links or 'None'}
 
-                    Please review and assign this request via the dashboard.
+                    Please review and assign this request via the dashboard: https://hrsa64dash-hu9htgdnmmpx2c6w5dmrou.streamlit.app/.
 
                     Best,
-                    Your Dashboard Bot
+                    Your TA Dashboard Bot
                     """
 
                     for email in coordinator_emails:
