@@ -69,9 +69,15 @@ def send_email_mailjet(to_email, subject, body):
         ]
     }
 
-    result = mailjet.send.create(data=data)
-    if result.status_code != 200:
-        st.warning(f"❌ Failed to email {to_email}: {result.status_code} - {result.json()}")
+    try:
+        result = mailjet.send.create(data=data)
+        if result.status_code == 200:
+            st.success(f"📤 Email sent to {to_email}")
+        else:
+            st.warning(f"❌ Failed to email {to_email}: {result.status_code} - {result.json()}")
+    except Exception as e:
+        st.error(f"❗ Mailjet error: {e}")
+
 
 
 
@@ -422,7 +428,7 @@ else:
                             #st.warning(f"⚠️ Failed to email {email}: {e}")
                     try:
                         send_email_mailjet(
-                            to_email="leowu0603@gmail.com",
+                            to_email="jw2104@georgetown.edu",
                             subject=subject,
                             body=body,
                         )
