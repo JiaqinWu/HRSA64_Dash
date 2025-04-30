@@ -13,6 +13,7 @@ from google.oauth2.service_account import Credentials
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseUpload
 import io
+from mailjet_rest import Client
 
 
 scope = ["https://spreadsheets.google.com/feeds", 'https://www.googleapis.com/auth/spreadsheets', "https://www.googleapis.com/auth/drive.file", "https://www.googleapis.com/auth/drive"]
@@ -39,6 +40,41 @@ creds_json = json.dumps(credentials)
 # Load credentials and authorize gspread
 creds = ServiceAccountCredentials.from_json_keyfile_dict(json.loads(creds_json), scope)
 client = gspread.authorize(creds)
+
+
+
+def send_email_mailjet(to_email, subject, body):
+    api_key = st.secrets["mailjet"]["api_key"]
+    api_secret = st.secrets["mailjet"]["api_secret"]
+    sender = st.secrets["mailjet"]["sender"]
+
+    mailjet = Client(auth=(api_key, api_secret), version='v3.1')
+
+    data = {
+        'Messages': [
+            {
+                "From": {
+                    "Email": sender,
+                    "Name": "TA Dashboard"
+                },
+                "To": [
+                    {
+                        "Email": to_email,
+                        "Name": to_email.split("@")[0]
+                    }
+                ],
+                "Subject": subject,
+                "TextPart": body
+            }
+        ]
+    }
+
+    result = mailjet.send.create(data=data)
+    if result.status_code != 200:
+        st.warning(f"❌ Failed to email {to_email}: {result.status_code} - {result.json()}")
+
+
+
 
 def upload_file_to_drive(file, filename, folder_id, creds_dict):
     # Convert Streamlit secret dict into Google Credentials object
@@ -351,8 +387,52 @@ else:
                     # Replace NaN with empty strings to ensure JSON compatibility
                     updated_sheet = updated_sheet.fillna("")
                     worksheet1.update([updated_sheet.columns.values.tolist()] + updated_sheet.values.tolist())
+                    # -- Send email notifications to all coordinators
+                    coordinator_emails = [email for email, user in USERS.items() if user["role"] == "Coordinator"]
+
+                    subject = f"📥 New TA Request Submitted: {new_ticket_id}"
+                    body = f"""
+                    Hi team,
+
+                    A new Technical Assistance request has been submitted:
+
+                    🆔 Ticket ID: {new_ticket_id}
+                    📍 Jurisdiction: {location}
+                    🏢 Organization: {organization}
+                    👤 Name: {name}
+                    📝 Description: {ta_description}
+
+                    📎 Attachments: {drive_links or 'None'}
+
+                    Please review and assign this request via the dashboard or Google Sheet.
+
+                    Best,
+                    Your Dashboard Bot
+                    """
+
+                    #for email in coordinator_emails:
+                        #try:
+                            #send_gmail_notification(
+                                #to_email=email,
+                                #subject=subject,
+                                #body=body,
+                                #creds_dict=st.secrets["gcp_service_account"]
+                            #)
+                        #except Exception as e:
+                            #st.warning(f"⚠️ Failed to email {email}: {e}")
+                    try:
+                        send_email_mailjet(
+                            to_email="leowu0603@gmail.com",
+                            subject=subject,
+                            body=body,
+                        )
+                    except Exception as e:
+                        st.warning(f"⚠️ Failed to email {email}: {e}")
+
                     st.success("✅ Submission successful!")
-                    time.sleep(6)
+                    for key in list(st.session_state.keys()):
+                        del st.session_state[key]
+                    time.sleep(5)
                     st.rerun()
 
                 except Exception as e:
