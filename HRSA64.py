@@ -71,10 +71,10 @@ def send_email_mailjet(to_email, subject, body):
 
     try:
         result = mailjet.send.create(data=data)
-        if result.status_code == 200:
-            st.success(f"📤 Email sent to {to_email}")
-        else:
-            st.warning(f"❌ Failed to email {to_email}: {result.status_code} - {result.json()}")
+        #if result.status_code == 200:
+            #st.success(f"📤 Email sent to {to_email}")
+        #else:
+            #st.warning(f"❌ Failed to email {to_email}: {result.status_code} - {result.json()}")
     except Exception as e:
         st.error(f"❗ Mailjet error: {e}")
 
@@ -398,7 +398,7 @@ else:
 
                     subject = f"📥 New TA Request Submitted: {new_ticket_id}"
                     body = f"""
-                    Hi team,
+                    Hi Coordinator Team,
 
                     A new Technical Assistance request has been submitted:
 
@@ -410,30 +410,23 @@ else:
 
                     📎 Attachments: {drive_links or 'None'}
 
-                    Please review and assign this request via the dashboard or Google Sheet.
+                    Please review and assign this request via the dashboard.
 
                     Best,
                     Your Dashboard Bot
                     """
 
-                    #for email in coordinator_emails:
-                        #try:
-                            #send_gmail_notification(
-                                #to_email=email,
-                                #subject=subject,
-                                #body=body,
-                                #creds_dict=st.secrets["gcp_service_account"]
-                            #)
-                        #except Exception as e:
-                            #st.warning(f"⚠️ Failed to email {email}: {e}")
-                    try:
-                        send_email_mailjet(
-                            to_email="jw2104@georgetown.edu",
-                            subject=subject,
-                            body=body,
-                        )
-                    except Exception as e:
-                        st.warning(f"⚠️ Failed to email {email}: {e}")
+                    for email in coordinator_emails:
+                        try:
+                            send_email_mailjet(
+                                to_email=email,
+                                subject=subject,
+                                body=body,
+                                creds_dict=st.secrets["gcp_service_account"]
+                            )
+                        except Exception as e:
+                            st.warning(f"⚠️ Failed to email {email}: {e}")
+
 
                     st.success("✅ Submission successful!")
                     for key in list(st.session_state.keys()):
