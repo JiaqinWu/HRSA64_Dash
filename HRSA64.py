@@ -109,8 +109,13 @@ df["Phone Number"] = df["Phone Number"].astype(str).apply(format_phone)
 
 # --- Demo user database
 USERS = {
-    "jw2104@georgetown.com": {"password": "qin88251216", "role": "Coordinator", "name":"Jiaqin"},
-    "jiaqinwu@georgetown.com": {"password": "qin88251216", "role": "Assignee/Staff", "name":"MM"}
+    "jw2104@georgetown.edu": {"password": "Qin8851216!", "role": "Coordinator", "name":"Test"},
+    "Jenevieve.Opoku@georgetown.edu": {"password": "Tootles82!", "role": "Coordinator", "name":"Jenevieve Opoku"},
+    "me735@georgetown.edu": {"password": "me735hrsa64!", "role": "Coordinator", "name":"Martine Etienne-Mesubi"},
+    "kd802@georgetown.edu": {"password": "kd802hrsa!!", "role": "Coordinator", "name":"Kemisha Denny"},
+    "lm1353@georgetown.edu": {"password": "LM1353hrsa64?", "role": "Coordinator", "name":"Lauren Mathae"},
+    "katherine.robsky@georgetown.edu": {"password": "Georgetown1", "role": "Coordinator", "name":"Katherine Robsky"},
+    "jiaqinwu@georgetown.edu": {"password": "qin88251216", "role": "Assignee/Staff", "name":"MM"}
 }
 lis_location = ["Maricopa Co. - Arizona", "Alameda Co. - California", "Los Angeles Co. - California", "Orange Co. - California", "Riverside Co. - California",\
                 "Sacramento Co. - California", "San Bernadino Co. -California", "San Diego Co. - California", "San Francisco Co. - California",\
@@ -551,6 +556,7 @@ else:
 
                             # Update the selected row
                             updated_df.loc[selected_request_index, "Assigned Coach"] = selected_coach
+                            updated_df.loc[selected_request_index, "Assigned Coordinator"] = user_info['name']
                             updated_df.loc[selected_request_index, "Status"] = "In Progress"
                             updated_df.loc[selected_request_index, "Assigned Date"] = datetime.today().strftime("%Y-%m-%d")
 
