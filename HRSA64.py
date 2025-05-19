@@ -234,24 +234,53 @@ if st.session_state.role is None:
 
 # --- Show view based on role
 else:
-    st.sidebar.title(f"Role: {st.session_state.role}")
+    st.sidebar.markdown(
+        f"""
+        <div style='
+            background: #f8f9fa;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            padding: 1.2em 1em 1em 1em;
+            margin-bottom: 1.5em;
+            text-align: center;
+            font-family: Arial, "Segoe UI", sans-serif;
+        '>
+            <span style='
+                font-size: 1.15em;
+                font-weight: 700;
+                color: #1a237e;
+                letter-spacing: 0.5px;
+            '>
+                Role: {st.session_state.role}
+            </span>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
     st.sidebar.button("🔄 Switch Role", on_click=lambda: st.session_state.update({
         "authenticated": False,
         "role": None,
         "user_email": ""
     }))
-    # --- Submit button styling (CSS injection)
+
+    # --- Button styling (CSS injection)
     st.markdown("""
         <style>
         .stButton > button {
             width: 100%;
             background-color: #cdb4db;
             color: black;
-            font-family: "Segoe UI", "Arial", sans-serif;
+            font-family: Arial, "Segoe UI", sans-serif;
             font-weight: 600;
             border-radius: 8px;
             padding: 0.6em;
             margin-top: 1em;
+            transition: background 0.2s;
+        }
+        .stButton > button:hover {
+            background-color: #b197fc;
+            color: #222;
         }
         </style>
     """, unsafe_allow_html=True)
@@ -381,7 +410,7 @@ else:
             drive_links = ""
             if document:
                 try:
-                    folder_id = "1Q9dMMdyfEGWFVv2_CbHbJVMHXOST3OYf"  # your actual folder ID
+                    folder_id = "1Q9dMMdyfEGWFVv2_CbHbJVMHXOST3OYf" 
 
                     links = []
                     for file in document:
@@ -397,7 +426,7 @@ else:
                         links.append(link)
 
                     drive_links = ", ".join(links)
-                    st.success("📎 File(s) uploaded to Google Drive.")    #(f"File uploaded to Google Drive: [View File]({drive_link})")
+                    st.success("File(s) uploaded to Google Drive.")    
 
                 except Exception as e:
                     st.error(f"Error uploading file(s) to Google Drive: {str(e)}")
@@ -423,8 +452,6 @@ else:
                 for error in errors:
                     st.warning(error)
             else:
-                # Add logic here to save to Google Sheet or database (add two more column "Submit Date" and "Status" marked as "Submitted" too)
-                # Prepare the new row
                 new_row = {
                     'Ticket ID': new_ticket_id,
                     'Jurisdiction': location,
@@ -458,27 +485,27 @@ else:
                     # Replace NaN with empty strings to ensure JSON compatibility
                     updated_sheet = updated_sheet.fillna("")
                     worksheet1.update([updated_sheet.columns.values.tolist()] + updated_sheet.values.tolist())
-                    # -- Send email notifications to all coordinators
+                    # Send email notifications to all coordinators
                     coordinator_emails = [email for email, user in USERS.items() if user["role"] == "Coordinator"]
 
-                    subject = f"📥 New TA Request Submitted: {new_ticket_id}"
+                    subject = f"New TA Request Submitted: {new_ticket_id}"
                     body = f"""
                     Hi Coordinator Team,
 
                     A new Technical Assistance request has been submitted:
 
-                    🆔 Ticket ID: {new_ticket_id}
-                    📍 Jurisdiction: {location}
-                    🏢 Organization: {organization}
-                    👤 Name: {name}
-                    📝 Description: {ta_description}
-
-                    📎 Attachments: {drive_links or 'None'}
+                    Ticket ID: {new_ticket_id}
+                    Jurisdiction: {location}
+                    Organization: {organization}
+                    Name: {name}
+                    Description: {ta_description}
+                    Priority: {priority_status}
+                    Attachments: {drive_links or 'None'}
 
                     Please review and assign this request via the dashboard: https://hrsa64dash-hu9htgdnmmpx2c6w5dmrou.streamlit.app/.
 
                     Best,
-                    Your TA Dashboard Bot
+                    Your GU-TAP System Bot
                     """
 
                     for email in coordinator_emails:
