@@ -207,7 +207,7 @@ if st.session_state.role is None:
             box-shadow: 0 4px 24px rgba(0,0,0,0.07);
             margin-bottom: 2em;
         '>
-            <img src='https://github.com/JiaqinWu/HRSA64_Dash/blob/main/Georgetown_logo_blueRGB.png' width='200' style='margin-bottom: 1em;'/>
+            <img src='https://raw.githubusercontent.com/JiaqinWu/HRSA64_Dash/main/Georgetown_logo_blueRGB.png' width='200' style='margin-bottom: 1em;'/>
             <h1 style='
                 color: #1a237e;
                 font-family: "Segoe UI", "Arial", sans-serif;
