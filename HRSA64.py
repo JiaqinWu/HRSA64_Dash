@@ -194,6 +194,14 @@ if "user_email" not in st.session_state:
 if st.session_state.role is None:
     #st.image("Georgetown_logo_blueRGB.png",width=200)
     #st.title("Welcome to the GU Technical Assistance Provider System")
+    col1, col2, col3 = st.columns([1,2,1])
+    with col1:
+        st.write("")
+    with col2:
+        st.image("Georgetown_logo_blueRGB.png", width=200)
+    with col3:
+        st.write("")
+
     st.markdown(
         """
         <div style='
@@ -202,12 +210,11 @@ if st.session_state.role is None:
             align-items: center;
             justify-content: center;
             background: #f8f9fa;
-            padding: 2em 0 1em 0;
+            padding: 1em 0 1em 0;
             border-radius: 18px;
             box-shadow: 0 4px 24px rgba(0,0,0,0.07);
             margin-bottom: 2em;
         '>
-            <img src='Georgetown_logo_blueRGB.png' width='200' style='margin-bottom: 1em;'/>
             <h1 style='
                 color: #1a237e;
                 font-family: "Segoe UI", "Arial", sans-serif;
