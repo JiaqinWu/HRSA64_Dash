@@ -258,7 +258,33 @@ else:
 
     # --- Requester: No login needed
     if st.session_state.role == "Requester":
-        st.header("📥 Georgetown University Technical Assistance Form ")
+        st.markdown(
+            """
+            <div style='
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                background: #f8f9fa;
+                padding: 2em 0 1em 0;
+                border-radius: 18px;
+                box-shadow: 0 4px 24px rgba(0,0,0,0.07);
+                margin-bottom: 2em;
+            '>
+                <img src='https://raw.githubusercontent.com/JiaqinWu/HRSA64_Dash/main/Georgetown_logo_blueRGB.png' width='200' style='margin-bottom: 1em;'/>
+                <h1 style='
+                    color: #1a237e;
+                    font-family: "Segoe UI", "Arial", sans-serif;
+                    font-weight: 700;
+                    margin: 0;
+                    font-size: 2.2em;
+                    text-align: center;
+                '>📥 Georgetown University Technical Assistance Form</h1>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+        #st.header("📥 Georgetown University Technical Assistance Form ")
         st.write("Please complete this form to request Technical Assistance from Georgetown University's Technical Assistance Provider (GU-TAP) team. We will review your request and will be in touch within 1-2 business days. You will receive an email from a TA Coordinator to schedule a time to gather more details about your needs. Once we have this information, we will assign a TA Lead to support you.")
         # Add requester form here
         col1, col2 = st.columns(2)
