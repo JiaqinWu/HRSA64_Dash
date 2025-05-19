@@ -151,14 +151,25 @@ df["Phone Number"] = df["Phone Number"].astype(str).apply(format_phone)
 
 # --- Demo user database
 USERS = {
-    "jw2104@georgetown.edu": {"password": "Qin8851216!", "role": "Coordinator", "name":"Test"},
+    "jw2104@georgetown.edu": {"password": "Qin8851216!", "role": "Coordinator", "name":"Jiaqin Wu"},
     "Jenevieve.Opoku@georgetown.edu": {"password": "Tootles82!", "role": "Coordinator", "name":"Jenevieve Opoku"},
     "me735@georgetown.edu": {"password": "me735hrsa64!", "role": "Coordinator", "name":"Martine Etienne-Mesubi"},
     "kd802@georgetown.edu": {"password": "kd802hrsa!!", "role": "Coordinator", "name":"Kemisha Denny"},
     "lm1353@georgetown.edu": {"password": "LM1353hrsa64?", "role": "Coordinator", "name":"Lauren Mathae"},
     "katherine.robsky@georgetown.edu": {"password": "Georgetown1", "role": "Coordinator", "name":"Katherine Robsky"},
-    "jiaqinwu@georgetown.edu": {"password": "qin88251216", "role": "Assignee/Staff", "name":"MM"}
+    "jw2104@georgetown.edu": {"password": "Qin8851216!", "role": "Assignee/Staff", "name":"Jiaqin Wu"},
+    "Jenevieve.Opoku@georgetown.edu": {"password": "Tootles82!", "role": "Assignee/Staff", "name":"Jenevieve Opoku"},
+    "kd802@georgetown.edu": {"password": "kd802hrsa!!", "role": "Assignee/Staff", "name":"Kemisha Denny"},
+    "katherine.robsky@georgetown.edu": {"password": "Georgetown1", "role": "Assignee/Staff", "name":"Katherine Robsky"},
+    "me735@georgetown.edu": {"password": "me735hrsa64!", "role": "Assignee/Staff", "name":"Martine Etienne-Mesubi"},
+    "db1432@georgetown.edu": {"password": "Deus123!", "role": "Assignee/Staff", "name":"Deus Bazira"},
+    "sk2046@georgetown.edu": {"password": "Sharon123!", "role": "Assignee/Staff", "name":"Sharon Kibwana"},
+    "sgk23@georgetown.edu": {"password": "Seble123!", "role": "Assignee/Staff", "name":"Seble Kassaye"},
+    "weijun.yu@georgetown.edu": {"password": "Weijun123!", "role": "Assignee/Staff", "name":"Weijun Yu"},
+    "temesgen.zelalem@mayo.edu": {"password": "Zelalem123!", "role": "Assignee/Staff", "name":"Zelalem Temesgen"},
+    "carod@bu.edu": {"password": "Carlos123!", "role": "Assignee/Staff", "name":"Carlos Rodriguez-Diaz"},
 }
+
 lis_location = ["Maricopa Co. - Arizona", "Alameda Co. - California", "Los Angeles Co. - California", "Orange Co. - California", "Riverside Co. - California",\
                 "Sacramento Co. - California", "San Bernadino Co. -California", "San Diego Co. - California", "San Francisco Co. - California",\
                 "Broward Co. - Florida", "Duval Co. - Florida", "Hillsborough Co. - Florida", "Miami-Dade Co. - Florida","Orange Co. - Florida",\
@@ -181,7 +192,8 @@ if "user_email" not in st.session_state:
 
 # --- Role selection
 if st.session_state.role is None:
-    st.title("Welcome to the TA Request System")
+    st.image("Georgetown_logo_blueRGB.png",width=200)
+    st.title("Welcome to the GU Technical Assistance Provider System")
 
     role = st.selectbox(
         "Select your role",
