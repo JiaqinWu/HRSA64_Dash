@@ -151,23 +151,47 @@ df["Phone Number"] = df["Phone Number"].astype(str).apply(format_phone)
 
 # --- Demo user database
 USERS = {
-    "jw2104@georgetown.edu": {"password": "Qin8851216!", "role": "Coordinator", "name":"Jiaqin Wu"},
-    "Jenevieve.Opoku@georgetown.edu": {"password": "Tootles82!", "role": "Coordinator", "name":"Jenevieve Opoku"},
-    "me735@georgetown.edu": {"password": "me735hrsa64!", "role": "Coordinator", "name":"Martine Etienne-Mesubi"},
-    "kd802@georgetown.edu": {"password": "kd802hrsa!!", "role": "Coordinator", "name":"Kemisha Denny"},
-    "lm1353@georgetown.edu": {"password": "LM1353hrsa64?", "role": "Coordinator", "name":"Lauren Mathae"},
-    "katherine.robsky@georgetown.edu": {"password": "Georgetown1", "role": "Coordinator", "name":"Katherine Robsky"},
-    "jw2104@georgetown.edu": {"password": "Qin8851216!", "role": "Assignee/Staff", "name":"Jiaqin Wu"},
-    "Jenevieve.Opoku@georgetown.edu": {"password": "Tootles82!", "role": "Assignee/Staff", "name":"Jenevieve Opoku"},
-    "kd802@georgetown.edu": {"password": "kd802hrsa!!", "role": "Assignee/Staff", "name":"Kemisha Denny"},
-    "katherine.robsky@georgetown.edu": {"password": "Georgetown1", "role": "Assignee/Staff", "name":"Katherine Robsky"},
-    "me735@georgetown.edu": {"password": "me735hrsa64!", "role": "Assignee/Staff", "name":"Martine Etienne-Mesubi"},
-    "db1432@georgetown.edu": {"password": "Deus123!", "role": "Assignee/Staff", "name":"Deus Bazira"},
-    "sk2046@georgetown.edu": {"password": "Sharon123!", "role": "Assignee/Staff", "name":"Sharon Kibwana"},
-    "sgk23@georgetown.edu": {"password": "Seble123!", "role": "Assignee/Staff", "name":"Seble Kassaye"},
-    "weijun.yu@georgetown.edu": {"password": "Weijun123!", "role": "Assignee/Staff", "name":"Weijun Yu"},
-    "temesgen.zelalem@mayo.edu": {"password": "Zelalem123!", "role": "Assignee/Staff", "name":"Zelalem Temesgen"},
-    "carod@bu.edu": {"password": "Carlos123!", "role": "Assignee/Staff", "name":"Carlos Rodriguez-Diaz"},
+    "jw2104@georgetown.edu": {
+        "Coordinator": {"password": "Qin8851216!", "name": "Jiaqin Wu"},
+        "Assignee/Staff": {"password": "Qin8851216!", "name": "Jiaqin Wu"}
+    },
+    "Jenevieve.Opoku@georgetown.edu": {
+        "Coordinator": {"password": "Tootles82!", "name": "Jenevieve Opoku"},
+        "Assignee/Staff": {"password": "Tootles82!", "name": "Jenevieve Opoku"}
+    },
+    "me735@georgetown.edu": {
+        "Coordinator": {"password": "me735hrsa64!", "name": "Martine Etienne-Mesubi"},
+        "Assignee/Staff": {"password": "me735hrsa64!", "name": "Martine Etienne-Mesubi"}
+    },
+    "kd802@georgetown.edu": {
+        "Coordinator": {"password": "kd802hrsa!!", "name": "Kemisha Denny"},
+        "Assignee/Staff": {"password": "kd802hrsa!!", "name": "Kemisha Denny"}
+    },
+    "lm1353@georgetown.edu": {
+        "Coordinator": {"password": "LM1353hrsa64?", "name": "Lauren Mathae"}
+    },
+    "katherine.robsky@georgetown.edu": {
+        "Coordinator": {"password": "Georgetown1", "name": "Katherine Robsky"},
+        "Assignee/Staff": {"password": "Georgetown1", "name": "Katherine Robsky"}
+    },
+    "db1432@georgetown.edu": {
+        "Assignee/Staff": {"password": "Deus123!", "name": "Deus Bazira"}
+    },
+    "sk2046@georgetown.edu": {
+        "Assignee/Staff": {"password": "Sharon123!", "name": "Sharon Kibwana"}
+    },
+    "sgk23@georgetown.edu": {
+        "Assignee/Staff": {"password": "Seble123!", "name": "Seble Kassaye"}
+    },
+    "weijun.yu@georgetown.edu": {
+        "Assignee/Staff": {"password": "Weijun123!", "name": "Weijun Yu"}
+    },
+    "temesgen.zelalem@mayo.edu": {
+        "Assignee/Staff": {"password": "Zelalem123!", "name": "Zelalem Temesgen"}
+    },
+    "carod@bu.edu": {
+        "Assignee/Staff": {"password": "Carlos123!", "name": "Carlos Rodriguez-Diaz"}
+    },
 }
 
 lis_location = ["Maricopa Co. - Arizona", "Alameda Co. - California", "Los Angeles Co. - California", "Orange Co. - California", "Riverside Co. - California",\
@@ -537,12 +561,16 @@ else:
             login = st.button("Login")
 
             if login:
-                user = USERS.get(email)
-                if user and user["password"] == password and user["role"] == st.session_state.role:
-                    st.session_state.authenticated = True
-                    st.session_state.user_email = email
-                    st.success("Login successful!")
-                    st.rerun()
+                user_roles = USERS.get(email)
+                if user_roles and st.session_state.role in user_roles:
+                    user = user_roles[st.session_state.role]
+                    if user["password"] == password:
+                        st.session_state.authenticated = True
+                        st.session_state.user_email = email
+                        st.success("Login successful!")
+                        st.rerun()
+                    else:
+                        st.error("Invalid credentials or role mismatch.")
                 else:
                     st.error("Invalid credentials or role mismatch.")
 
