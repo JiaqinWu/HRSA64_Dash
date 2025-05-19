@@ -264,7 +264,6 @@ else:
         "user_email": ""
     }))
 
-    # --- Button styling (CSS injection)
     st.markdown("""
         <style>
         .stButton > button {
@@ -285,7 +284,7 @@ else:
         </style>
     """, unsafe_allow_html=True)
 
-    # --- Requester: No login needed
+    # Requester: No login needed
     if st.session_state.role == "Requester":
         st.markdown(
             """
@@ -315,7 +314,7 @@ else:
         )
         #st.header("📥 Georgetown University Technical Assistance Form ")
         st.write("Please complete this form to request Technical Assistance from Georgetown University's Technical Assistance Provider (GU-TAP) team. We will review your request and will be in touch within 1-2 business days. You will receive an email from a TA Coordinator to schedule a time to gather more details about your needs. Once we have this information, we will assign a TA Lead to support you.")
-        # Add requester form here
+        # Requester form
         col1, col2 = st.columns(2)
         with col1:
             name = st.text_input("Name *",placeholder="Enter text")
@@ -341,7 +340,6 @@ else:
             email = st.text_input("Email Address *",placeholder="Enter email")
         with col6:
             phone = st.text_input("Phone Number *",placeholder="(201) 555-0123")    
-
         col7, col8 = st.columns(2)
         with col7:
             focus_area = st.selectbox(
@@ -363,9 +361,6 @@ else:
                 "Target Due Date *",
                 value=None
             )
-
-            
-
         ta_description = st.text_area("TA Description *", placeholder='Enter text', height=150) 
         document = st.file_uploader(
             "Upload any files or attachments that are relevant to this request.",accept_multiple_files=True
@@ -377,13 +372,14 @@ else:
                 placeholder="Select option..."
             )
         
-        # --- Submit button styling (CSS injection)
+        # Submit button
         st.markdown("""
             <style>
             .stButton > button {
                 width: 100%;
                 background-color: #cdb4db;
                 color: black;
+                font-family: Arial, "Segoe UI", sans-serif;
                 font-weight: 600;
                 border-radius: 8px;
                 padding: 0.6em;
@@ -392,7 +388,7 @@ else:
             </style>
         """, unsafe_allow_html=True)
 
-        # --- Submit logic
+        # Submit logic
         if st.button("Submit"):
             email_pattern = r'^[\w\.-]+@[\w\.-]+\.\w+$'
             def clean_and_format_us_phone(phone_input):
@@ -502,7 +498,7 @@ else:
                     Priority: {priority_status}
                     Attachments: {drive_links or 'None'}
 
-                    Please review and assign this request via the dashboard: https://hrsa64dash-hu9htgdnmmpx2c6w5dmrou.streamlit.app/.
+                    Please review and assign this request via the GU-TAP System: https://hrsagutap.streamlit.app/.
 
                     Best,
                     Your GU-TAP System Bot
@@ -553,10 +549,54 @@ else:
         else:
             if st.session_state.role == "Coordinator":
                 user_info = USERS.get(st.session_state.user_email)
-                st.header("📬 Coordinator Dashboard")
+                st.markdown(
+                    """
+                    <div style='
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                        justify-content: center;
+                        background: #f8f9fa;
+                        padding: 2em 0 1em 0;
+                        border-radius: 18px;
+                        box-shadow: 0 4px 24px rgba(0,0,0,0.07);
+                        margin-bottom: 2em;
+                    '>
+                        <img src='https://raw.githubusercontent.com/JiaqinWu/HRSA64_Dash/main/Georgetown_logo_blueRGB.png' width='200' style='margin-bottom: 1em;'/>
+                        <h1 style='
+                            color: #1a237e;
+                            font-family: "Segoe UI", "Arial", sans-serif;
+                            font-weight: 700;
+                            margin: 0;
+                            font-size: 2.2em;
+                            text-align: center;
+                        '>📬 Coordinator Dashboard</h1>
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
+                #st.header("📬 Coordinator Dashboard")
                 # Personalized greeting
                 if user_info and "name" in user_info:
-                    st.markdown(f"#### 👋 Welcome, {user_info['name']}!")
+                    st.markdown(f"""
+                    <div style='                      
+                    background: #f8f9fa;                        
+                    border-radius: 12px;                        
+                    box-shadow: 0 2px 8px rgba(0,0,0,0.04);                        
+                    padding: 1.2em 1em 1em 1em;                        
+                    margin-bottom: 1.5em;                        
+                    text-align: center;                        
+                    font-family: Arial, "Segoe UI", sans-serif;                    
+                    '>
+                        <span style='                           
+                        font-size: 1.15em;
+                        font-weight: 700;
+                        color: #1a237e;
+                        letter-spacing: 0.5px;'>
+                            👋 Welcome, {user_info['name']}!
+                        </span>
+                    </div>
+                    """, unsafe_allow_html=True)
                 col1, col2, col3 = st.columns(3)
                 # create column span
                 today = datetime.today()
