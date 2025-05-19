@@ -55,7 +55,7 @@ def send_email_mailjet(to_email, subject, body):
             {
                 "From": {
                     "Email": sender,
-                    "Name": "TA Dashboard"
+                    "Name": "GU-TAP System"
                 },
                 "To": [
                     {
@@ -506,37 +506,78 @@ else:
                     updated_sheet = updated_sheet.fillna("")
                     worksheet1.update([updated_sheet.columns.values.tolist()] + updated_sheet.values.tolist())
                     # Send email notifications to all coordinators
-                    coordinator_emails = [email for email, user in USERS.items() if user["role"] == "Coordinator"]
+                    coordinator_emails = [email for email, user in USERS.items() if "Coordinator" in user]
+                    #coordinator_emails = "jw2104@georgetown.edu"
 
                     subject = f"New TA Request Submitted: {new_ticket_id}"
-                    body = f"""
-                    Hi Coordinator Team,
-
-                    A new Technical Assistance request has been submitted:
-
-                    Ticket ID: {new_ticket_id}
-                    Jurisdiction: {location}
-                    Organization: {organization}
-                    Name: {name}
-                    Description: {ta_description}
-                    Priority: {priority_status}
-                    Attachments: {drive_links or 'None'}
-
-                    Please review and assign this request via the GU-TAP System: https://hrsagutap.streamlit.app/.
-
-                    Best,
-                    Your GU-TAP System Bot
-                    """
-
                     for email in coordinator_emails:
+                        coordinator_name = USERS[email]["Coordinator"]["name"]
+                        personalized_body = f"""
+                        Hi {coordinator_name},
+
+                        A new Technical Assistance request has been submitted:
+
+                        Ticket ID: {new_ticket_id}
+                        Jurisdiction: {location}
+                        Organization: {organization}
+                        Name: {name}
+                        Description: {ta_description}
+                        Priority: {priority_status}
+                        Attachments: {drive_links or 'None'}
+
+                        Please review and assign this request via the GU-TAP System: https://hrsagutap.streamlit.app/.
+                        Please contact gutap@georgetown.edu for any questions or concerns.
+
+                        Best,
+                        GU-TAP System
+                        """
                         try:
                             send_email_mailjet(
                                 to_email=email,
                                 subject=subject,
-                                body=body,
+                                body=personalized_body,
                             )
                         except Exception as e:
-                            st.warning(f"⚠️ Failed to email {email}: {e}")
+                            st.warning(f"⚠️ Failed to send email to coordinator {email}: {e}")
+
+
+                    # Send confirmation email to requester
+                    confirmation_subject = f"Your TA Request ({new_ticket_id}) has been received"
+                    confirmation_body = f"""
+                    Hi {name},
+
+                    Thank you for submitting your Technical Assistance request to Georgetown University's Technical Assistance Provider (GU-TAP) team.
+
+                    Here is a summary of your submission:
+                    - Ticket ID: {new_ticket_id}
+                    - Jurisdiction: {location}
+                    - Organization: {organization}
+                    - Name: {name}
+                    - Title/Position: {title}
+                    - Email Address: {email}
+                    - Phone Number: {formatted_phone}
+                    - Focus Area: {focus_area}
+                    - TA Type: {type_TA}
+                    - Targeted Due Date: {due_date.strftime("%Y-%m-%d")}
+                    - Priority: {priority_status}
+                    - Description: {ta_description}
+                    - Attachments: {drive_links or 'None'}
+
+                    A TA Coordinator will review your request and assign a coach to your request within 2-3 business days.
+                    Please contact gutap@georgetown.edu for any questions or concerns.
+
+                    Best,
+                    GU-TAP System
+                    """
+
+                    try:
+                        send_email_mailjet(
+                            to_email=email,
+                            subject=confirmation_subject,
+                            body=confirmation_body,
+                        )
+                    except Exception as e:
+                        st.warning(f"⚠️ Failed to send confirmation email to requester: {e}")
 
 
                     st.success("✅ Submission successful!")
@@ -679,18 +720,13 @@ else:
                         st.info("No requests with coming dues to show.")
                     
 
-                staff_list = ["MM", "KK", "LL"]
+                staff_list = ["Jenevieve Opoku", "Deus Bazira", "Kemisha Denny", "Katherine Robsky", 
+                "Martine Etienne-Mesubi", "Seble Kassaye", "Weijun Yu", "Jiaqin Wu", "Zelalem Temesgen", "Carlos Rodriguez-Diaz"]
                 selected_staff = st.selectbox("Select a staff to view their requests", staff_list)
 
-
-                # Date ranges
                 today = datetime.today()
                 last_month = today - timedelta(days=30)
-
-                # Filter staff-specific data
                 staff_dff = df[df["Assigned Coach"] == selected_staff].copy()
-
-                # --- Metrics
                 in_progress_count = staff_dff[staff_dff["Status"] == "In Progress"].shape[0]
                 due_soon_count = staff_dff[
                     (staff_dff["Status"] == "In Progress") & 
@@ -701,16 +737,16 @@ else:
                     (staff_dff["Submit Date"] >= last_month)
                 ].shape[0]
 
-                # --- Metric Display
+                # Metric 
                 col1, col2, col3 = st.columns(3)
                 col1.metric("🟡 In Progress", in_progress_count)
                 col2.metric("📅 Due in 30 Days", due_soon_count)
                 col3.metric("✅ Completed (Last 30 Days)", completed_recently)
 
-                # --- Detailed Table
+                # Detailed Table
                 st.markdown("#### 📋 Detailed Request List")
 
-                # --- Status filter
+                # Status filter
                 status_options = ["In Progress", "Completed"]
                 selected_status = st.multiselect(
                     "Filter by request status",
@@ -733,7 +769,6 @@ else:
                 staff_dfff["Targeted Due Date"] = staff_dfff["Targeted Due Date"].dt.strftime("%Y-%m-%d")
 
                 st.dataframe(staff_dfff[display_cols].reset_index(drop=True))
-
 
                 # Filter submitted requests
                 submitted_requests = df[df["Status"] == "Submitted"].copy()
@@ -769,7 +804,7 @@ else:
                         "Focus Area", "TA Type", "Submit Date", "Targeted Due Date", "Priority", "TA Description","Document"
                     ]].reset_index(drop=True))
 
-                    # Select request by index (row number in submitted_requests)
+                    # Select request by index 
                     request_indices = submitted_requests_sorted.index.tolist()
                     selected_request_index = st.selectbox(
                         "Select a request to assign",
@@ -784,14 +819,11 @@ else:
                         index=None,
                         placeholder="Select option..."
                     )
-                    
 
                     # Assign button
                     if st.button("✅ Assign Coach and Start TA"):
                         try:
-                            # Create a copy to avoid modifying the original df directly (optional but safe)
                             updated_df = df.copy()
-
                             # Update the selected row
                             updated_df.loc[selected_request_index, "Assigned Coach"] = selected_coach
                             updated_df.loc[selected_request_index, "Assigned Coordinator"] = user_info['name']
