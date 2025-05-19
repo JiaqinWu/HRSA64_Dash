@@ -221,12 +221,44 @@ if st.session_state.role is None:
         unsafe_allow_html=True
     )
 
+    #role = st.selectbox(
+        #"Select your role",
+        #["Requester", "Coordinator", "Assignee/Staff"],
+        #index=None,
+        #placeholder="Select option..."
+    #)
+    st.markdown(
+        """
+        <div style='
+            background: #fff;
+            border-radius: 14px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+            padding: 2em 2em 1.5em 2em;
+            max-width: 420px;
+            margin: 0 auto 2em auto;
+            text-align: center;
+        '>
+            <div style='
+                font-size: 1.3em;
+                font-weight: 600;
+                color: #4b2e83;
+                margin-bottom: 1em;
+                letter-spacing: 0.5px;
+            '>
+                Please select your role to continue
+            </div>
+        """,
+        unsafe_allow_html=True
+    )
+
     role = st.selectbox(
-        "Select your role",
+        "",
         ["Requester", "Coordinator", "Assignee/Staff"],
         index=None,
         placeholder="Select option..."
     )
+
+    st.markdown("</div>", unsafe_allow_html=True)
 
     if role:
         st.session_state.role = role
