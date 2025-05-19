@@ -507,7 +507,7 @@ else:
                     worksheet1.update([updated_sheet.columns.values.tolist()] + updated_sheet.values.tolist())
                     # Send email notifications to all coordinators
                     #coordinator_emails = [email for email, user in USERS.items() if "Coordinator" in user]
-                    coordinator_emails = "jw2104@georgetown.edu"
+                    coordinator_emails = ["jw2104@georgetown.edu"]
 
                     subject = f"New TA Request Submitted: {new_ticket_id}"
                     for email in coordinator_emails:
