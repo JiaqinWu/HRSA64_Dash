@@ -1161,7 +1161,7 @@ else:
                 """, unsafe_allow_html=True)
 
                 # --- Section 2: Filter, Sort, Comment
-                st.subheader("💬 Leave Comments & Track Requests")
+                st.subheader("🚧 In-progress Requests")
 
                 # Filter "In Progress" requests
                 if staff_df.empty:
@@ -1208,8 +1208,6 @@ else:
                         (staff_df["TA Type"].isin(ta_type_filter)) &
                         (staff_df["Focus Area"].isin(focus_area_filter))
                     ]
-
-
 
                     # Display filtered table
                     st.dataframe(filtered_df2[[
