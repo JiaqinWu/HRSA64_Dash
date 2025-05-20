@@ -916,8 +916,6 @@ else:
                             (in_progress_df["Focus Area"].isin(focus_area_filter))
                         ]
 
-
-
                         # Display filtered table
                         st.dataframe(filtered_df[[
                             "Ticket ID","Jurisdiction", "Organization", "Name", "Title/Position", "Email Address", "Phone Number",
@@ -1022,11 +1020,57 @@ else:
 
             elif st.session_state.role == "Assignee/Staff":
                 # Add staff content here
-                staff_name = USERS[st.session_state.user_email]["name"]
-
-                st.markdown(f"#### 👋 Welcome, {staff_name}!")
-
-                st.header("👷 Staff Dashboard")
+                user_info = USERS.get(st.session_state.user_email)
+                staff_name = user_info["Assignee/Staff"]["name"] if user_info and "Assignee/Staff" in user_info else None
+                st.markdown(
+                    """
+                    <div style='
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                        justify-content: center;
+                        background: #f8f9fa;
+                        padding: 2em 0 1em 0;
+                        border-radius: 18px;
+                        box-shadow: 0 4px 24px rgba(0,0,0,0.07);
+                        margin-bottom: 2em;
+                    '>
+                        <img src='https://raw.githubusercontent.com/JiaqinWu/HRSA64_Dash/main/Georgetown_logo_blueRGB.png' width='200' style='margin-bottom: 1em;'/>
+                        <h1 style='
+                            color: #1a237e;
+                            font-family: "Segoe UI", "Arial", sans-serif;
+                            font-weight: 700;
+                            margin: 0;
+                            font-size: 2.2em;
+                            text-align: center;
+                        '>👷 Staff Dashboard</h1>
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
+                #st.header("👷 Staff Dashboard")
+                # Personalized greeting
+                if staff_name:
+                    st.markdown(f"""
+                    <div style='                      
+                    background: #f8f9fa;                        
+                    border-radius: 12px;                        
+                    box-shadow: 0 2px 8px rgba(0,0,0,0.04);                        
+                    padding: 1.2em 1em 1em 1em;                        
+                    margin-bottom: 1.5em;                        
+                    text-align: center;                        
+                    font-family: Arial, "Segoe UI", sans-serif;                    
+                    '>
+                        <span style='                           
+                        font-size: 1.15em;
+                        font-weight: 700;
+                        color: #1a237e;
+                        letter-spacing: 0.5px;'>
+                            👋 Welcome, {staff_name}!
+                        </span>
+                    </div>
+                    """, unsafe_allow_html=True)
+                
 
                 # Filter requests assigned to current staff and In Progress
                 staff_df = df[(df["Assigned Coach"] == staff_name) & (df["Status"] == "In Progress")].copy()
