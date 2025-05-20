@@ -618,6 +618,7 @@ else:
         else:
             if st.session_state.role == "Coordinator":
                 user_info = USERS.get(st.session_state.user_email)
+                coordinator_name = user_info["Coordinator"]["name"]
                 st.markdown(
                     """
                     <div style='
@@ -646,7 +647,7 @@ else:
                 )
                 #st.header("📬 Coordinator Dashboard")
                 # Personalized greeting
-                if user_info and "name" in user_info:
+                if user_info and "Coordinator" in user_info:
                     st.markdown(f"""
                     <div style='                      
                     background: #f8f9fa;                        
@@ -662,7 +663,7 @@ else:
                         font-weight: 700;
                         color: #1a237e;
                         letter-spacing: 0.5px;'>
-                            👋 Welcome, {user_info['name']}!
+                            👋 Welcome, {coordinator_name}!
                         </span>
                     </div>
                     """, unsafe_allow_html=True)
@@ -830,7 +831,7 @@ else:
                             updated_df = df.copy()
                             # Update the selected row
                             updated_df.loc[selected_request_index, "Assigned Coach"] = selected_coach
-                            updated_df.loc[selected_request_index, "Assigned Coordinator"] = user_info['name']
+                            updated_df.loc[selected_request_index, "Assigned Coordinator"] = coordinator_name
                             updated_df.loc[selected_request_index, "Status"] = "In Progress"
                             updated_df.loc[selected_request_index, "Assigned Date"] = datetime.today().strftime("%Y-%m-%d")
 
