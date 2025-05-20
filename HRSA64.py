@@ -668,6 +668,16 @@ else:
                     </div>
                     """, unsafe_allow_html=True)
                 col1, col2, col3 = st.columns(3)
+                total_request = df.shape[0]
+                inprogress_request = df[df['Status'] == 'In Progress'].shape[0]
+                completed_request = df[df['Status'] == 'Completed'].shape[0]
+
+                col1.metric(label="# of Total Requests", value= millify(total_request, precision=2))
+                col2.metric(label="# of In-Progress Requests", value= millify(inprogress_request, precision=2))
+                col3.metric(label="# of Completed Requests", value= millify(completed_request, precision=2))
+                style_metric_cards(border_left_color="#DBF227")
+
+                col1, col2, col3 = st.columns(3)
                 # create column span
                 today = datetime.today()
                 last_week = today - timedelta(days=7)
