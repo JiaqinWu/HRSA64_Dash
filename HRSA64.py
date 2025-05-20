@@ -844,6 +844,46 @@ else:
                             worksheet1.update([updated_df.columns.values.tolist()] + updated_df.values.tolist())
 
                             st.success(f"Coach {selected_coach} assigned! Status updated to 'In Progress'.")
+
+                            # Send email to staff   
+                            # Find staff email by name
+                            staff_email = None
+                            for email, roles in USERS.items():
+                                if "Assignee/Staff" in roles and roles["Assignee/Staff"]["name"] == selected_coach:
+                                    staff_email = email
+                                    break
+
+                            if staff_email:
+                                staff_subject = f"You have been assigned a new TA request: {updated_df.loc[selected_request_index, 'Ticket ID']}"
+                                staff_body = f"""
+                                Hi {selected_coach},
+
+                                You have been assigned as the coach for the following Technical Assistance request:
+
+                                Ticket ID: {updated_df.loc[selected_request_index, 'Ticket ID']}
+                                Jurisdiction: {updated_df.loc[selected_request_index, 'Jurisdiction']}
+                                Organization: {updated_df.loc[selected_request_index, 'Organization']}
+                                Name: {updated_df.loc[selected_request_index, 'Name']}
+                                Description: {updated_df.loc[selected_request_index, 'TA Description']}
+                                Priority: {updated_df.loc[selected_request_index, 'Priority']}
+                                Targeted Due Date: {updated_df.loc[selected_request_index, 'Targeted Due Date']}
+                                Attachments: {updated_df.loc[selected_request_index, 'Document'] or 'None'}
+
+                                Please view and manage this request via the GU-TAP System: https://hrsagutap.streamlit.app/.
+                                Please contact gutap@georgetown.edu for any questions or concerns.
+
+                                Best,
+                                GU-TAP System
+                                """
+                                try:
+                                    send_email_mailjet(
+                                        to_email=staff_email,
+                                        subject=staff_subject,
+                                        body=staff_body,
+                                    )
+                                except Exception as e:
+                                    st.warning(f"⚠️ Failed to send assignment email to staff {selected_coach}: {e}")
+
                             time.sleep(2)
                             st.rerun()
 
@@ -1138,7 +1178,7 @@ else:
                         # Push to Google Sheet
                         worksheet1.update([updated_df.columns.values.tolist()] + updated_df.values.tolist())
 
-                        st.success("Request marked as completed and synced to Google Sheet.")
+                        st.success("✅ Request marked as completed.")
                         time.sleep(2)
                         st.rerun()
 
