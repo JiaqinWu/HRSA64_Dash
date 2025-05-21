@@ -366,12 +366,23 @@ else:
             phone = st.text_input("Phone Number *",placeholder="(201) 555-0123")    
         col7, col8 = st.columns(2)
         with col7:
+            focus_area_options = [
+                "Housing", "Prevention", "Substance Abuse", "Rapid Start",
+                "Telehealth/Telemedicine", "Data Sharing", "Other"
+            ]
+
             focus_area = st.selectbox(
                 "TA Focus Area *",
-                ["Housing", "Prevention", "Substance Abuse","Rapid Start","Telehealth/Telemedicine","Data Sharing"],
+                focus_area_options,
                 index=None,
                 placeholder="Select option..."
             )
+
+            # If "Other" is selected, show a text input for custom value
+            if focus_area == "Other":
+                focus_area_other = st.text_input("Please specify the TA Focus Area")
+                if focus_area_other:
+                    focus_area = focus_area_other  # Use the custom value
         with col8:
             type_TA = st.selectbox(
                 "What Style of TA is needed *",
