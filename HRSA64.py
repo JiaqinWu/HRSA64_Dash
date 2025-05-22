@@ -220,8 +220,9 @@ if st.session_state.role is None:
     #st.title("Welcome to the GU Technical Assistance Provider System")
     st.set_page_config(
         page_title="GU TAP System",
-        page_icon="https://raw.githubusercontent.com/JiaqinWu/HRSA64_Dash/main/Georgetown_logo_blueRGB.png"
-    ) #, layout="wide"
+        page_icon="https://raw.githubusercontent.com/JiaqinWu/HRSA64_Dash/main/Georgetown_logo_blueRGB.png", 
+        layout="centered"
+    ) 
     st.markdown(
         """
         <div style='
