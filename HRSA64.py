@@ -439,30 +439,6 @@ else:
 
 
             drive_links = ""
-            if document:
-                try:
-                    folder_id = "1Q9dMMdyfEGWFVv2_CbHbJVMHXOST3OYf" 
-
-                    links = []
-                    for file in document:
-                        # Rename file as: GU0001_filename.pdf
-                        renamed_filename = f"{new_ticket_id}_{file.name}"
-
-                        link = upload_file_to_drive(
-                            file=file,
-                            filename=renamed_filename,
-                            folder_id=folder_id,
-                            creds_dict=st.secrets["gcp_service_account"]
-                        )
-                        links.append(link)
-
-                    drive_links = ", ".join(links)
-                    st.success("File(s) uploaded to Google Drive.")    
-
-                except Exception as e:
-                    st.error(f"Error uploading file(s) to Google Drive: {str(e)}")
-
-
             # Required field checks
             if not name: errors.append("Name is required.")
             if not title: errors.append("Title/Position is required.")
@@ -483,6 +459,26 @@ else:
                 for error in errors:
                     st.warning(error)
             else:
+                # Only upload files if all validation passes
+                if document:
+                    try:
+                        folder_id = "1Q9dMMdyfEGWFVv2_CbHbJVMHXOST3OYf" 
+                        links = []
+                        for file in document:
+                            # Rename file as: GU0001_filename.pdf
+                            renamed_filename = f"{new_ticket_id}_{file.name}"
+                            link = upload_file_to_drive(
+                                file=file,
+                                filename=renamed_filename,
+                                folder_id=folder_id,
+                                creds_dict=st.secrets["gcp_service_account"]
+                            )
+                            links.append(link)
+                        drive_links = ", ".join(links)
+                        st.success("File(s) uploaded to Google Drive.")    
+                    except Exception as e:
+                        st.error(f"Error uploading file(s) to Google Drive: {str(e)}")
+
                 new_row = {
                     'Ticket ID': new_ticket_id,
                     'Jurisdiction': location,
