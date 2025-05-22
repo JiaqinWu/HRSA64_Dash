@@ -396,12 +396,12 @@ else:
                 "Target Due Date *",
                 value=None
             )
-            if not due_date: 
-                st.error("Target Due Date is required.")
+            #if not due_date: 
+                #st.error("Target Due Date is required.")
 
             # Add required check: due_date must be after today
-            if due_date and due_date <= datetime.today().date():
-                st.error("Target Due Date must be after today.")
+            #if due_date and due_date <= datetime.today().date():
+                #st.error("Target Due Date must be after today.")
 
         ta_description = st.text_area("TA Description *", placeholder='Enter text', height=150) 
         document = st.file_uploader(
@@ -457,7 +457,9 @@ else:
                 errors.append("Please enter a valid U.S. phone number (10 digits).")
             if not focus_area: errors.append("TA Focus Area must be selected.")
             if not type_TA: errors.append("TA Style must be selected.")
-            #if not due_date: errors.append("Target Due Date is required.")
+            if not due_date: errors.append("Target Due Date is required.")
+            elif due_date <= datetime.today().date():
+                errors.append("Target Due Date must be after today.")
             if not ta_description: errors.append("TA Description is required.")
             if not priority_status: errors.append("Priority Status must be selected.")
 
