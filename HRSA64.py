@@ -218,7 +218,11 @@ if "user_email" not in st.session_state:
 if st.session_state.role is None:
     #st.image("Georgetown_logo_blueRGB.png",width=200)
     #st.title("Welcome to the GU Technical Assistance Provider System")
-    st.set_page_config(page_title="GU TAP System")
+    st.set_page_config(
+    page_title="GU TAP System",
+    page_icon="https://raw.githubusercontent.com/JiaqinWu/HRSA64_Dash/main/Georgetown_logo_blueRGB.png", 
+    layout="wide"
+)
     st.markdown(
         """
         <div style='
