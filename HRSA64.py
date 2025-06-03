@@ -1229,16 +1229,19 @@ else:
 
                 # Filter requests assigned to current staff and In Progress
                 staff_df = df[(df["Assigned Coach"] == staff_name) & (df["Status"] == "In Progress")].copy()
+                com_df = df[(df["Assigned Coach"] == staff_name) & (df["Status"] == "Completed")].copy()
+
 
                 # Ensure date columns are datetime
                 staff_df["Targeted Due Date"] = pd.to_datetime(staff_df["Targeted Due Date"], errors="coerce")
                 staff_df["Assigned Date"] = pd.to_datetime(staff_df["Assigned Date"], errors="coerce")
 
                 # --- Top Summary Cards
-                col1, col2, col3 = st.columns(3)
-
+                col1, col2 = st.columns(2)
+                col3, col4 = st.columns(2)
                 # 1. Total In Progress
                 total_in_progress = staff_df.shape[0]
+                total_complete = com_df.shape[0]
 
                 # 2. Newly Assigned: within last 3 days
                 recent_cutoff = datetime.today() - timedelta(days=3)
@@ -1249,12 +1252,14 @@ else:
                 due_soon = staff_df[staff_df["Targeted Due Date"] <= due_soon_cutoff].shape[0]
 
                 col1.metric("🟡 In Progress", total_in_progress)
-                col2.metric("🆕 Newly Assigned (Last 3 days)", newly_assigned)
-                col3.metric("📅 Due Within 1 Month", due_soon)
+                col2.metric("✅ Completed", total_complete)
+                col3.metric("🆕 Newly Assigned (Last 3 days)", newly_assigned)
+                col4.metric("📅 Due Within 1 Month", due_soon)
+
                 style_metric_cards(border_left_color="#DBF227")
 
                 # --- Section 1: Mark as Completed
-                st.subheader("✅ Mark Requests as Completed")
+                st.markdown("#### ✅ Mark Requests as Completed")
                 # Format dates
                 staff_df["Assigned Date"] = staff_df["Assigned Date"].dt.strftime("%Y-%m-%d")
                 staff_df["Targeted Due Date"] = staff_df["Targeted Due Date"].dt.strftime("%Y-%m-%d")
@@ -1316,7 +1321,7 @@ else:
                 """, unsafe_allow_html=True)
 
                 # --- Section 2: Filter, Sort, Comment
-                st.subheader("🚧 In-progress Requests")
+                st.markdown("#### 🚧 In-progress Requests")
 
                 # Filter "In Progress" requests
                 if staff_df.empty:
@@ -1333,7 +1338,7 @@ else:
                     
 
                     # --- Filters
-                    st.markdown("#### 🔍 Filter Options")
+                    st.markdown("##### 🔍 Filter Options")
 
                     col1, col2, col3 = st.columns(3)
                     with col1:
