@@ -804,7 +804,7 @@ else:
                 col3.metric("✅ Completed (Last 30 Days)", completed_recently)
 
                 # Detailed Table
-                st.markdown("#### 📋 Detailed Request List")
+                st.markdown("##### 📋 Detailed Request List")
 
                 # Status filter
                 status_options = ["In Progress", "Completed"]
@@ -834,8 +834,33 @@ else:
                 submitted_requests = df[df["Status"] == "Submitted"].copy()
 
                 st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
-
-                st.subheader("📋 Unassigned Requests")
+                st.markdown("")
+                st.markdown("""
+                    <div style='
+                        background: #e9ecef;
+                        border-radius: 14px;
+                        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+                        padding: 1.5em 1em 1em 1em;
+                        margin-bottom: 2em;
+                        margin-top: 1em;
+                    '>
+                        <h2 style='
+                            color: #1a237e;
+                            font-family: "Segoe UI", "Arial", sans-serif;
+                            font-weight: 700;
+                            margin-bottom: 0.2em;
+                            font-size: 1.3em;
+                        '>📋 Assign TA Requests</h2>
+                        <p style='
+                            color: #333;
+                            font-size: 1em;
+                            margin-bottom: 0.8em;
+                        '>
+                            This section lists all TA requests that have not yet been assigned to a coach. Review the details and assign a staff member to start the TA process.
+                        </p>
+                    </div>
+                """, unsafe_allow_html=True)
+                st.markdown("##### 📋 Unassigned Requests")
 
                 if submitted_requests.empty:
                     st.info("No submitted requests at the moment.")
@@ -962,7 +987,37 @@ else:
                         </style>
                     """, unsafe_allow_html=True)
 
-                    st.subheader("🚧 In-progress Requests")
+                    st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
+                    st.markdown("")
+
+                    st.markdown("""
+                        <div style='
+                            background: #e9ecef;
+                            border-radius: 14px;
+                            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+                            padding: 1.5em 1em 1em 1em;
+                            margin-bottom: 2em;
+                            margin-top: 1em;
+                        '>
+                            <h2 style='
+                                color: #1a237e;
+                                font-family: "Segoe UI", "Arial", sans-serif;
+                                font-weight: 700;
+                                margin-bottom: 0.2em;
+                                font-size: 1.3em;
+                            '>📊 TA Request Management: Comments & Completion Review</h2>
+                            <p style='
+                                color: #333;
+                                font-size: 1em;
+                                margin-bottom: 0.8em;
+                            '>
+                                Use this section to leave comments or updates for in-progress TA requests, and to review the status and details of completed requests.
+                            </p>
+                        </div>
+                    """, unsafe_allow_html=True)
+
+                    st.markdown("##### 🚧 In-progress Requests")
+
 
                     # Filter "In Progress" requests
                     in_progress_df = df[df["Status"] == "In Progress"].copy()
@@ -1054,8 +1109,8 @@ else:
                             except Exception as e:
                                 st.error(f"Error updating Google Sheets: {str(e)}")
 
+                    st.markdown("##### ✅ Completed Requests")
 
-                    st.subheader("✅ Completed Requests")
 
                     # Filter "Completed" requests
                     complete_df = df[df["Status"] == "Completed"].copy()
@@ -1114,6 +1169,9 @@ else:
                             "Targeted Due Date", "Close Date", "Expected Duration (Days)",
                             'Actual Duration (Days)', "Coordinator Comment", "Staff Comment"
                         ]].reset_index(drop=True))
+
+                        st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
+                        st.markdown("")
 
             elif st.session_state.role == "Assignee/Staff":
                 # Add staff content here
