@@ -353,7 +353,7 @@ else:
         with col3:
             organization = st.selectbox(
                 "Organization *",
-                ["CGHPI", "HRSA", "NASTAD"],
+                ["GU", "HRSA", "NASTAD"],
                 index=None,
                 placeholder="Select option..."
             )
@@ -387,11 +387,11 @@ else:
             if focus_area == "Other":
                 focus_area_other = st.text_input("Please specify the TA Focus Area")
                 if focus_area_other:
-                    focus_area = focus_area_other  # Use the custom value
+                    focus_area = focus_area_other 
         with col8:
             type_TA = st.selectbox(
                 "What Style of TA is needed *",
-                ["In-Person","Virtual","Hybrid (Combination of in-person and virtual)"],
+                ["In-Person","Virtual","Hybrid (Combination of in-person and virtual)","Unsure"],
                 index=None,
                 placeholder="Select option..."
             )
@@ -710,7 +710,30 @@ else:
                 col2.metric(label="# of Requests from past week", value= millify(pastweek_request, precision=2))
                 col3.metric(label="# of Requests from past month", value= millify(pastmonth_request, precision=2))
                 style_metric_cards(border_left_color="#DBF227")
-
+                st.markdown("""
+                    <div style='
+                        background: #e9ecef;
+                        border-radius: 14px;
+                        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+                        padding: 1.5em 1em 1em 1em;
+                        margin-bottom: 2em;
+                        margin-top: 1em;
+                    '>
+                        <h2 style='
+                            color: #1a237e;
+                            font-family: "Segoe UI", "Arial", sans-serif;
+                            font-weight: 700;
+                            margin-bottom: 0.2em;
+                        '>📊 Monitoring In-Progress TA Requests</h2>
+                        <p style='
+                            color: #333;
+                            font-size: 1.1em;
+                            margin-bottom: 0.8em;
+                        '>
+                            This section provides an overview and monitoring tools for all Technical Assistance (TA) requests that are currently in progress. Use the charts and filters below to track assignments, due dates, and staff workload.
+                        </p>
+                    </div>
+                """, unsafe_allow_html=True)
                 # Convert date columns
                 df["Assigned Date"] = pd.to_datetime(df["Assigned Date"], errors="coerce")
                 df["Targeted Due Date"] = pd.to_datetime(df["Targeted Due Date"], errors="coerce")
@@ -808,6 +831,8 @@ else:
 
                 # Filter submitted requests
                 submitted_requests = df[df["Status"] == "Submitted"].copy()
+
+                st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
 
                 st.subheader("📋 Unassigned Requests")
 
