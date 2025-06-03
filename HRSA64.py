@@ -724,11 +724,11 @@ else:
                             font-family: "Segoe UI", "Arial", sans-serif;
                             font-weight: 700;
                             margin-bottom: 0.2em;
-                            font-size: 1.2em;
+                            font-size: 1.3em;
                         '>📊 Monitoring In-Progress TA Requests</h2>
                         <p style='
                             color: #333;
-                            font-size: 1.1em;
+                            font-size: 1em;
                             margin-bottom: 0.8em;
                         '>
                             This section provides an overview and monitoring tools for all Technical Assistance (TA) requests that are currently in progress. Use the charts and filters below to track assignments, due dates, and staff workload.
@@ -747,7 +747,7 @@ else:
                 col4, col5 = st.columns(2)
                 # --- Pie 1: In Progress
                 with col4:
-                    st.markdown("#### 🟡 In Progress Requests by Coach")
+                    st.markdown("##### 🟡 In Progress Requests by Coach")
                     if not inprogress.empty:
                         chart_data = inprogress['Assigned Coach'].value_counts().reset_index()
                         chart_data.columns = ['Assigned Coach', 'Count']
@@ -762,7 +762,7 @@ else:
 
                 # --- Pie 2: Requests in Past Month
                 with col5:
-                    st.markdown("#### 📅 Due in 30 Days by Coach")
+                    st.markdown("##### 📅 Due in 30 Days by Coach")
                     if not request_pastmonth.empty:
                         chart_data = request_pastmonth['Assigned Coach'].value_counts().reset_index()
                         chart_data.columns = ['Assigned Coach', 'Count']
