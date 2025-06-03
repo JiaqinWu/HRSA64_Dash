@@ -860,7 +860,7 @@ else:
                         </p>
                     </div>
                 """, unsafe_allow_html=True)
-                st.markdown("##### 📋 Unassigned Requests")
+                st.markdown("#### 📋 Unassigned Requests")
 
                 if submitted_requests.empty:
                     st.info("No submitted requests at the moment.")
@@ -1016,7 +1016,7 @@ else:
                         </div>
                     """, unsafe_allow_html=True)
 
-                    st.markdown("##### 🚧 In-progress Requests")
+                    st.markdown("#### 🚧 In-progress Requests")
 
 
                     # Filter "In Progress" requests
@@ -1036,7 +1036,7 @@ else:
                         
 
                         # --- Filters
-                        st.markdown("#### 🔍 Filter Options")
+                        st.markdown("##### 🔍 Filter Options")
 
                         col1, col2, col3 = st.columns(3)
                         with col1:
@@ -1109,7 +1109,7 @@ else:
                             except Exception as e:
                                 st.error(f"Error updating Google Sheets: {str(e)}")
 
-                    st.markdown("##### ✅ Completed Requests")
+                    st.markdown("#### ✅ Completed Requests")
 
 
                     # Filter "Completed" requests
@@ -1131,7 +1131,7 @@ else:
                         complete_df["Close Date"] = complete_df["Close Date"].dt.strftime("%Y-%m-%d")
 
                         # --- Filters
-                        st.markdown("#### 🔍 Filter Options")
+                        st.markdown("##### 🔍 Filter Options")
 
                         col1, col2, col3 = st.columns(3)
                         with col1:
