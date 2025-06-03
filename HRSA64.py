@@ -722,8 +722,9 @@ else:
                         <h2 style='
                             color: #1a237e;
                             font-family: "Segoe UI", "Arial", sans-serif;
-                            font-weight: 300;
+                            font-weight: 700;
                             margin-bottom: 0.2em;
+                            font-size: 1.2em;
                         '>📊 Monitoring In-Progress TA Requests</h2>
                         <p style='
                             color: #333;
