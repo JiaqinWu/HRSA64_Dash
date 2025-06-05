@@ -160,8 +160,8 @@ USERS = {
         "Assignee/Staff": {"password": "Tootles82!", "name": "Jenevieve Opoku"}
     },
     "me735@georgetown.edu": {
-        "Coordinator": {"password": "me735hrsa64!", "name": "Martine Etienne-Mesubi"},
-        "Assignee/Staff": {"password": "me735hrsa64!", "name": "Martine Etienne-Mesubi"}
+        "Coordinator": {"password": "me735hrsa64", "name": "Martine Etienne-Mesubi"},
+        "Assignee/Staff": {"password": "me735hrsa64", "name": "Martine Etienne-Mesubi"}
     },
     "kd802@georgetown.edu": {
         "Coordinator": {"password": "kd802hrsa!!", "name": "Kemisha Denny"},
