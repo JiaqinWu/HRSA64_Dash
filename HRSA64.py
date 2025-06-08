@@ -582,7 +582,6 @@ else:
                     - Targeted Due Date: {due_date.strftime("%Y-%m-%d")}
                     - Priority: {priority_status}
                     - Description: {ta_description}
-                    - Attachments: {drive_links or 'None'}
 
                     A TA Coordinator will review your request and assign a coach to your request within 2-3 business days.
                     Please contact gutap@georgetown.edu for any questions or concerns.
