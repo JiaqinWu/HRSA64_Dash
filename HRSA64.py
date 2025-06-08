@@ -385,7 +385,7 @@ else:
 
             # If "Other" is selected, show a text input for custom value
             if focus_area == "Other":
-                focus_area_other = st.text_input("Please specify the TA Focus Area")
+                focus_area_other = st.text_input("Please specify the TA Focus Area *")
                 if focus_area_other:
                     focus_area = focus_area_other 
         with col8:
