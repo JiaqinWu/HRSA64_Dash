@@ -1344,12 +1344,12 @@ else:
                             </p>
                         </div>
                     """, unsafe_allow_html=True)
-                    lis_ticket = df["Ticket ID"].unique().tolist()
+                    lis_ticket1 = df["Ticket ID"].unique().tolist()
 
                     # Interaction Log form
                     col1, col2 = st.columns(2)
                     with col1:
-                        ticket_id_del = st.selectbox("Ticket ID *",lis_ticket, index=None,
+                        ticket_id_del = st.selectbox("Ticket ID *",lis_ticket1, index=None,
                             placeholder="Select option...")
                     with col2:
                         date_del = st.date_input("Date of Delivery *",value=datetime.today().date())
