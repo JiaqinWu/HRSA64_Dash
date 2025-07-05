@@ -1212,7 +1212,7 @@ else:
                     col1, col2 = st.columns(2)
                     with col1:
                         ticket_id_int = st.selectbox("Ticket ID *",lis_ticket, index=None,
-                            placeholder="Select option...")
+                            placeholder="Select option...",key='interaction')
                     with col2:
                         date_int = st.date_input("Date of Interaction *",value=datetime.today().date())
                     
@@ -1350,7 +1350,7 @@ else:
                     col1, col2 = st.columns(2)
                     with col1:
                         ticket_id_del = st.selectbox("Ticket ID *",lis_ticket1, index=None,
-                            placeholder="Select option...")
+                            placeholder="Select option...",key='delivery')
                     with col2:
                         date_del = st.date_input("Date of Delivery *",value=datetime.today().date())
                     
