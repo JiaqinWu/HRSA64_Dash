@@ -128,6 +128,13 @@ try:
 except Exception as e:
     st.error(f"Error fetching data from Google Sheets: {str(e)}")
 
+try:
+    spreadsheet3 = client.open('Example_TA_Request')
+    worksheet3 = spreadsheet3.worksheet('Delivery')
+    df_del = pd.DataFrame(worksheet3.get_all_records())
+except Exception as e:
+    st.error(f"Error fetching data from Google Sheets: {str(e)}")
+
 df['Submit Date'] = pd.to_datetime(df['Submit Date'], errors='coerce')
 df["Phone Number"] = df["Phone Number"].astype(str)
 
@@ -1173,7 +1180,7 @@ else:
                         ]].reset_index(drop=True))
 
                 st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
-                with st.expander("Submit a New Interaction Log Form"):
+                with st.expander("📊 Submit a New Interaction Log Form"):
                     st.markdown("""
                         <div style='
                             background: #e9ecef;
@@ -1299,6 +1306,144 @@ else:
                                 # Replace NaN with empty strings to ensure JSON compatibility
                                 updated_sheet1 = updated_sheet1.fillna("")
                                 worksheet2.update([updated_sheet1.columns.values.tolist()] + updated_sheet1.values.tolist())
+
+                                st.success("✅ Submission successful!")
+                                for key in list(st.session_state.keys()):
+                                    del st.session_state[key]
+                                time.sleep(5)
+                                st.rerun()
+
+                            except Exception as e:
+                                st.error(f"Error updating Google Sheets: {str(e)}")
+
+                st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
+
+                with st.expander("📊 Submit a New Delivery Form"):
+                    st.markdown("""
+                        <div style='
+                            background: #e9ecef;
+                            border-radius: 14px;
+                            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+                            padding: 1.5em 1em 1em 1em;
+                            margin-bottom: 2em;
+                            margin-top: 1em;
+                        '>
+                            <h2 style='
+                                color: #1a237e;
+                                font-family: "Segoe UI", "Arial", sans-serif;
+                                font-weight: 700;
+                                margin-bottom: 0.2em;
+                                font-size: 1.3em;
+                            '>📊 Submit a New Delivery Form with Jurisdiction</h2>
+                            <p style='
+                                color: #333;
+                                font-size: 1em;
+                                margin-bottom: 0.8em;
+                            '>
+                                Use this section to submit a new delivery form with jurisdiction.
+                            </p>
+                        </div>
+                    """, unsafe_allow_html=True)
+                    lis_ticket = df["Ticket ID"].unique().tolist()
+
+                    # Interaction Log form
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        ticket_id_del = st.selectbox("Ticket ID *",lis_ticket, index=None,
+                            placeholder="Select option...")
+                    with col2:
+                        date_del = st.date_input("Date of Delivery *",value=datetime.today().date())
+                    
+                    list_delivery = [
+                        "Report", "Email Reply", "Dashboard", "New Data Points", "Other"
+                    ]
+
+                    type_delivery = st.selectbox(
+                        "Type of Delivery *",
+                        list_delivery,
+                        index=None,
+                        placeholder="Select option..."
+                    )
+
+                    # If "Other" is selected, show a text input for custom value
+                    if type_delivery == "Other":
+                        type_delivery_other = st.text_input("Please specify the Type of Delivery *")
+                        if type_delivery_other:
+                            type_delivery = type_delivery_other 
+                    delivery_description = st.text_area("Short Summary *", placeholder='Enter text', height=150) 
+                    document_del = st.file_uploader(
+                        "Upload any files or attachments that are relevant to this delivery.",accept_multiple_files=True
+                    )
+                    
+                    # Submit button
+                    st.markdown("""
+                        <style>
+                        .stButton > button {
+                            width: 100%;
+                            background-color: #cdb4db;
+                            color: black;
+                            font-family: Arial, "Segoe UI", sans-serif;
+                            font-weight: 600;
+                            border-radius: 8px;
+                            padding: 0.6em;
+                            margin-top: 1em;
+                        }
+                        </style>
+                    """, unsafe_allow_html=True)
+
+                    # Submit logic
+                    if st.button("Submit"):
+                        errors = []
+                        drive_links = ""
+                        # Required field checks
+                        if not ticket_id_del: errors.append("Ticket ID is required.")
+                        if not date_del: errors.append("Date of delivery is required.")
+                        if not type_delivery: errors.append("Type of delivery is required.")
+                        if not delivery_description: errors.append("Short summary is required.")
+
+                        # Show warnings or success
+                        if errors:
+                            for error in errors:
+                                st.warning(error)
+                        else:
+                            # Only upload files if all validation passes
+                            if document_int:
+                                try:
+                                    folder_id_del = "1gXfWxys2cxd67YDk8zKPmG_mLGID4qL2" 
+                                    links_del = []
+                                    for file in document_del:
+                                        # Rename file as: GU0001_filename.pdf
+                                        renamed_filename = f"{ticket_id_del}_{file.name}"
+                                        link = upload_file_to_drive(
+                                            file=file,
+                                            filename=renamed_filename,
+                                            folder_id=folder_id_del,
+                                            creds_dict=st.secrets["gcp_service_account"]
+                                        )
+                                        links_del.append(link)
+                                    drive_links_del = ", ".join(links_del)
+                                    st.success("File(s) uploaded to Google Drive.")    
+                                except Exception as e:
+                                    st.error(f"Error uploading file(s) to Google Drive: {str(e)}")
+
+                            new_row_del = {
+                                'Ticket ID': ticket_id_del,
+                                "Date of Delivery": date_del,
+                                "Type of Delivery": type_delivery,
+                                "Short Summary": delivery_description,
+                                "Document": drive_links_del
+                            }
+                            new_data_del = pd.DataFrame([new_row_del])
+
+                            try:
+                                # Append new data to Google Sheet
+                                updated_sheet2 = pd.concat([df_del, new_data_del], ignore_index=True)
+                                updated_sheet2= updated_sheet2.applymap(
+                                    lambda x: x.strftime("%Y-%m-%d") if isinstance(x, (datetime, pd.Timestamp)) else x
+                                )
+                                # Replace NaN with empty strings to ensure JSON compatibility
+                                updated_sheet2 = updated_sheet2.fillna("")
+                                worksheet3.update([updated_sheet2.columns.values.tolist()] + updated_sheet2.values.tolist())
 
                                 st.success("✅ Submission successful!")
                                 for key in list(st.session_state.keys()):
