@@ -1254,7 +1254,7 @@ else:
                     """, unsafe_allow_html=True)
 
                     # Submit logic
-                    if st.button("Submit"):
+                    if st.button("Submit",key='interaction_submit'):
                         errors = []
                         drive_links = ""
                         # Required field checks
@@ -1392,7 +1392,7 @@ else:
                     """, unsafe_allow_html=True)
 
                     # Submit logic
-                    if st.button("Submit"):
+                    if st.button("Submit",key='delivery_submit'):
                         errors = []
                         drive_links = ""
                         # Required field checks
