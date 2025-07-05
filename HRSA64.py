@@ -1232,7 +1232,7 @@ else:
                         type_interaction_other = st.text_input("Please specify the Type of Interaction *")
                         if type_interaction_other:
                             type_interaction = type_interaction_other 
-                    interaction_description = st.text_area("Short Summary *", placeholder='Enter text', height=150) 
+                    interaction_description = st.text_area("Short Summary *", placeholder='Enter text', height=150,key='interaction_description') 
                     document_int = st.file_uploader(
                         "Upload any files or attachments that are relevant to this interaction.",accept_multiple_files=True
                     )
@@ -1370,7 +1370,7 @@ else:
                         type_delivery_other = st.text_input("Please specify the Type of Delivery *")
                         if type_delivery_other:
                             type_delivery = type_delivery_other 
-                    delivery_description = st.text_area("Short Summary *", placeholder='Enter text', height=150) 
+                    delivery_description = st.text_area("Short Summary *", placeholder='Enter text', height=150,key='delivery_description') 
                     document_del = st.file_uploader(
                         "Upload any files or attachments that are relevant to this delivery.",accept_multiple_files=True
                     )
