@@ -984,191 +984,191 @@ else:
                             </style>
                         """, unsafe_allow_html=True)
 
-                    st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
-                    st.markdown("")
-                    with st.expander("🚧 In-progress Requests"):
-                        st.markdown("""
-                            <div style='
-                                background: #e9ecef;
-                                border-radius: 14px;
-                                box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-                                padding: 1.5em 1em 1em 1em;
-                                margin-bottom: 2em;
-                                margin-top: 1em;
+                st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
+                st.markdown("")
+                with st.expander("🚧 In-progress Requests"):
+                    st.markdown("""
+                        <div style='
+                            background: #e9ecef;
+                            border-radius: 14px;
+                            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+                            padding: 1.5em 1em 1em 1em;
+                            margin-bottom: 2em;
+                            margin-top: 1em;
+                        '>
+                            <h2 style='
+                                color: #1a237e;
+                                font-family: "Segoe UI", "Arial", sans-serif;
+                                font-weight: 700;
+                                margin-bottom: 0.2em;
+                                font-size: 1.3em;
+                            '>📊 TA Request Management: Comments & Completion Review</h2>
+                            <p style='
+                                color: #333;
+                                font-size: 1em;
+                                margin-bottom: 0.8em;
                             '>
-                                <h2 style='
-                                    color: #1a237e;
-                                    font-family: "Segoe UI", "Arial", sans-serif;
-                                    font-weight: 700;
-                                    margin-bottom: 0.2em;
-                                    font-size: 1.3em;
-                                '>📊 TA Request Management: Comments & Completion Review</h2>
-                                <p style='
-                                    color: #333;
-                                    font-size: 1em;
-                                    margin-bottom: 0.8em;
-                                '>
-                                    Use this section to leave comments or updates for in-progress TA requests, and to review the status and details of completed requests.
-                                </p>
-                            </div>
-                        """, unsafe_allow_html=True)
+                                Use this section to leave comments or updates for in-progress TA requests, and to review the status and details of completed requests.
+                            </p>
+                        </div>
+                    """, unsafe_allow_html=True)
 
-                        st.markdown("#### 🚧 In-progress & Completed Requests")
+                    st.markdown("#### 🚧 In-progress & Completed Requests")
 
 
-                        # Filter "In Progress" requests
-                        in_progress_df = df[df["Status"] == "In Progress"].copy()
+                    # Filter "In Progress" requests
+                    in_progress_df = df[df["Status"] == "In Progress"].copy()
 
-                        if in_progress_df.empty:
-                            st.info("No requests currently in progress.")
-                        else:
-                            # Convert date columns
-                            in_progress_df["Assigned Date"] = pd.to_datetime(in_progress_df["Assigned Date"], errors="coerce")
-                            in_progress_df["Targeted Due Date"] = pd.to_datetime(in_progress_df["Targeted Due Date"], errors="coerce")
-                            in_progress_df['Expected Duration (Days)'] = (in_progress_df["Targeted Due Date"]-in_progress_df["Assigned Date"]).dt.days
+                    if in_progress_df.empty:
+                        st.info("No requests currently in progress.")
+                    else:
+                        # Convert date columns
+                        in_progress_df["Assigned Date"] = pd.to_datetime(in_progress_df["Assigned Date"], errors="coerce")
+                        in_progress_df["Targeted Due Date"] = pd.to_datetime(in_progress_df["Targeted Due Date"], errors="coerce")
+                        in_progress_df['Expected Duration (Days)'] = (in_progress_df["Targeted Due Date"]-in_progress_df["Assigned Date"]).dt.days
 
-                            # Format dates
-                            in_progress_df["Assigned Date"] = in_progress_df["Assigned Date"].dt.strftime("%Y-%m-%d")
-                            in_progress_df["Targeted Due Date"] = in_progress_df["Targeted Due Date"].dt.strftime("%Y-%m-%d")
-                            
+                        # Format dates
+                        in_progress_df["Assigned Date"] = in_progress_df["Assigned Date"].dt.strftime("%Y-%m-%d")
+                        in_progress_df["Targeted Due Date"] = in_progress_df["Targeted Due Date"].dt.strftime("%Y-%m-%d")
+                        
 
-                            # --- Filters
-                            st.markdown("##### 🔍 Filter Options")
+                        # --- Filters
+                        st.markdown("##### 🔍 Filter Options")
 
-                            col1, col2, col3 = st.columns(3)
-                            with col1:
-                                priority_filter = st.multiselect(
-                                    "Filter by Priority",
-                                    options=in_progress_df["Priority"].unique(),
-                                    default=in_progress_df["Priority"].unique(), key='in1'
-                                )
-
-                            with col2:
-                                ta_type_filter = st.multiselect(
-                                    "Filter by TA Type",
-                                    options=in_progress_df["TA Type"].unique(),
-                                    default=in_progress_df["TA Type"].unique(), key='in2'
-                                )
-
-                            with col3:
-                                focus_area_filter = st.multiselect(
-                                    "Filter by Focus Area",
-                                    options=in_progress_df["Focus Area"].unique(),
-                                    default=in_progress_df["Focus Area"].unique(), key='in3'
-                                )
-                            
-
-                            # Apply filters
-                            filtered_df = in_progress_df[
-                                (in_progress_df["Priority"].isin(priority_filter)) &
-                                (in_progress_df["TA Type"].isin(ta_type_filter)) &
-                                (in_progress_df["Focus Area"].isin(focus_area_filter))
-                            ]
-
-                            # Display filtered table
-                            st.dataframe(filtered_df[[
-                                "Ticket ID","Jurisdiction", "Organization", "Name", "Title/Position", "Email Address", "Phone Number",
-                                "Focus Area", "TA Type", "Assigned Date", "Targeted Due Date","Expected Duration (Days)","Priority",
-                                "Assigned Coach", "TA Description","Document","Coordinator Comment"
-                            ]].sort_values(by="Expected Duration (Days)").reset_index(drop=True))
-
-                            # Select request by index (row number in submitted_requests)
-                            request_indices1 = filtered_df.index.tolist()
-                            selected_request_index1 = st.selectbox(
-                                "Select a request to comment",
-                                options=request_indices1,
-                                format_func=lambda idx: f"{filtered_df.at[idx, 'Ticket ID']} | {filtered_df.at[idx, 'Name']} | {filtered_df.at[idx, 'Jurisdiction']}",
+                        col1, col2, col3 = st.columns(3)
+                        with col1:
+                            priority_filter = st.multiselect(
+                                "Filter by Priority",
+                                options=in_progress_df["Priority"].unique(),
+                                default=in_progress_df["Priority"].unique(), key='in1'
                             )
 
-                            # Input + submit comment
-                            comment_input = st.text_area("Comments", placeholder="Enter comments", height=150, key='comm')
+                        with col2:
+                            ta_type_filter = st.multiselect(
+                                "Filter by TA Type",
+                                options=in_progress_df["TA Type"].unique(),
+                                default=in_progress_df["TA Type"].unique(), key='in2'
+                            )
 
-                            if st.button("✅ Submit Comments"):
-                                try:
-                                    # Find the actual row index in the original df (map back using ID or index)
-                                    selected_row_global_index = filtered_df.loc[selected_request_index1].name
+                        with col3:
+                            focus_area_filter = st.multiselect(
+                                "Filter by Focus Area",
+                                options=in_progress_df["Focus Area"].unique(),
+                                default=in_progress_df["Focus Area"].unique(), key='in3'
+                            )
+                        
 
-                                    # Copy and update df
-                                    updated_df = df.copy()
-                                    updated_df.loc[selected_row_global_index, "Coordinator Comment"] = comment_input
-                                    updated_df = updated_df.applymap(
-                                        lambda x: x.strftime("%Y-%m-%d") if isinstance(x, (pd.Timestamp, datetime)) and not pd.isna(x) else x
-                                    )
-                                    updated_df = updated_df.fillna("") 
+                        # Apply filters
+                        filtered_df = in_progress_df[
+                            (in_progress_df["Priority"].isin(priority_filter)) &
+                            (in_progress_df["TA Type"].isin(ta_type_filter)) &
+                            (in_progress_df["Focus Area"].isin(focus_area_filter))
+                        ]
 
-                                    # Push to Google Sheets
-                                    worksheet1.update([updated_df.columns.values.tolist()] + updated_df.values.tolist())
+                        # Display filtered table
+                        st.dataframe(filtered_df[[
+                            "Ticket ID","Jurisdiction", "Organization", "Name", "Title/Position", "Email Address", "Phone Number",
+                            "Focus Area", "TA Type", "Assigned Date", "Targeted Due Date","Expected Duration (Days)","Priority",
+                            "Assigned Coach", "TA Description","Document","Coordinator Comment"
+                        ]].sort_values(by="Expected Duration (Days)").reset_index(drop=True))
 
-                                    st.success("💬 Comment saved and synced with Google Sheets.")
-                                    time.sleep(2)
-                                    st.rerun()
+                        # Select request by index (row number in submitted_requests)
+                        request_indices1 = filtered_df.index.tolist()
+                        selected_request_index1 = st.selectbox(
+                            "Select a request to comment",
+                            options=request_indices1,
+                            format_func=lambda idx: f"{filtered_df.at[idx, 'Ticket ID']} | {filtered_df.at[idx, 'Name']} | {filtered_df.at[idx, 'Jurisdiction']}",
+                        )
 
-                                except Exception as e:
-                                    st.error(f"Error updating Google Sheets: {str(e)}")
+                        # Input + submit comment
+                        comment_input = st.text_area("Comments", placeholder="Enter comments", height=150, key='comm')
 
-                        st.markdown("#### ✅ Completed Requests")
+                        if st.button("✅ Submit Comments"):
+                            try:
+                                # Find the actual row index in the original df (map back using ID or index)
+                                selected_row_global_index = filtered_df.loc[selected_request_index1].name
 
-
-                        # Filter "Completed" requests
-                        complete_df = df[df["Status"] == "Completed"].copy()
-
-                        if complete_df.empty:
-                            st.info("No requests currently completed.")
-                        else:
-                            # Convert date columns
-                            complete_df["Assigned Date"] = pd.to_datetime(complete_df["Assigned Date"], errors="coerce")
-                            complete_df["Close Date"] = pd.to_datetime(complete_df["Close Date"], errors="coerce")
-                            complete_df["Targeted Due Date"] = pd.to_datetime(complete_df["Targeted Due Date"], errors="coerce")
-                            complete_df['Expected Duration (Days)'] = (complete_df["Targeted Due Date"]-complete_df["Assigned Date"]).dt.days
-                            complete_df['Actual Duration (Days)'] = (complete_df["Close Date"]-complete_df["Assigned Date"]).dt.days
-
-                            # Format dates
-                            complete_df["Assigned Date"] = complete_df["Assigned Date"].dt.strftime("%Y-%m-%d")
-                            complete_df["Targeted Due Date"] = complete_df["Targeted Due Date"].dt.strftime("%Y-%m-%d")
-                            complete_df["Close Date"] = complete_df["Close Date"].dt.strftime("%Y-%m-%d")
-
-                            # --- Filters
-                            st.markdown("##### 🔍 Filter Options")
-
-                            col1, col2, col3 = st.columns(3)
-                            with col1:
-                                priority_filter1 = st.multiselect(
-                                    "Filter by Priority",
-                                    options=complete_df["Priority"].unique(),
-                                    default=complete_df["Priority"].unique(), key='com1'
+                                # Copy and update df
+                                updated_df = df.copy()
+                                updated_df.loc[selected_row_global_index, "Coordinator Comment"] = comment_input
+                                updated_df = updated_df.applymap(
+                                    lambda x: x.strftime("%Y-%m-%d") if isinstance(x, (pd.Timestamp, datetime)) and not pd.isna(x) else x
                                 )
+                                updated_df = updated_df.fillna("") 
 
-                            with col2:
-                                ta_type_filter1 = st.multiselect(
-                                    "Filter by TA Type",
-                                    options=complete_df["TA Type"].unique(),
-                                    default=complete_df["TA Type"].unique(), key='com2'
-                                )
+                                # Push to Google Sheets
+                                worksheet1.update([updated_df.columns.values.tolist()] + updated_df.values.tolist())
 
-                            with col3:
-                                focus_area_filter1 = st.multiselect(
-                                    "Filter by Focus Area",
-                                    options=complete_df["Focus Area"].unique(),
-                                    default=complete_df["Focus Area"].unique(), key='com3'
-                                )
+                                st.success("💬 Comment saved and synced with Google Sheets.")
+                                time.sleep(2)
+                                st.rerun()
 
-                            # Apply filters
-                            filtered_df1 = complete_df[
-                                (complete_df["Priority"].isin(priority_filter1)) &
-                                (complete_df["TA Type"].isin(ta_type_filter1)) &
-                                (complete_df["Focus Area"].isin(focus_area_filter1))
-                            ]
+                            except Exception as e:
+                                st.error(f"Error updating Google Sheets: {str(e)}")
 
-                            # Display filtered table
-                            st.dataframe(filtered_df1[[
-                                "Ticket ID","Jurisdiction", "Organization", "Name", "Title/Position", "Email Address", "Phone Number",
-                                "Focus Area", "TA Type", "Priority", "Assigned Coach", "TA Description","Document","Assigned Date",
-                                "Targeted Due Date", "Close Date", "Expected Duration (Days)",
-                                'Actual Duration (Days)', "Coordinator Comment", "Staff Comment"
-                            ]].reset_index(drop=True))
+                    st.markdown("#### ✅ Completed Requests")
 
-                            st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
-                            st.markdown("")
+
+                    # Filter "Completed" requests
+                    complete_df = df[df["Status"] == "Completed"].copy()
+
+                    if complete_df.empty:
+                        st.info("No requests currently completed.")
+                    else:
+                        # Convert date columns
+                        complete_df["Assigned Date"] = pd.to_datetime(complete_df["Assigned Date"], errors="coerce")
+                        complete_df["Close Date"] = pd.to_datetime(complete_df["Close Date"], errors="coerce")
+                        complete_df["Targeted Due Date"] = pd.to_datetime(complete_df["Targeted Due Date"], errors="coerce")
+                        complete_df['Expected Duration (Days)'] = (complete_df["Targeted Due Date"]-complete_df["Assigned Date"]).dt.days
+                        complete_df['Actual Duration (Days)'] = (complete_df["Close Date"]-complete_df["Assigned Date"]).dt.days
+
+                        # Format dates
+                        complete_df["Assigned Date"] = complete_df["Assigned Date"].dt.strftime("%Y-%m-%d")
+                        complete_df["Targeted Due Date"] = complete_df["Targeted Due Date"].dt.strftime("%Y-%m-%d")
+                        complete_df["Close Date"] = complete_df["Close Date"].dt.strftime("%Y-%m-%d")
+
+                        # --- Filters
+                        st.markdown("##### 🔍 Filter Options")
+
+                        col1, col2, col3 = st.columns(3)
+                        with col1:
+                            priority_filter1 = st.multiselect(
+                                "Filter by Priority",
+                                options=complete_df["Priority"].unique(),
+                                default=complete_df["Priority"].unique(), key='com1'
+                            )
+
+                        with col2:
+                            ta_type_filter1 = st.multiselect(
+                                "Filter by TA Type",
+                                options=complete_df["TA Type"].unique(),
+                                default=complete_df["TA Type"].unique(), key='com2'
+                            )
+
+                        with col3:
+                            focus_area_filter1 = st.multiselect(
+                                "Filter by Focus Area",
+                                options=complete_df["Focus Area"].unique(),
+                                default=complete_df["Focus Area"].unique(), key='com3'
+                            )
+
+                        # Apply filters
+                        filtered_df1 = complete_df[
+                            (complete_df["Priority"].isin(priority_filter1)) &
+                            (complete_df["TA Type"].isin(ta_type_filter1)) &
+                            (complete_df["Focus Area"].isin(focus_area_filter1))
+                        ]
+
+                        # Display filtered table
+                        st.dataframe(filtered_df1[[
+                            "Ticket ID","Jurisdiction", "Organization", "Name", "Title/Position", "Email Address", "Phone Number",
+                            "Focus Area", "TA Type", "Priority", "Assigned Coach", "TA Description","Document","Assigned Date",
+                            "Targeted Due Date", "Close Date", "Expected Duration (Days)",
+                            'Actual Duration (Days)', "Coordinator Comment", "Staff Comment"
+                        ]].reset_index(drop=True))
+
+                        st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
+                        st.markdown("")
 
             elif st.session_state.role == "Assignee/Staff":
                 # Add staff content here
