@@ -42,7 +42,6 @@ creds = ServiceAccountCredentials.from_json_keyfile_dict(json.loads(creds_json),
 client = gspread.authorize(creds)
 
 
-
 def send_email_mailjet(to_email, subject, body):
     api_key = st.secrets["mailjet"]["api_key"]
     api_secret = st.secrets["mailjet"]["api_secret"]
@@ -77,9 +76,6 @@ def send_email_mailjet(to_email, subject, body):
             #st.warning(f"❌ Failed to email {to_email}: {result.status_code} - {result.json()}")
     except Exception as e:
         st.error(f"❗ Mailjet error: {e}")
-
-
-
 
 
 def upload_file_to_drive(file, filename, folder_id, creds_dict):
@@ -709,286 +705,7 @@ else:
                 col2.metric(label="# of Requests from past week", value= millify(pastweek_request, precision=2))
                 col3.metric(label="# of Requests from past month", value= millify(pastmonth_request, precision=2))
                 style_metric_cards(border_left_color="#DBF227")
-                st.markdown("""
-                    <div style='
-                        background: #e9ecef;
-                        border-radius: 14px;
-                        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-                        padding: 1.5em 1em 1em 1em;
-                        margin-bottom: 2em;
-                        margin-top: 1em;
-                    '>
-                        <h2 style='
-                            color: #1a237e;
-                            font-family: "Segoe UI", "Arial", sans-serif;
-                            font-weight: 700;
-                            margin-bottom: 0.2em;
-                            font-size: 1.3em;
-                        '>📊 Monitoring In-Progress TA Requests</h2>
-                        <p style='
-                            color: #333;
-                            font-size: 1em;
-                            margin-bottom: 0.8em;
-                        '>
-                            This section provides an overview and monitoring tools for all Technical Assistance (TA) requests that are currently in progress. Use the charts and filters below to track assignments, due dates, and staff workload.
-                        </p>
-                    </div>
-                """, unsafe_allow_html=True)
-                # Convert date columns
-                df["Assigned Date"] = pd.to_datetime(df["Assigned Date"], errors="coerce")
-                df["Targeted Due Date"] = pd.to_datetime(df["Targeted Due Date"], errors="coerce")
-                df["Submit Date"] = pd.to_datetime(df["Submit Date"], errors="coerce")
-
-                inprogress = df[df['Status'] == 'In Progress']
-                next_month = today + timedelta(days=30)
-                request_pastmonth = df[(df["Targeted Due Date"] <= next_month)&(df['Status'] == 'In Progress')]
-
-                col4, col5 = st.columns(2)
-                # --- Pie 1: In Progress
-                with col4:
-                    st.markdown("##### 🟡 In Progress Requests by Coach")
-                    if not inprogress.empty:
-                        chart_data = inprogress['Assigned Coach'].value_counts().reset_index()
-                        chart_data.columns = ['Assigned Coach', 'Count']
-                        pie1 = alt.Chart(chart_data).mark_arc(innerRadius=50).encode(
-                            theta=alt.Theta(field="Count", type="quantitative"),
-                            color=alt.Color(field="Assigned Coach", type="nominal"),
-                            tooltip=["Assigned Coach", "Count"]
-                        ).properties(width=250, height=250)
-                        st.altair_chart(pie1, use_container_width=True)
-                    else:
-                        st.info("No in-progress requests to show.")
-
-                # --- Pie 2: Requests in Past Month
-                with col5:
-                    st.markdown("##### 📅 Due in 30 Days by Coach")
-                    if not request_pastmonth.empty:
-                        chart_data = request_pastmonth['Assigned Coach'].value_counts().reset_index()
-                        chart_data.columns = ['Assigned Coach', 'Count']
-                        pie2 = alt.Chart(chart_data).mark_arc(innerRadius=50).encode(
-                            theta=alt.Theta(field="Count", type="quantitative"),
-                            color=alt.Color(field="Assigned Coach", type="nominal"),
-                            tooltip=["Assigned Coach", "Count"]
-                        ).properties(width=250, height=250)
-                        st.altair_chart(pie2, use_container_width=True)
-                    else:
-                        st.info("No requests with coming dues to show.")
-                    
-
-                staff_list = ["Jenevieve Opoku", "Deus Bazira", "Kemisha Denny", "Katherine Robsky", 
-                "Martine Etienne-Mesubi", "Seble Kassaye", "Weijun Yu", "Jiaqin Wu", "Zelalem Temesgen", "Carlos Rodriguez-Diaz"]
-
-                staff_list_sorted = sorted(staff_list, key=lambda x: x.split()[0])
-
-                selected_staff = st.selectbox("Select a staff to view their requests", staff_list_sorted, index=None,
-                        placeholder="Select option...")
-
-                today = datetime.today()
-                last_month = today - timedelta(days=30)
-                staff_dff = df[df["Assigned Coach"] == selected_staff].copy()
-                in_progress_count = staff_dff[staff_dff["Status"] == "In Progress"].shape[0]
-                due_soon_count = staff_dff[
-                    (staff_dff["Status"] == "In Progress") & 
-                    (staff_dff["Targeted Due Date"] <= next_month)
-                ].shape[0]
-                completed_recently = staff_dff[
-                    (staff_dff["Status"] == "Completed") & 
-                    (staff_dff["Submit Date"] >= last_month)
-                ].shape[0]
-
-                # Metric 
-                col1, col2, col3 = st.columns(3)
-                col1.metric("🟡 In Progress", in_progress_count)
-                col2.metric("📅 Due in 30 Days", due_soon_count)
-                col3.metric("✅ Completed (Last 30 Days)", completed_recently)
-
-                # Detailed Table
-                st.markdown("##### 📋 Detailed Request List")
-
-                # Status filter
-                status_options = ["In Progress", "Completed"]
-                selected_status = st.multiselect(
-                    "Filter by request status",
-                    options=status_options,
-                    default=["In Progress"]
-                )
-
-                # Apply filters: staff and status
-                staff_dfff = staff_dff[staff_dff["Status"].isin(selected_status)].copy()
-
-                display_cols = [
-                    "Ticket ID", "Jurisdiction", "Organization", "Name", "Focus Area", "TA Type",
-                    "Targeted Due Date", "Priority", "Status", "TA Description","Document"
-                ]
-
-                # Sort by due date
-                staff_dfff = staff_dfff.sort_values(by="Targeted Due Date")
-
-                # Format dates for display
-                staff_dfff["Targeted Due Date"] = staff_dfff["Targeted Due Date"].dt.strftime("%Y-%m-%d")
-
-                st.dataframe(staff_dfff[display_cols].reset_index(drop=True))
-
-                # Filter submitted requests
-                submitted_requests = df[df["Status"] == "Submitted"].copy()
-
-                st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
-                st.markdown("")
-                st.markdown("""
-                    <div style='
-                        background: #e9ecef;
-                        border-radius: 14px;
-                        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-                        padding: 1.5em 1em 1em 1em;
-                        margin-bottom: 2em;
-                        margin-top: 1em;
-                    '>
-                        <h2 style='
-                            color: #1a237e;
-                            font-family: "Segoe UI", "Arial", sans-serif;
-                            font-weight: 700;
-                            margin-bottom: 0.2em;
-                            font-size: 1.3em;
-                        '>📋 Assign TA Requests</h2>
-                        <p style='
-                            color: #333;
-                            font-size: 1em;
-                            margin-bottom: 0.8em;
-                        '>
-                            This section lists all TA requests that have not yet been assigned to a coach. Review the details and assign a staff member to start the TA process.
-                        </p>
-                    </div>
-                """, unsafe_allow_html=True)
-                st.markdown("#### 📋 Unassigned Requests")
-
-                if submitted_requests.empty:
-                    st.info("No submitted requests at the moment.")
-                else:
-                    # Define custom priority order
-                    priority_order = {"Critical": 1, "High": 2, "Normal": 3, "Low": 4}
-
-                    # Create a temporary column for sort priority
-                    submitted_requests["PriorityOrder"] = submitted_requests["Priority"].map(priority_order)
-
-                    # Convert date columns if needed
-                    submitted_requests["Submit Date"] = pd.to_datetime(submitted_requests["Submit Date"], errors='coerce')
-                    submitted_requests["Targeted Due Date"] = pd.to_datetime(submitted_requests["Targeted Due Date"], errors='coerce')
-
-                    # Format dates to "YYYY-MM-DD" for display
-                    submitted_requests["Submit Date"] = submitted_requests["Submit Date"].dt.strftime("%Y-%m-%d")
-                    submitted_requests["Targeted Due Date"] = submitted_requests["Targeted Due Date"].dt.strftime("%Y-%m-%d")
-
-                    # Sort by custom priority, then submit date, then due date
-                    submitted_requests_sorted = submitted_requests.sort_values(
-                        by=["PriorityOrder", "Submit Date", "Targeted Due Date"],
-                        ascending=[True, True, True]
-                    )
-
-                    # Display clean table (exclude PriorityOrder column)
-                    st.dataframe(submitted_requests_sorted[[
-                        "Ticket ID","Jurisdiction", "Organization", "Name", "Title/Position", "Email Address", "Phone Number",
-                        "Focus Area", "TA Type", "Submit Date", "Targeted Due Date", "Priority", "TA Description","Document"
-                    ]].reset_index(drop=True))
-
-                    # Select request by index 
-                    request_indices = submitted_requests_sorted.index.tolist()
-                    selected_request_index = st.selectbox(
-                        "Select a request to assign",
-                        options=request_indices,
-                        format_func=lambda idx: f"{submitted_requests_sorted.at[idx, 'Ticket ID']} | {submitted_requests_sorted.at[idx, 'Name']} | {submitted_requests_sorted.at[idx, 'Jurisdiction']}",
-                    )
-
-                    # Select coach
-                    selected_coach = st.selectbox(
-                        "Assign a coach",
-                        options=staff_list_sorted,
-                        index=None,
-                        placeholder="Select option..."
-                    )
-
-                    # Assign button
-                    if st.button("✅ Assign Coach and Start TA"):
-                        try:
-                            updated_df = df.copy()
-                            # Update the selected row
-                            updated_df.loc[selected_request_index, "Assigned Coach"] = selected_coach
-                            updated_df.loc[selected_request_index, "Assigned Coordinator"] = coordinator_name
-                            updated_df.loc[selected_request_index, "Status"] = "In Progress"
-                            updated_df.loc[selected_request_index, "Assigned Date"] = datetime.today().strftime("%Y-%m-%d")
-
-                            updated_df = updated_df.applymap(
-                                lambda x: x.strftime("%Y-%m-%d") if isinstance(x, (pd.Timestamp, datetime)) and not pd.isna(x) else x
-                            )
-                            updated_df = updated_df.fillna("") 
-
-                            # Push to Google Sheet
-                            worksheet1.update([updated_df.columns.values.tolist()] + updated_df.values.tolist())
-
-                            st.success(f"Coach {selected_coach} assigned! Status updated to 'In Progress'.")
-
-                            # Send email to staff   
-                            # Find staff email by name
-                            staff_email = None
-                            for email, roles in USERS.items():
-                                if "Assignee/Staff" in roles and roles["Assignee/Staff"]["name"] == selected_coach:
-                                    staff_email = email
-                                    break
-
-                            if staff_email:
-                                staff_subject = f"You have been assigned a new TA request: {updated_df.loc[selected_request_index, 'Ticket ID']}"
-                                staff_body = f"""
-                                Hi {selected_coach},
-
-                                You have been assigned as the coach for the following Technical Assistance request:
-
-                                Ticket ID: {updated_df.loc[selected_request_index, 'Ticket ID']}
-                                Jurisdiction: {updated_df.loc[selected_request_index, 'Jurisdiction']}
-                                Organization: {updated_df.loc[selected_request_index, 'Organization']}
-                                Name: {updated_df.loc[selected_request_index, 'Name']}
-                                Description: {updated_df.loc[selected_request_index, 'TA Description']}
-                                Priority: {updated_df.loc[selected_request_index, 'Priority']}
-                                Targeted Due Date: {updated_df.loc[selected_request_index, 'Targeted Due Date']}
-                                Attachments: {updated_df.loc[selected_request_index, 'Document'] or 'None'}
-
-                                Please view and manage this request via the GU-TAP System: https://hrsagutap.streamlit.app/.
-                                Please contact gutap@georgetown.edu for any questions or concerns.
-
-                                Best,
-                                GU-TAP System
-                                """
-                                try:
-                                    send_email_mailjet(
-                                        to_email=staff_email,
-                                        subject=staff_subject,
-                                        body=staff_body,
-                                    )
-                                except Exception as e:
-                                    st.warning(f"⚠️ Failed to send assignment email to staff {selected_coach}: {e}")
-
-                            time.sleep(2)
-                            st.rerun()
-
-                        except Exception as e:
-                            st.error(f"Error updating Google Sheets: {str(e)}")
-
-                    # --- Submit button styling (CSS injection)
-                    st.markdown("""
-                        <style>
-                        .stButton > button {
-                            width: 100%;
-                            background-color: #cdb4db;
-                            color: black;
-                            font-weight: 600;
-                            border-radius: 8px;
-                            padding: 0.6em;
-                            margin-top: 1em;
-                        }
-                        </style>
-                    """, unsafe_allow_html=True)
-
-                    st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
-                    st.markdown("")
-
+                with st.expander("📊 Monitoring In-Progress TA Requests"):
                     st.markdown("""
                         <div style='
                             background: #e9ecef;
@@ -1004,173 +721,454 @@ else:
                                 font-weight: 700;
                                 margin-bottom: 0.2em;
                                 font-size: 1.3em;
-                            '>📊 TA Request Management: Comments & Completion Review</h2>
+                            '>📊 Monitoring In-Progress TA Requests</h2>
                             <p style='
                                 color: #333;
                                 font-size: 1em;
                                 margin-bottom: 0.8em;
                             '>
-                                Use this section to leave comments or updates for in-progress TA requests, and to review the status and details of completed requests.
+                                This section provides an overview and monitoring tools for all Technical Assistance (TA) requests that are currently in progress. Use the charts and filters below to track assignments, due dates, and staff workload.
                             </p>
                         </div>
                     """, unsafe_allow_html=True)
+                    # Convert date columns
+                    df["Assigned Date"] = pd.to_datetime(df["Assigned Date"], errors="coerce")
+                    df["Targeted Due Date"] = pd.to_datetime(df["Targeted Due Date"], errors="coerce")
+                    df["Submit Date"] = pd.to_datetime(df["Submit Date"], errors="coerce")
 
-                    st.markdown("#### 🚧 In-progress Requests")
+                    inprogress = df[df['Status'] == 'In Progress']
+                    next_month = today + timedelta(days=30)
+                    request_pastmonth = df[(df["Targeted Due Date"] <= next_month)&(df['Status'] == 'In Progress')]
 
+                    col4, col5 = st.columns(2)
+                    # --- Pie 1: In Progress
+                    with col4:
+                        st.markdown("##### 🟡 In Progress Requests by Coach")
+                        if not inprogress.empty:
+                            chart_data = inprogress['Assigned Coach'].value_counts().reset_index()
+                            chart_data.columns = ['Assigned Coach', 'Count']
+                            pie1 = alt.Chart(chart_data).mark_arc(innerRadius=50).encode(
+                                theta=alt.Theta(field="Count", type="quantitative"),
+                                color=alt.Color(field="Assigned Coach", type="nominal"),
+                                tooltip=["Assigned Coach", "Count"]
+                            ).properties(width=250, height=250)
+                            st.altair_chart(pie1, use_container_width=True)
+                        else:
+                            st.info("No in-progress requests to show.")
 
-                    # Filter "In Progress" requests
-                    in_progress_df = df[df["Status"] == "In Progress"].copy()
+                    # --- Pie 2: Requests in Past Month
+                    with col5:
+                        st.markdown("##### 📅 Due in 30 Days by Coach")
+                        if not request_pastmonth.empty:
+                            chart_data = request_pastmonth['Assigned Coach'].value_counts().reset_index()
+                            chart_data.columns = ['Assigned Coach', 'Count']
+                            pie2 = alt.Chart(chart_data).mark_arc(innerRadius=50).encode(
+                                theta=alt.Theta(field="Count", type="quantitative"),
+                                color=alt.Color(field="Assigned Coach", type="nominal"),
+                                tooltip=["Assigned Coach", "Count"]
+                            ).properties(width=250, height=250)
+                            st.altair_chart(pie2, use_container_width=True)
+                        else:
+                            st.info("No requests with coming dues to show.")
+                        
 
-                    if in_progress_df.empty:
-                        st.info("No requests currently in progress.")
+                    staff_list = ["Jenevieve Opoku", "Deus Bazira", "Kemisha Denny", "Katherine Robsky", 
+                    "Martine Etienne-Mesubi", "Seble Kassaye", "Weijun Yu", "Jiaqin Wu", "Zelalem Temesgen", "Carlos Rodriguez-Diaz"]
+
+                    staff_list_sorted = sorted(staff_list, key=lambda x: x.split()[0])
+
+                    selected_staff = st.selectbox("Select a staff to view their requests", staff_list_sorted, index=None,
+                            placeholder="Select option...")
+
+                    today = datetime.today()
+                    last_month = today - timedelta(days=30)
+                    staff_dff = df[df["Assigned Coach"] == selected_staff].copy()
+                    in_progress_count = staff_dff[staff_dff["Status"] == "In Progress"].shape[0]
+                    due_soon_count = staff_dff[
+                        (staff_dff["Status"] == "In Progress") & 
+                        (staff_dff["Targeted Due Date"] <= next_month)
+                    ].shape[0]
+                    completed_recently = staff_dff[
+                        (staff_dff["Status"] == "Completed") & 
+                        (staff_dff["Submit Date"] >= last_month)
+                    ].shape[0]
+
+                    # Metric 
+                    col1, col2, col3 = st.columns(3)
+                    col1.metric("🟡 In Progress", in_progress_count)
+                    col2.metric("📅 Due in 30 Days", due_soon_count)
+                    col3.metric("✅ Completed (Last 30 Days)", completed_recently)
+
+                    # Detailed Table
+                    st.markdown("##### 📋 Detailed Request List")
+
+                    # Status filter
+                    status_options = ["In Progress", "Completed"]
+                    selected_status = st.multiselect(
+                        "Filter by request status",
+                        options=status_options,
+                        default=["In Progress"]
+                    )
+
+                    # Apply filters: staff and status
+                    staff_dfff = staff_dff[staff_dff["Status"].isin(selected_status)].copy()
+
+                    display_cols = [
+                        "Ticket ID", "Jurisdiction", "Organization", "Name", "Focus Area", "TA Type",
+                        "Targeted Due Date", "Priority", "Status", "TA Description","Document"
+                    ]
+
+                    # Sort by due date
+                    staff_dfff = staff_dfff.sort_values(by="Targeted Due Date")
+
+                    # Format dates for display
+                    staff_dfff["Targeted Due Date"] = staff_dfff["Targeted Due Date"].dt.strftime("%Y-%m-%d")
+
+                    st.dataframe(staff_dfff[display_cols].reset_index(drop=True))
+
+                    # Filter submitted requests
+                    submitted_requests = df[df["Status"] == "Submitted"].copy()
+
+                st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
+                st.markdown("")
+                with st.expander("📋 Assign TA Requests"):
+                    st.markdown("""
+                        <div style='
+                            background: #e9ecef;
+                            border-radius: 14px;
+                            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+                            padding: 1.5em 1em 1em 1em;
+                            margin-bottom: 2em;
+                            margin-top: 1em;
+                        '>
+                            <h2 style='
+                                color: #1a237e;
+                                font-family: "Segoe UI", "Arial", sans-serif;
+                                font-weight: 700;
+                                margin-bottom: 0.2em;
+                                font-size: 1.3em;
+                            '>📋 Assign TA Requests</h2>
+                            <p style='
+                                color: #333;
+                                font-size: 1em;
+                                margin-bottom: 0.8em;
+                            '>
+                                This section lists all TA requests that have not yet been assigned to a coach. Review the details and assign a staff member to start the TA process.
+                            </p>
+                        </div>
+                    """, unsafe_allow_html=True)
+                    st.markdown("#### 📋 Unassigned Requests")
+
+                    if submitted_requests.empty:
+                        st.info("No submitted requests at the moment.")
                     else:
-                        # Convert date columns
-                        in_progress_df["Assigned Date"] = pd.to_datetime(in_progress_df["Assigned Date"], errors="coerce")
-                        in_progress_df["Targeted Due Date"] = pd.to_datetime(in_progress_df["Targeted Due Date"], errors="coerce")
-                        in_progress_df['Expected Duration (Days)'] = (in_progress_df["Targeted Due Date"]-in_progress_df["Assigned Date"]).dt.days
+                        # Define custom priority order
+                        priority_order = {"Critical": 1, "High": 2, "Normal": 3, "Low": 4}
 
-                        # Format dates
-                        in_progress_df["Assigned Date"] = in_progress_df["Assigned Date"].dt.strftime("%Y-%m-%d")
-                        in_progress_df["Targeted Due Date"] = in_progress_df["Targeted Due Date"].dt.strftime("%Y-%m-%d")
-                        
+                        # Create a temporary column for sort priority
+                        submitted_requests["PriorityOrder"] = submitted_requests["Priority"].map(priority_order)
 
-                        # --- Filters
-                        st.markdown("##### 🔍 Filter Options")
+                        # Convert date columns if needed
+                        submitted_requests["Submit Date"] = pd.to_datetime(submitted_requests["Submit Date"], errors='coerce')
+                        submitted_requests["Targeted Due Date"] = pd.to_datetime(submitted_requests["Targeted Due Date"], errors='coerce')
 
-                        col1, col2, col3 = st.columns(3)
-                        with col1:
-                            priority_filter = st.multiselect(
-                                "Filter by Priority",
-                                options=in_progress_df["Priority"].unique(),
-                                default=in_progress_df["Priority"].unique(), key='in1'
-                            )
+                        # Format dates to "YYYY-MM-DD" for display
+                        submitted_requests["Submit Date"] = submitted_requests["Submit Date"].dt.strftime("%Y-%m-%d")
+                        submitted_requests["Targeted Due Date"] = submitted_requests["Targeted Due Date"].dt.strftime("%Y-%m-%d")
 
-                        with col2:
-                            ta_type_filter = st.multiselect(
-                                "Filter by TA Type",
-                                options=in_progress_df["TA Type"].unique(),
-                                default=in_progress_df["TA Type"].unique(), key='in2'
-                            )
-
-                        with col3:
-                            focus_area_filter = st.multiselect(
-                                "Filter by Focus Area",
-                                options=in_progress_df["Focus Area"].unique(),
-                                default=in_progress_df["Focus Area"].unique(), key='in3'
-                            )
-                        
-
-                        # Apply filters
-                        filtered_df = in_progress_df[
-                            (in_progress_df["Priority"].isin(priority_filter)) &
-                            (in_progress_df["TA Type"].isin(ta_type_filter)) &
-                            (in_progress_df["Focus Area"].isin(focus_area_filter))
-                        ]
-
-                        # Display filtered table
-                        st.dataframe(filtered_df[[
-                            "Ticket ID","Jurisdiction", "Organization", "Name", "Title/Position", "Email Address", "Phone Number",
-                            "Focus Area", "TA Type", "Assigned Date", "Targeted Due Date","Expected Duration (Days)","Priority",
-                            "Assigned Coach", "TA Description","Document","Coordinator Comment"
-                        ]].sort_values(by="Expected Duration (Days)").reset_index(drop=True))
-
-                        # Select request by index (row number in submitted_requests)
-                        request_indices1 = filtered_df.index.tolist()
-                        selected_request_index1 = st.selectbox(
-                            "Select a request to comment",
-                            options=request_indices1,
-                            format_func=lambda idx: f"{filtered_df.at[idx, 'Ticket ID']} | {filtered_df.at[idx, 'Name']} | {filtered_df.at[idx, 'Jurisdiction']}",
+                        # Sort by custom priority, then submit date, then due date
+                        submitted_requests_sorted = submitted_requests.sort_values(
+                            by=["PriorityOrder", "Submit Date", "Targeted Due Date"],
+                            ascending=[True, True, True]
                         )
 
-                        # Input + submit comment
-                        comment_input = st.text_area("Comments", placeholder="Enter comments", height=150, key='comm')
+                        # Display clean table (exclude PriorityOrder column)
+                        st.dataframe(submitted_requests_sorted[[
+                            "Ticket ID","Jurisdiction", "Organization", "Name", "Title/Position", "Email Address", "Phone Number",
+                            "Focus Area", "TA Type", "Submit Date", "Targeted Due Date", "Priority", "TA Description","Document"
+                        ]].reset_index(drop=True))
 
-                        if st.button("✅ Submit Comments"):
+                        # Select request by index 
+                        request_indices = submitted_requests_sorted.index.tolist()
+                        selected_request_index = st.selectbox(
+                            "Select a request to assign",
+                            options=request_indices,
+                            format_func=lambda idx: f"{submitted_requests_sorted.at[idx, 'Ticket ID']} | {submitted_requests_sorted.at[idx, 'Name']} | {submitted_requests_sorted.at[idx, 'Jurisdiction']}",
+                        )
+
+                        # Select coach
+                        selected_coach = st.selectbox(
+                            "Assign a coach",
+                            options=staff_list_sorted,
+                            index=None,
+                            placeholder="Select option..."
+                        )
+
+                        # Assign button
+                        if st.button("✅ Assign Coach and Start TA"):
                             try:
-                                # Find the actual row index in the original df (map back using ID or index)
-                                selected_row_global_index = filtered_df.loc[selected_request_index1].name
-
-                                # Copy and update df
                                 updated_df = df.copy()
-                                updated_df.loc[selected_row_global_index, "Coordinator Comment"] = comment_input
+                                # Update the selected row
+                                updated_df.loc[selected_request_index, "Assigned Coach"] = selected_coach
+                                updated_df.loc[selected_request_index, "Assigned Coordinator"] = coordinator_name
+                                updated_df.loc[selected_request_index, "Status"] = "In Progress"
+                                updated_df.loc[selected_request_index, "Assigned Date"] = datetime.today().strftime("%Y-%m-%d")
+
                                 updated_df = updated_df.applymap(
                                     lambda x: x.strftime("%Y-%m-%d") if isinstance(x, (pd.Timestamp, datetime)) and not pd.isna(x) else x
                                 )
                                 updated_df = updated_df.fillna("") 
 
-                                # Push to Google Sheets
+                                # Push to Google Sheet
                                 worksheet1.update([updated_df.columns.values.tolist()] + updated_df.values.tolist())
 
-                                st.success("💬 Comment saved and synced with Google Sheets.")
+                                st.success(f"Coach {selected_coach} assigned! Status updated to 'In Progress'.")
+
+                                # Send email to staff   
+                                # Find staff email by name
+                                staff_email = None
+                                for email, roles in USERS.items():
+                                    if "Assignee/Staff" in roles and roles["Assignee/Staff"]["name"] == selected_coach:
+                                        staff_email = email
+                                        break
+
+                                if staff_email:
+                                    staff_subject = f"You have been assigned a new TA request: {updated_df.loc[selected_request_index, 'Ticket ID']}"
+                                    staff_body = f"""
+                                    Hi {selected_coach},
+
+                                    You have been assigned as the coach for the following Technical Assistance request:
+
+                                    Ticket ID: {updated_df.loc[selected_request_index, 'Ticket ID']}
+                                    Jurisdiction: {updated_df.loc[selected_request_index, 'Jurisdiction']}
+                                    Organization: {updated_df.loc[selected_request_index, 'Organization']}
+                                    Name: {updated_df.loc[selected_request_index, 'Name']}
+                                    Description: {updated_df.loc[selected_request_index, 'TA Description']}
+                                    Priority: {updated_df.loc[selected_request_index, 'Priority']}
+                                    Targeted Due Date: {updated_df.loc[selected_request_index, 'Targeted Due Date']}
+                                    Attachments: {updated_df.loc[selected_request_index, 'Document'] or 'None'}
+
+                                    Please view and manage this request via the GU-TAP System: https://hrsagutap.streamlit.app/.
+                                    Please contact gutap@georgetown.edu for any questions or concerns.
+
+                                    Best,
+                                    GU-TAP System
+                                    """
+                                    try:
+                                        send_email_mailjet(
+                                            to_email=staff_email,
+                                            subject=staff_subject,
+                                            body=staff_body,
+                                        )
+                                    except Exception as e:
+                                        st.warning(f"⚠️ Failed to send assignment email to staff {selected_coach}: {e}")
+
                                 time.sleep(2)
                                 st.rerun()
 
                             except Exception as e:
                                 st.error(f"Error updating Google Sheets: {str(e)}")
 
-                    st.markdown("#### ✅ Completed Requests")
+                        # --- Submit button styling (CSS injection)
+                        st.markdown("""
+                            <style>
+                            .stButton > button {
+                                width: 100%;
+                                background-color: #cdb4db;
+                                color: black;
+                                font-weight: 600;
+                                border-radius: 8px;
+                                padding: 0.6em;
+                                margin-top: 1em;
+                            }
+                            </style>
+                        """, unsafe_allow_html=True)
+
+                    st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
+                    st.markdown("")
+                    with st.expander("🚧 In-progress Requests"):
+                        st.markdown("""
+                            <div style='
+                                background: #e9ecef;
+                                border-radius: 14px;
+                                box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+                                padding: 1.5em 1em 1em 1em;
+                                margin-bottom: 2em;
+                                margin-top: 1em;
+                            '>
+                                <h2 style='
+                                    color: #1a237e;
+                                    font-family: "Segoe UI", "Arial", sans-serif;
+                                    font-weight: 700;
+                                    margin-bottom: 0.2em;
+                                    font-size: 1.3em;
+                                '>📊 TA Request Management: Comments & Completion Review</h2>
+                                <p style='
+                                    color: #333;
+                                    font-size: 1em;
+                                    margin-bottom: 0.8em;
+                                '>
+                                    Use this section to leave comments or updates for in-progress TA requests, and to review the status and details of completed requests.
+                                </p>
+                            </div>
+                        """, unsafe_allow_html=True)
+
+                        st.markdown("#### 🚧 In-progress & Completed Requests")
 
 
-                    # Filter "Completed" requests
-                    complete_df = df[df["Status"] == "Completed"].copy()
+                        # Filter "In Progress" requests
+                        in_progress_df = df[df["Status"] == "In Progress"].copy()
 
-                    if complete_df.empty:
-                        st.info("No requests currently completed.")
-                    else:
-                        # Convert date columns
-                        complete_df["Assigned Date"] = pd.to_datetime(complete_df["Assigned Date"], errors="coerce")
-                        complete_df["Close Date"] = pd.to_datetime(complete_df["Close Date"], errors="coerce")
-                        complete_df["Targeted Due Date"] = pd.to_datetime(complete_df["Targeted Due Date"], errors="coerce")
-                        complete_df['Expected Duration (Days)'] = (complete_df["Targeted Due Date"]-complete_df["Assigned Date"]).dt.days
-                        complete_df['Actual Duration (Days)'] = (complete_df["Close Date"]-complete_df["Assigned Date"]).dt.days
+                        if in_progress_df.empty:
+                            st.info("No requests currently in progress.")
+                        else:
+                            # Convert date columns
+                            in_progress_df["Assigned Date"] = pd.to_datetime(in_progress_df["Assigned Date"], errors="coerce")
+                            in_progress_df["Targeted Due Date"] = pd.to_datetime(in_progress_df["Targeted Due Date"], errors="coerce")
+                            in_progress_df['Expected Duration (Days)'] = (in_progress_df["Targeted Due Date"]-in_progress_df["Assigned Date"]).dt.days
 
-                        # Format dates
-                        complete_df["Assigned Date"] = complete_df["Assigned Date"].dt.strftime("%Y-%m-%d")
-                        complete_df["Targeted Due Date"] = complete_df["Targeted Due Date"].dt.strftime("%Y-%m-%d")
-                        complete_df["Close Date"] = complete_df["Close Date"].dt.strftime("%Y-%m-%d")
+                            # Format dates
+                            in_progress_df["Assigned Date"] = in_progress_df["Assigned Date"].dt.strftime("%Y-%m-%d")
+                            in_progress_df["Targeted Due Date"] = in_progress_df["Targeted Due Date"].dt.strftime("%Y-%m-%d")
+                            
 
-                        # --- Filters
-                        st.markdown("##### 🔍 Filter Options")
+                            # --- Filters
+                            st.markdown("##### 🔍 Filter Options")
 
-                        col1, col2, col3 = st.columns(3)
-                        with col1:
-                            priority_filter1 = st.multiselect(
-                                "Filter by Priority",
-                                options=complete_df["Priority"].unique(),
-                                default=complete_df["Priority"].unique(), key='com1'
+                            col1, col2, col3 = st.columns(3)
+                            with col1:
+                                priority_filter = st.multiselect(
+                                    "Filter by Priority",
+                                    options=in_progress_df["Priority"].unique(),
+                                    default=in_progress_df["Priority"].unique(), key='in1'
+                                )
+
+                            with col2:
+                                ta_type_filter = st.multiselect(
+                                    "Filter by TA Type",
+                                    options=in_progress_df["TA Type"].unique(),
+                                    default=in_progress_df["TA Type"].unique(), key='in2'
+                                )
+
+                            with col3:
+                                focus_area_filter = st.multiselect(
+                                    "Filter by Focus Area",
+                                    options=in_progress_df["Focus Area"].unique(),
+                                    default=in_progress_df["Focus Area"].unique(), key='in3'
+                                )
+                            
+
+                            # Apply filters
+                            filtered_df = in_progress_df[
+                                (in_progress_df["Priority"].isin(priority_filter)) &
+                                (in_progress_df["TA Type"].isin(ta_type_filter)) &
+                                (in_progress_df["Focus Area"].isin(focus_area_filter))
+                            ]
+
+                            # Display filtered table
+                            st.dataframe(filtered_df[[
+                                "Ticket ID","Jurisdiction", "Organization", "Name", "Title/Position", "Email Address", "Phone Number",
+                                "Focus Area", "TA Type", "Assigned Date", "Targeted Due Date","Expected Duration (Days)","Priority",
+                                "Assigned Coach", "TA Description","Document","Coordinator Comment"
+                            ]].sort_values(by="Expected Duration (Days)").reset_index(drop=True))
+
+                            # Select request by index (row number in submitted_requests)
+                            request_indices1 = filtered_df.index.tolist()
+                            selected_request_index1 = st.selectbox(
+                                "Select a request to comment",
+                                options=request_indices1,
+                                format_func=lambda idx: f"{filtered_df.at[idx, 'Ticket ID']} | {filtered_df.at[idx, 'Name']} | {filtered_df.at[idx, 'Jurisdiction']}",
                             )
 
-                        with col2:
-                            ta_type_filter1 = st.multiselect(
-                                "Filter by TA Type",
-                                options=complete_df["TA Type"].unique(),
-                                default=complete_df["TA Type"].unique(), key='com2'
-                            )
+                            # Input + submit comment
+                            comment_input = st.text_area("Comments", placeholder="Enter comments", height=150, key='comm')
 
-                        with col3:
-                            focus_area_filter1 = st.multiselect(
-                                "Filter by Focus Area",
-                                options=complete_df["Focus Area"].unique(),
-                                default=complete_df["Focus Area"].unique(), key='com3'
-                            )
+                            if st.button("✅ Submit Comments"):
+                                try:
+                                    # Find the actual row index in the original df (map back using ID or index)
+                                    selected_row_global_index = filtered_df.loc[selected_request_index1].name
 
-                        # Apply filters
-                        filtered_df1 = complete_df[
-                            (complete_df["Priority"].isin(priority_filter1)) &
-                            (complete_df["TA Type"].isin(ta_type_filter1)) &
-                            (complete_df["Focus Area"].isin(focus_area_filter1))
-                        ]
+                                    # Copy and update df
+                                    updated_df = df.copy()
+                                    updated_df.loc[selected_row_global_index, "Coordinator Comment"] = comment_input
+                                    updated_df = updated_df.applymap(
+                                        lambda x: x.strftime("%Y-%m-%d") if isinstance(x, (pd.Timestamp, datetime)) and not pd.isna(x) else x
+                                    )
+                                    updated_df = updated_df.fillna("") 
 
-                        # Display filtered table
-                        st.dataframe(filtered_df1[[
-                            "Ticket ID","Jurisdiction", "Organization", "Name", "Title/Position", "Email Address", "Phone Number",
-                            "Focus Area", "TA Type", "Priority", "Assigned Coach", "TA Description","Document","Assigned Date",
-                            "Targeted Due Date", "Close Date", "Expected Duration (Days)",
-                            'Actual Duration (Days)', "Coordinator Comment", "Staff Comment"
-                        ]].reset_index(drop=True))
+                                    # Push to Google Sheets
+                                    worksheet1.update([updated_df.columns.values.tolist()] + updated_df.values.tolist())
 
-                        st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
-                        st.markdown("")
+                                    st.success("💬 Comment saved and synced with Google Sheets.")
+                                    time.sleep(2)
+                                    st.rerun()
+
+                                except Exception as e:
+                                    st.error(f"Error updating Google Sheets: {str(e)}")
+
+                        st.markdown("#### ✅ Completed Requests")
+
+
+                        # Filter "Completed" requests
+                        complete_df = df[df["Status"] == "Completed"].copy()
+
+                        if complete_df.empty:
+                            st.info("No requests currently completed.")
+                        else:
+                            # Convert date columns
+                            complete_df["Assigned Date"] = pd.to_datetime(complete_df["Assigned Date"], errors="coerce")
+                            complete_df["Close Date"] = pd.to_datetime(complete_df["Close Date"], errors="coerce")
+                            complete_df["Targeted Due Date"] = pd.to_datetime(complete_df["Targeted Due Date"], errors="coerce")
+                            complete_df['Expected Duration (Days)'] = (complete_df["Targeted Due Date"]-complete_df["Assigned Date"]).dt.days
+                            complete_df['Actual Duration (Days)'] = (complete_df["Close Date"]-complete_df["Assigned Date"]).dt.days
+
+                            # Format dates
+                            complete_df["Assigned Date"] = complete_df["Assigned Date"].dt.strftime("%Y-%m-%d")
+                            complete_df["Targeted Due Date"] = complete_df["Targeted Due Date"].dt.strftime("%Y-%m-%d")
+                            complete_df["Close Date"] = complete_df["Close Date"].dt.strftime("%Y-%m-%d")
+
+                            # --- Filters
+                            st.markdown("##### 🔍 Filter Options")
+
+                            col1, col2, col3 = st.columns(3)
+                            with col1:
+                                priority_filter1 = st.multiselect(
+                                    "Filter by Priority",
+                                    options=complete_df["Priority"].unique(),
+                                    default=complete_df["Priority"].unique(), key='com1'
+                                )
+
+                            with col2:
+                                ta_type_filter1 = st.multiselect(
+                                    "Filter by TA Type",
+                                    options=complete_df["TA Type"].unique(),
+                                    default=complete_df["TA Type"].unique(), key='com2'
+                                )
+
+                            with col3:
+                                focus_area_filter1 = st.multiselect(
+                                    "Filter by Focus Area",
+                                    options=complete_df["Focus Area"].unique(),
+                                    default=complete_df["Focus Area"].unique(), key='com3'
+                                )
+
+                            # Apply filters
+                            filtered_df1 = complete_df[
+                                (complete_df["Priority"].isin(priority_filter1)) &
+                                (complete_df["TA Type"].isin(ta_type_filter1)) &
+                                (complete_df["Focus Area"].isin(focus_area_filter1))
+                            ]
+
+                            # Display filtered table
+                            st.dataframe(filtered_df1[[
+                                "Ticket ID","Jurisdiction", "Organization", "Name", "Title/Position", "Email Address", "Phone Number",
+                                "Focus Area", "TA Type", "Priority", "Assigned Coach", "TA Description","Document","Assigned Date",
+                                "Targeted Due Date", "Close Date", "Expected Duration (Days)",
+                                'Actual Duration (Days)', "Coordinator Comment", "Staff Comment"
+                            ]].reset_index(drop=True))
+
+                            st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
+                            st.markdown("")
 
             elif st.session_state.role == "Assignee/Staff":
                 # Add staff content here
