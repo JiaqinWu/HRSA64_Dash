@@ -1605,6 +1605,8 @@ else:
                         </style>
                     """, unsafe_allow_html=True)
 
+                st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
+
                 # --- Section 2: Filter, Sort, Comment
                 with st.expander("🚧 In-progress Requests"):
                     st.markdown("#### 🚧 In-progress Requests")
@@ -1696,6 +1698,7 @@ else:
 
                             except Exception as e:
                                 st.error(f"Error saving comment: {str(e)}")
+                st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
 
                 with st.expander("📊 Submit a New Interaction Log Form"):
                     st.markdown("""
