@@ -1987,8 +1987,6 @@ else:
                                 )
                                 # Replace NaN with empty strings to ensure JSON compatibility
                                 updated_sheet2 = updated_sheet2.fillna("")
-                                spreadsheet3 = client.open('Example_TA_Request')
-                                worksheet3 = spreadsheet3.worksheet('Delivery')
                                 worksheet3.update([updated_sheet2.columns.values.tolist()] + updated_sheet2.values.tolist())
 
                                 st.success("✅ Submission successful!")
