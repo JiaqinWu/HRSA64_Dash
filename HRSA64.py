@@ -847,30 +847,13 @@ else:
                     submitted_requests = df[df["Status"] == "Submitted"].copy()
 
                 st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
-                with st.expander("📋 Assign TA Requests"):
+                with st.expander("📝 **ASSIGN TA REQUESTS**"):
                     st.markdown("""
-                        <div style='
-                            background: #e9ecef;
-                            border-radius: 14px;
-                            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-                            padding: 1.5em 1em 1em 1em;
-                            margin-bottom: 2em;
-                            margin-top: 1em;
-                        '>
-                            <h2 style='
-                                color: #1a237e;
-                                font-family: "Segoe UI", "Arial", sans-serif;
-                                font-weight: 700;
-                                margin-bottom: 0.2em;
-                                font-size: 1.3em;
-                            '>📋 Assign TA Requests</h2>
-                            <p style='
-                                color: #333;
-                                font-size: 1em;
-                                margin-bottom: 0.8em;
-                            '>
-                                This section lists all TA requests that have not yet been assigned to a coach. Review the details and assign a staff member to start the TA process.
-                            </p>
+                        <div style='background: #f0f4ff; border-radius: 16px; box-shadow: 0 2px 8px rgba(26,35,126,0.08); padding: 1.5em 1em 1em 1em; margin-bottom: 2em; margin-top: 1em;'>
+                            <div style='color: #1a237e; font-family: "Segoe UI", "Arial", sans-serif; font-weight: 700; font-size: 1.4em; margin-bottom: 0.3em;'>📋 Assign TA Requests</div>
+                            <div style='color: #333; font-size: 1.08em; margin-bottom: 0.8em;'>
+                                Review all unassigned Technical Assistance requests and assign them to the appropriate staff member. Use the table and filters below to prioritize and manage new requests efficiently.
+                            </div>
                         </div>
                     """, unsafe_allow_html=True)
                     st.markdown("#### 📋 Unassigned Requests")
@@ -1188,30 +1171,13 @@ else:
                         ]].reset_index(drop=True))
 
                 st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
-                with st.expander("📊 Submit a New Interaction Log Form"):
+                with st.expander("🗒️ **SUBMIT INTERACTION LOG**"):
                     st.markdown("""
-                        <div style='
-                            background: #e9ecef;
-                            border-radius: 14px;
-                            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-                            padding: 1.5em 1em 1em 1em;
-                            margin-bottom: 2em;
-                            margin-top: 1em;
-                        '>
-                            <h2 style='
-                                color: #1a237e;
-                                font-family: "Segoe UI", "Arial", sans-serif;
-                                font-weight: 700;
-                                margin-bottom: 0.2em;
-                                font-size: 1.3em;
-                            '>📊 Submit a New Interaction Log Form with Jurisdiction</h2>
-                            <p style='
-                                color: #333;
-                                font-size: 1em;
-                                margin-bottom: 0.8em;
-                            '>
-                                Use this section to submit a new interaction log form with jurisdiction.
-                            </p>
+                        <div style='background: #f0f4ff; border-radius: 16px; box-shadow: 0 2px 8px rgba(26,35,126,0.08); padding: 1.5em 1em 1em 1em; margin-bottom: 2em; margin-top: 1em;'>
+                            <div style='color: #1a237e; font-family: "Segoe UI", "Arial", sans-serif; font-weight: 700; font-size: 1.4em; margin-bottom: 0.3em;'>🗒️ Submit a New Interaction Log Form</div>
+                            <div style='color: #333; font-size: 1.08em; margin-bottom: 0.8em;'>
+                                Log a new interaction with a jurisdiction. Fill out the form below to record emails, meetings, or other communications related to a TA request.
+                            </div>
                         </div>
                     """, unsafe_allow_html=True)
                     lis_ticket = df["Ticket ID"].unique().tolist()
@@ -1328,30 +1294,13 @@ else:
 
                 st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
 
-                with st.expander("📊 Submit a New Delivery Form"):
+                with st.expander("📦 **SUBMIT DELIVERY FORM**"):
                     st.markdown("""
-                        <div style='
-                            background: #e9ecef;
-                            border-radius: 14px;
-                            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-                            padding: 1.5em 1em 1em 1em;
-                            margin-bottom: 2em;
-                            margin-top: 1em;
-                        '>
-                            <h2 style='
-                                color: #1a237e;
-                                font-family: "Segoe UI", "Arial", sans-serif;
-                                font-weight: 700;
-                                margin-bottom: 0.2em;
-                                font-size: 1.3em;
-                            '>📊 Submit a New Delivery Form with Jurisdiction</h2>
-                            <p style='
-                                color: #333;
-                                font-size: 1em;
-                                margin-bottom: 0.8em;
-                            '>
-                                Use this section to submit a new delivery form with jurisdiction.
-                            </p>
+                        <div style='background: #f0f4ff; border-radius: 16px; box-shadow: 0 2px 8px rgba(26,35,126,0.08); padding: 1.5em 1em 1em 1em; margin-bottom: 2em; margin-top: 1em;'>
+                            <div style='color: #1a237e; font-family: "Segoe UI", "Arial", sans-serif; font-weight: 700; font-size: 1.4em; margin-bottom: 0.3em;'>📦 Submit a New Delivery Form</div>
+                            <div style='color: #333; font-size: 1.08em; margin-bottom: 0.8em;'>
+                                Record a new delivery (e.g., report, dashboard, data) for a TA request. Use the form below to upload files and provide a summary of the delivery.
+                            </div>
                         </div>
                     """, unsafe_allow_html=True)
                     lis_ticket1 = df["Ticket ID"].unique().tolist()
@@ -1555,7 +1504,7 @@ else:
                 style_metric_cards(border_left_color="#DBF227")
 
                 # --- Section 1: Mark as Completed
-                with st.expander("✅ Mark Requests as Completed"):
+                with st.expander("✅ **MARK REQUESTS AS COMPLETED**"):
                     st.markdown("#### ✅ Mark Requests as Completed")
                     # Format dates
                     staff_df["Assigned Date"] = staff_df["Assigned Date"].dt.strftime("%Y-%m-%d")
@@ -1622,7 +1571,7 @@ else:
                 st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
 
                 # --- Section 2: Filter, Sort, Comment
-                with st.expander("🚧 In-progress Requests"):
+                with st.expander("🚧 IN-PROGRESS REQUESTS"):
                     st.markdown("#### 🚧 In-progress Requests")
 
                     # Filter "In Progress" requests
@@ -1714,30 +1663,13 @@ else:
                                 st.error(f"Error saving comment: {str(e)}")
                 st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
 
-                with st.expander("📊 Submit a New Interaction Log Form"):
+                with st.expander("🗒️ **SUBMIT INTERACTION LOG**"):
                     st.markdown("""
-                        <div style='
-                            background: #e9ecef;
-                            border-radius: 14px;
-                            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-                            padding: 1.5em 1em 1em 1em;
-                            margin-bottom: 2em;
-                            margin-top: 1em;
-                        '>
-                            <h2 style='
-                                color: #1a237e;
-                                font-family: "Segoe UI", "Arial", sans-serif;
-                                font-weight: 700;
-                                margin-bottom: 0.2em;
-                                font-size: 1.3em;
-                            '>📊 Submit a New Interaction Log Form with Jurisdiction</h2>
-                            <p style='
-                                color: #333;
-                                font-size: 1em;
-                                margin-bottom: 0.8em;
-                            '>
-                                Use this section to submit a new interaction log form with jurisdiction.
-                            </p>
+                        <div style='background: #f0f4ff; border-radius: 16px; box-shadow: 0 2px 8px rgba(26,35,126,0.08); padding: 1.5em 1em 1em 1em; margin-bottom: 2em; margin-top: 1em;'>
+                            <div style='color: #1a237e; font-family: "Segoe UI", "Arial", sans-serif; font-weight: 700; font-size: 1.4em; margin-bottom: 0.3em;'>🗒️ Submit a New Interaction Log Form</div>
+                            <div style='color: #333; font-size: 1.08em; margin-bottom: 0.8em;'>
+                                Log a new interaction with a jurisdiction. Fill out the form below to record emails, meetings, or other communications related to a TA request.
+                            </div>
                         </div>
                     """, unsafe_allow_html=True)
                     lis_ticket = df["Ticket ID"].unique().tolist()
@@ -1874,30 +1806,13 @@ else:
 
                 st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
 
-                with st.expander("📊 Submit a New Delivery Form"):
+                with st.expander("📦 **SUBMIT DELIVERY FORM**"):
                     st.markdown("""
-                        <div style='
-                            background: #e9ecef;
-                            border-radius: 14px;
-                            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-                            padding: 1.5em 1em 1em 1em;
-                            margin-bottom: 2em;
-                            margin-top: 1em;
-                        '>
-                            <h2 style='
-                                color: #1a237e;
-                                font-family: "Segoe UI", "Arial", sans-serif;
-                                font-weight: 700;
-                                margin-bottom: 0.2em;
-                                font-size: 1.3em;
-                            '>📊 Submit a New Delivery Form with Jurisdiction</h2>
-                            <p style='
-                                color: #333;
-                                font-size: 1em;
-                                margin-bottom: 0.8em;
-                            '>
-                                Use this section to submit a new delivery form with jurisdiction.
-                            </p>
+                        <div style='background: #f0f4ff; border-radius: 16px; box-shadow: 0 2px 8px rgba(26,35,126,0.08); padding: 1.5em 1em 1em 1em; margin-bottom: 2em; margin-top: 1em;'>
+                            <div style='color: #1a237e; font-family: "Segoe UI", "Arial", sans-serif; font-weight: 700; font-size: 1.4em; margin-bottom: 0.3em;'>📦 Submit a New Delivery Form</div>
+                            <div style='color: #333; font-size: 1.08em; margin-bottom: 0.8em;'>
+                                Record a new delivery (e.g., report, dashboard, data) for a TA request. Use the form below to upload files and provide a summary of the delivery.
+                            </div>
                         </div>
                     """, unsafe_allow_html=True)
                     lis_ticket1 = df["Ticket ID"].unique().tolist()
