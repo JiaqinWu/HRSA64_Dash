@@ -1470,8 +1470,7 @@ else:
                                 tooltip=['Ticket ID', 'Type of Interaction', 'Count']
                             ).properties(
                                 width=600,
-                                height=400,
-                                title='Number of Interactions per Ticket ID by Type'
+                                height=400
                             )
                             st.altair_chart(pie1, use_container_width=True)
                         else:
@@ -1486,8 +1485,7 @@ else:
                                 tooltip=['Ticket ID', 'Type of Delivery', 'Count']
                             ).properties(
                                 width=600,
-                                height=400,
-                                title='Number of Deliveries per Ticket ID by Type'
+                                height=400
                             )
                             st.altair_chart(pie1, use_container_width=True)
                         else:
