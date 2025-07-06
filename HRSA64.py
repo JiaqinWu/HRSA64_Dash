@@ -1938,7 +1938,7 @@ else:
                     # Submit logic
                     if st.button("Submit",key='delivery_submit1'):
                         errors = []
-                        drive_links = ""
+                        drive_links_del = ""  # <-- Add this line
                         # Required field checks
                         if not ticket_id_del: errors.append("Ticket ID is required.")
                         if not date_del: errors.append("Date of delivery is required.")
