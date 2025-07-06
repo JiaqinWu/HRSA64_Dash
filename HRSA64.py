@@ -1417,6 +1417,88 @@ else:
 
                 st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
 
+                with st.expander("📦 **CHECK INTERACTION & DELIVERY PATTERNS**"):
+                    st.markdown("""
+                        <div style='background: #f0f4ff; border-radius: 16px; box-shadow: 0 2px 8px rgba(26,35,126,0.08); padding: 1.5em 1em 1em 1em; margin-bottom: 2em; margin-top: 1em;'>
+                            <div style='color: #1a237e; font-family: "Segoe UI", "Arial", sans-serif; font-weight: 700; font-size: 1.4em; margin-bottom: 0.3em;'>📦 Check Interaction & Delivery Patterns</div>
+                            <div style='color: #333; font-size: 1.08em; margin-bottom: 0.8em;'>
+                                Check this section to see the interaction and delivery patterns of the TA requests.
+                            </div>
+                        </div>
+                    """, unsafe_allow_html=True)
+                    # Fetch data from Google Sheets     
+                    try:
+                        spreadsheet1 = client.open('Example_TA_Request')
+                        worksheet1 = spreadsheet1.worksheet('Main')
+                        df = pd.DataFrame(worksheet1.get_all_records())
+                    except Exception as e:
+                        st.error(f"Error fetching data from Google Sheets: {str(e)}")
+
+                    try:
+                        spreadsheet2 = client.open('Example_TA_Request')
+                        worksheet2 = spreadsheet2.worksheet('Interaction')
+                        df_int = pd.DataFrame(worksheet2.get_all_records())
+                    except Exception as e:
+                        st.error(f"Error fetching data from Google Sheets: {str(e)}")
+
+                    try:
+                        spreadsheet3 = client.open('Example_TA_Request')
+                        worksheet3 = spreadsheet3.worksheet('Delivery')
+                        df_del = pd.DataFrame(worksheet3.get_all_records())
+                    except Exception as e:
+                        st.error(f"Error fetching data from Google Sheets: {str(e)}")
+                    
+                    num_interaction = df_int.shape[0]
+                    num_delivery = df_del.shape[0]
+
+                    col1, col2 = st.columns(2)
+                    col1.metric("🟡 # of Interactions", num_interaction)
+                    col2.metric("🟡 # of Deliveries", num_delivery)
+
+                    col3, col4 = st.columns(2)
+                    # Group by Ticket ID and Type of Interaction, count occurrences
+                    interaction_counts = df_int.groupby(['Ticket ID', 'Type of Interaction']).size().reset_index(name='Count')
+                    delivery_counts = df_del.groupby(['Ticket ID', 'Type of Delivery']).size().reset_index(name='Count')
+
+                    with col3: 
+                        st.markdown("##### 🟡 Top 10 with most Interactions by Interaction Type")
+                        if not interaction_counts.empty:
+                            pie1 = alt.Chart(interaction_counts).mark_bar().encode(
+                                y=alt.Y('Ticket ID:N', sort='-x', title='Ticket ID'),
+                                x=alt.X('Count:Q', title='Number of Interactions'),
+                                color=alt.Color('Type of Interaction:N', title='Interaction Type'),
+                                tooltip=['Ticket ID', 'Type of Interaction', 'Count']
+                            ).properties(
+                                width=600,
+                                height=400,
+                                title='Number of Interactions per Ticket ID by Type'
+                            )
+                            st.altair_chart(pie1, use_container_width=True)
+                        else:
+                            st.info("No any interaction to show.")
+                    with col4: 
+                        st.markdown("##### 🟡 Top 10 with most Deliveries by Delivery Type")
+                        if not delivery_counts.empty:
+                            pie1 = alt.Chart(delivery_counts).mark_bar().encode(
+                                y=alt.Y('Ticket ID:N', sort='-x', title='Ticket ID'),
+                                x=alt.X('Count:Q', title='Number of Deliveries'),
+                                color=alt.Color('Type of Delivery:N', title='Delivery Type'),
+                                tooltip=['Ticket ID', 'Type of Delivery', 'Count']
+                            ).properties(
+                                width=600,
+                                height=400,
+                                title='Number of Deliveries per Ticket ID by Type'
+                            )
+                            st.altair_chart(pie1, use_container_width=True)
+                        else:
+                            st.info("No any delivery to show.")
+                        
+
+                    
+
+
+                st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
+
 
             elif st.session_state.role == "Assignee/Staff":
                 # Add staff content here
