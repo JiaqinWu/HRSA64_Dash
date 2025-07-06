@@ -1773,6 +1773,28 @@ else:
                         </style>
                     """, unsafe_allow_html=True)
 
+                    # Example usage: Fetch data from Google Sheets
+                    try:
+                        spreadsheet1 = client.open('Example_TA_Request')
+                        worksheet1 = spreadsheet1.worksheet('Main')
+                        df = pd.DataFrame(worksheet1.get_all_records())
+                    except Exception as e:
+                        st.error(f"Error fetching data from Google Sheets: {str(e)}")
+
+                    try:
+                        spreadsheet2 = client.open('Example_TA_Request')
+                        worksheet2 = spreadsheet2.worksheet('Interaction')
+                        df_int = pd.DataFrame(worksheet2.get_all_records())
+                    except Exception as e:
+                        st.error(f"Error fetching data from Google Sheets: {str(e)}")
+
+                    try:
+                        spreadsheet3 = client.open('Example_TA_Request')
+                        worksheet3 = spreadsheet3.worksheet('Delivery')
+                        df_del = pd.DataFrame(worksheet3.get_all_records())
+                    except Exception as e:
+                        st.error(f"Error fetching data from Google Sheets: {str(e)}")
+
                     # Submit logic
                     if st.button("Submit",key='interaction_submit1'):
                         errors = []
