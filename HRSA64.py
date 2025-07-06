@@ -1489,6 +1489,30 @@ else:
                         st.altair_chart(pie1, use_container_width=True)
                     else:
                         st.info("No any delivery to show.")
+
+
+                    unique_id = sorted(set(df_int["Ticket ID"].unique().tolist() + df_del["Ticket ID"].unique().tolist()))
+                    selected_ticket_id = st.selectbox("Select a Ticket ID", unique_id, placeholder="Select option...")
+                    # Filter records
+                    interactions_for_ticket = df_int[df_int["Ticket ID"] == selected_ticket_id]
+                    deliveries_for_ticket = df_del[df_del["Ticket ID"] == selected_ticket_id]
+                    num_interaction_ticket = interactions_for_ticket.shape[0]
+                    num_delivery_ticket = deliveries_for_ticket.shape[0]
+                    st.markdown(f"##### 🟡 Interactions for Ticket ID: {selected_ticket_id}")
+                    st.markdown(f"🟡 # of Interactions: {num_interaction_ticket if num_interaction_ticket > 0 else 0}")
+                    if num_interaction_ticket > 0:
+                        st.dataframe(interactions_for_ticket)
+                    else:
+                        st.info("No interaction records found for this Ticket ID.")
+                        st.dataframe(pd.DataFrame([{"Ticket ID": selected_ticket_id, "Type of Interaction": "N/A", "Date of Interaction": "N/A", "Short Summary": "N/A", "Document": "N/A"}]))
+                    st.markdown(f"##### 🟡 Deliveries for Ticket ID: {selected_ticket_id}")
+                    st.markdown(f"🟡 # of Deliveries: {num_delivery_ticket if num_delivery_ticket > 0 else 0}")
+                    if num_delivery_ticket > 0:
+                        st.dataframe(deliveries_for_ticket)
+                    else:
+                        st.info("No delivery records found for this Ticket ID.")
+                        st.dataframe(pd.DataFrame([{"Ticket ID": selected_ticket_id, "Type of Delivery": "N/A", "Date of Delivery": "N/A", "Short Summary": "N/A", "Document": "N/A"}]))
+
                         
 
                     
