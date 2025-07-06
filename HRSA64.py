@@ -848,30 +848,13 @@ else:
                     submitted_requests = df[df["Status"] == "Submitted"].copy()
 
                 st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
-                with st.expander("📋 Assign TA Requests"):
+                with st.expander("📝 **ASSIGN TA REQUESTS**"):
                     st.markdown("""
-                        <div style='
-                            background: #e9ecef;
-                            border-radius: 14px;
-                            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-                            padding: 1.5em 1em 1em 1em;
-                            margin-bottom: 2em;
-                            margin-top: 1em;
-                        '>
-                            <h2 style='
-                                color: #1a237e;
-                                font-family: "Segoe UI", "Arial", sans-serif;
-                                font-weight: 700;
-                                margin-bottom: 0.2em;
-                                font-size: 1.3em;
-                            '>📋 Assign TA Requests</h2>
-                            <p style='
-                                color: #333;
-                                font-size: 1em;
-                                margin-bottom: 0.8em;
-                            '>
-                                This section lists all TA requests that have not yet been assigned to a coach. Review the details and assign a staff member to start the TA process.
-                            </p>
+                        <div style='background: #f0f4ff; border-radius: 16px; box-shadow: 0 2px 8px rgba(26,35,126,0.08); padding: 1.5em 1em 1em 1em; margin-bottom: 2em; margin-top: 1em;'>
+                            <div style='color: #1a237e; font-family: "Segoe UI", "Arial", sans-serif; font-weight: 700; font-size: 1.4em; margin-bottom: 0.3em;'>📋 Assign TA Requests</div>
+                            <div style='color: #333; font-size: 1.08em; margin-bottom: 0.8em;'>
+                                Review all unassigned Technical Assistance requests and assign them to the appropriate staff member. Use the table and filters below to prioritize and manage new requests efficiently.
+                            </div>
                         </div>
                     """, unsafe_allow_html=True)
                     st.markdown("#### 📋 Unassigned Requests")
@@ -1004,30 +987,13 @@ else:
                         """, unsafe_allow_html=True)
 
                 st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
-                with st.expander("👍 Details of In-progress & Completed Requests"):
+                with st.expander("👍 **DETAILS OF IN-PROGRESS & COMPLETED REQUESTS**"):
                     st.markdown("""
-                        <div style='
-                            background: #e9ecef;
-                            border-radius: 14px;
-                            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-                            padding: 1.5em 1em 1em 1em;
-                            margin-bottom: 2em;
-                            margin-top: 1em;
-                        '>
-                            <h2 style='
-                                color: #1a237e;
-                                font-family: "Segoe UI", "Arial", sans-serif;
-                                font-weight: 700;
-                                margin-bottom: 0.2em;
-                                font-size: 1.3em;
-                            '>📊 TA Request Management: Comments & Completion Review</h2>
-                            <p style='
-                                color: #333;
-                                font-size: 1em;
-                                margin-bottom: 0.8em;
-                            '>
-                                Use this section to leave comments or updates for in-progress TA requests, and to review the status and details of completed requests.
-                            </p>
+                        <div style='background: #f0f4ff; border-radius: 16px; box-shadow: 0 2px 8px rgba(26,35,126,0.08); padding: 1.5em 1em 1em 1em; margin-bottom: 2em; margin-top: 1em;'>
+                            <div style='color: #1a237e; font-family: "Segoe UI", "Arial", sans-serif; font-weight: 700; font-size: 1.4em; margin-bottom: 0.3em;'>👍 Details of In-progress & Completed Requests</div>
+                            <div style='color: #333; font-size: 1.08em; margin-bottom: 0.8em;'>
+                                Leave comments, update progress, and review the status and details of all in-progress and completed TA requests. Use the filters and tables below to manage and track request outcomes.
+                            </div>
                         </div>
                     """, unsafe_allow_html=True)
 
@@ -1189,30 +1155,13 @@ else:
                         ]].reset_index(drop=True))
 
                 st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
-                with st.expander("📊 Submit a New Interaction Log Form"):
+                with st.expander("🗒️ **SUBMIT INTERACTION LOG**"):
                     st.markdown("""
-                        <div style='
-                            background: #e9ecef;
-                            border-radius: 14px;
-                            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-                            padding: 1.5em 1em 1em 1em;
-                            margin-bottom: 2em;
-                            margin-top: 1em;
-                        '>
-                            <h2 style='
-                                color: #1a237e;
-                                font-family: "Segoe UI", "Arial", sans-serif;
-                                font-weight: 700;
-                                margin-bottom: 0.2em;
-                                font-size: 1.3em;
-                            '>📊 Submit a New Interaction Log Form with Jurisdiction</h2>
-                            <p style='
-                                color: #333;
-                                font-size: 1em;
-                                margin-bottom: 0.8em;
-                            '>
-                                Use this section to submit a new interaction log form with jurisdiction.
-                            </p>
+                        <div style='background: #f0f4ff; border-radius: 16px; box-shadow: 0 2px 8px rgba(26,35,126,0.08); padding: 1.5em 1em 1em 1em; margin-bottom: 2em; margin-top: 1em;'>
+                            <div style='color: #1a237e; font-family: "Segoe UI", "Arial", sans-serif; font-weight: 700; font-size: 1.4em; margin-bottom: 0.3em;'>🗒️ Submit a New Interaction Log Form</div>
+                            <div style='color: #333; font-size: 1.08em; margin-bottom: 0.8em;'>
+                                Log a new interaction with a jurisdiction. Fill out the form below to record emails, meetings, or other communications related to a TA request.
+                            </div>
                         </div>
                     """, unsafe_allow_html=True)
                     lis_ticket = df["Ticket ID"].unique().tolist()
@@ -1329,30 +1278,13 @@ else:
 
                 st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
 
-                with st.expander("📊 Submit a New Delivery Form"):
+                with st.expander("📦 **SUBMIT DELIVERY FORM**"):
                     st.markdown("""
-                        <div style='
-                            background: #e9ecef;
-                            border-radius: 14px;
-                            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-                            padding: 1.5em 1em 1em 1em;
-                            margin-bottom: 2em;
-                            margin-top: 1em;
-                        '>
-                            <h2 style='
-                                color: #1a237e;
-                                font-family: "Segoe UI", "Arial", sans-serif;
-                                font-weight: 700;
-                                margin-bottom: 0.2em;
-                                font-size: 1.3em;
-                            '>📊 Submit a New Delivery Form with Jurisdiction</h2>
-                            <p style='
-                                color: #333;
-                                font-size: 1em;
-                                margin-bottom: 0.8em;
-                            '>
-                                Use this section to submit a new delivery form with jurisdiction.
-                            </p>
+                        <div style='background: #f0f4ff; border-radius: 16px; box-shadow: 0 2px 8px rgba(26,35,126,0.08); padding: 1.5em 1em 1em 1em; margin-bottom: 2em; margin-top: 1em;'>
+                            <div style='color: #1a237e; font-family: "Segoe UI", "Arial", sans-serif; font-weight: 700; font-size: 1.4em; margin-bottom: 0.3em;'>📦 Submit a New Delivery Form</div>
+                            <div style='color: #333; font-size: 1.08em; margin-bottom: 0.8em;'>
+                                Record a new delivery (e.g., report, dashboard, data) for a TA request. Use the form below to upload files and provide a summary of the delivery.
+                            </div>
                         </div>
                     """, unsafe_allow_html=True)
                     lis_ticket1 = df["Ticket ID"].unique().tolist()
@@ -1715,30 +1647,320 @@ else:
                                 st.error(f"Error saving comment: {str(e)}")
                 st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
 
-                with st.expander("📊 Submit a New Interaction Log Form"):
+                with st.expander("📝 **ASSIGN TA REQUESTS**"):
                     st.markdown("""
-                        <div style='
-                            background: #e9ecef;
-                            border-radius: 14px;
-                            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-                            padding: 1.5em 1em 1em 1em;
-                            margin-bottom: 2em;
-                            margin-top: 1em;
-                        '>
-                            <h2 style='
-                                color: #1a237e;
-                                font-family: "Segoe UI", "Arial", sans-serif;
-                                font-weight: 700;
-                                margin-bottom: 0.2em;
-                                font-size: 1.3em;
-                            '>📊 Submit a New Interaction Log Form with Jurisdiction</h2>
-                            <p style='
-                                color: #333;
-                                font-size: 1em;
-                                margin-bottom: 0.8em;
-                            '>
-                                Use this section to submit a new interaction log form with jurisdiction.
-                            </p>
+                        <div style='background: #f0f4ff; border-radius: 16px; box-shadow: 0 2px 8px rgba(26,35,126,0.08); padding: 1.5em 1em 1em 1em; margin-bottom: 2em; margin-top: 1em;'>
+                            <div style='color: #1a237e; font-family: "Segoe UI", "Arial", sans-serif; font-weight: 700; font-size: 1.4em; margin-bottom: 0.3em;'>📋 Assign TA Requests</div>
+                            <div style='color: #333; font-size: 1.08em; margin-bottom: 0.8em;'>
+                                Review all unassigned Technical Assistance requests and assign them to the appropriate staff member. Use the table and filters below to prioritize and manage new requests efficiently.
+                            </div>
+                        </div>
+                    """, unsafe_allow_html=True)
+                    st.markdown("#### 📋 Unassigned Requests")
+
+                    if submitted_requests.empty:
+                        st.info("No submitted requests at the moment.")
+                    else:
+                        # Define custom priority order
+                        priority_order = {"Critical": 1, "High": 2, "Normal": 3, "Low": 4}
+
+                        # Create a temporary column for sort priority
+                        submitted_requests["PriorityOrder"] = submitted_requests["Priority"].map(priority_order)
+
+                        # Convert date columns if needed
+                        submitted_requests["Submit Date"] = pd.to_datetime(submitted_requests["Submit Date"], errors='coerce')
+                        submitted_requests["Targeted Due Date"] = pd.to_datetime(submitted_requests["Targeted Due Date"], errors='coerce')
+
+                        # Format dates to "YYYY-MM-DD" for display
+                        submitted_requests["Submit Date"] = submitted_requests["Submit Date"].dt.strftime("%Y-%m-%d")
+                        submitted_requests["Targeted Due Date"] = submitted_requests["Targeted Due Date"].dt.strftime("%Y-%m-%d")
+
+                        # Sort by custom priority, then submit date, then due date
+                        submitted_requests_sorted = submitted_requests.sort_values(
+                            by=["PriorityOrder", "Submit Date", "Targeted Due Date"],
+                            ascending=[True, True, True]
+                        )
+
+                        # Display clean table (exclude PriorityOrder column)
+                        st.dataframe(submitted_requests_sorted[[
+                            "Ticket ID","Jurisdiction", "Organization", "Name", "Title/Position", "Email Address", "Phone Number",
+                            "Focus Area", "TA Type", "Submit Date", "Targeted Due Date", "Priority", "TA Description","Document"
+                        ]].reset_index(drop=True))
+
+                        # Select request by index 
+                        request_indices = submitted_requests_sorted.index.tolist()
+                        selected_request_index = st.selectbox(
+                            "Select a request to assign",
+                            options=request_indices,
+                            format_func=lambda idx: f"{submitted_requests_sorted.at[idx, 'Ticket ID']} | {submitted_requests_sorted.at[idx, 'Name']} | {submitted_requests_sorted.at[idx, 'Jurisdiction']}",
+                        )
+
+                        # Select coach
+                        selected_coach = st.selectbox(
+                            "Assign a coach",
+                            options=staff_list_sorted,
+                            index=None,
+                            placeholder="Select option..."
+                        )
+
+                        # Assign button
+                        if st.button("✅ Assign Coach and Start TA"):
+                            try:
+                                updated_df = df.copy()
+                                # Update the selected row
+                                updated_df.loc[selected_request_index, "Assigned Coach"] = selected_coach
+                                updated_df.loc[selected_request_index, "Assigned Coordinator"] = coordinator_name
+                                updated_df.loc[selected_request_index, "Status"] = "In Progress"
+                                updated_df.loc[selected_request_index, "Assigned Date"] = datetime.today().strftime("%Y-%m-%d")
+
+                                updated_df = updated_df.applymap(
+                                    lambda x: x.strftime("%Y-%m-%d") if isinstance(x, (pd.Timestamp, datetime)) and not pd.isna(x) else x
+                                )
+                                updated_df = updated_df.fillna("") 
+                                spreadsheet1 = client.open('Example_TA_Request')
+                                worksheet1 = spreadsheet1.worksheet('Main')
+
+                                # Push to Google Sheet
+                                worksheet1.update([updated_df.columns.values.tolist()] + updated_df.values.tolist())
+
+                                st.success(f"Coach {selected_coach} assigned! Status updated to 'In Progress'.")
+
+                                # Send email to staff   
+                                # Find staff email by name
+                                staff_email = None
+                                for email, roles in USERS.items():
+                                    if "Assignee/Staff" in roles and roles["Assignee/Staff"]["name"] == selected_coach:
+                                        staff_email = email
+                                        break
+
+                                if staff_email:
+                                    staff_subject = f"You have been assigned a new TA request: {updated_df.loc[selected_request_index, 'Ticket ID']}"
+                                    staff_body = f"""
+                                    Hi {selected_coach},
+
+                                    You have been assigned as the coach for the following Technical Assistance request:
+
+                                    Ticket ID: {updated_df.loc[selected_request_index, 'Ticket ID']}
+                                    Jurisdiction: {updated_df.loc[selected_request_index, 'Jurisdiction']}
+                                    Organization: {updated_df.loc[selected_request_index, 'Organization']}
+                                    Name: {updated_df.loc[selected_request_index, 'Name']}
+                                    Description: {updated_df.loc[selected_request_index, 'TA Description']}
+                                    Priority: {updated_df.loc[selected_request_index, 'Priority']}
+                                    Targeted Due Date: {updated_df.loc[selected_request_index, 'Targeted Due Date']}
+                                    Attachments: {updated_df.loc[selected_request_index, 'Document'] or 'None'}
+
+                                    Please view and manage this request via the GU-TAP System: https://hrsagutap.streamlit.app/.
+                                    Please contact gutap@georgetown.edu for any questions or concerns.
+
+                                    Best,
+                                    GU-TAP System
+                                    """
+                                    try:
+                                        send_email_mailjet(
+                                            to_email=staff_email,
+                                            subject=staff_subject,
+                                            body=staff_body,
+                                        )
+                                    except Exception as e:
+                                        st.warning(f"⚠️ Failed to send assignment email to staff {selected_coach}: {e}")
+
+                                time.sleep(2)
+                                st.rerun()
+
+                            except Exception as e:
+                                st.error(f"Error updating Google Sheets: {str(e)}")
+
+                        # --- Submit button styling (CSS injection)
+                        st.markdown("""
+                            <style>
+                            .stButton > button {
+                                width: 100%;
+                                background-color: #cdb4db;
+                                color: black;
+                                font-weight: 600;
+                                border-radius: 8px;
+                                padding: 0.6em;
+                                margin-top: 1em;
+                            }
+                            </style>
+                        """, unsafe_allow_html=True)
+
+                st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
+                with st.expander("👍 **DETAILS OF IN-PROGRESS & COMPLETED REQUESTS**"):
+                    st.markdown("""
+                        <div style='background: #f0f4ff; border-radius: 16px; box-shadow: 0 2px 8px rgba(26,35,126,0.08); padding: 1.5em 1em 1em 1em; margin-bottom: 2em; margin-top: 1em;'>
+                            <div style='color: #1a237e; font-family: "Segoe UI", "Arial", sans-serif; font-weight: 700; font-size: 1.4em; margin-bottom: 0.3em;'>👍 Details of In-progress & Completed Requests</div>
+                            <div style='color: #333; font-size: 1.08em; margin-bottom: 0.8em;'>
+                                Leave comments, update progress, and review the status and details of all in-progress and completed TA requests. Use the filters and tables below to manage and track request outcomes.
+                            </div>
+                        </div>
+                    """, unsafe_allow_html=True)
+
+                    st.markdown("#### 🚧 In-progress Requests")
+
+
+                    # Filter "In Progress" requests
+                    in_progress_df = df[df["Status"] == "In Progress"].copy()
+
+                    if in_progress_df.empty:
+                        st.info("No requests currently in progress.")
+                    else:
+                        # Convert date columns
+                        in_progress_df["Assigned Date"] = pd.to_datetime(in_progress_df["Assigned Date"], errors="coerce")
+                        in_progress_df["Targeted Due Date"] = pd.to_datetime(in_progress_df["Targeted Due Date"], errors="coerce")
+                        in_progress_df['Expected Duration (Days)'] = (in_progress_df["Targeted Due Date"]-in_progress_df["Assigned Date"]).dt.days
+
+                        # Format dates
+                        in_progress_df["Assigned Date"] = in_progress_df["Assigned Date"].dt.strftime("%Y-%m-%d")
+                        in_progress_df["Targeted Due Date"] = in_progress_df["Targeted Due Date"].dt.strftime("%Y-%m-%d")
+                        
+
+                        # --- Filters
+                        st.markdown("##### 🔍 Filter Options")
+
+                        col1, col2, col3 = st.columns(3)
+                        with col1:
+                            priority_filter = st.multiselect(
+                                "Filter by Priority",
+                                options=in_progress_df["Priority"].unique(),
+                                default=in_progress_df["Priority"].unique(), key='in1'
+                            )
+
+                        with col2:
+                            ta_type_filter = st.multiselect(
+                                "Filter by TA Type",
+                                options=in_progress_df["TA Type"].unique(),
+                                default=in_progress_df["TA Type"].unique(), key='in2'
+                            )
+
+                        with col3:
+                            focus_area_filter = st.multiselect(
+                                "Filter by Focus Area",
+                                options=in_progress_df["Focus Area"].unique(),
+                                default=in_progress_df["Focus Area"].unique(), key='in3'
+                            )
+                        
+
+                        # Apply filters
+                        filtered_df = in_progress_df[
+                            (in_progress_df["Priority"].isin(priority_filter)) &
+                            (in_progress_df["TA Type"].isin(ta_type_filter)) &
+                            (in_progress_df["Focus Area"].isin(focus_area_filter))
+                        ]
+
+                        # Display filtered table
+                        st.dataframe(filtered_df[[
+                            "Ticket ID","Jurisdiction", "Organization", "Name", "Title/Position", "Email Address", "Phone Number",
+                            "Focus Area", "TA Type", "Assigned Date", "Targeted Due Date","Expected Duration (Days)","Priority",
+                            "Assigned Coach", "TA Description","Document","Coordinator Comment"
+                        ]].sort_values(by="Expected Duration (Days)").reset_index(drop=True))
+
+                        # Select request by index (row number in submitted_requests)
+                        request_indices1 = filtered_df.index.tolist()
+                        selected_request_index1 = st.selectbox(
+                            "Select a request to comment",
+                            options=request_indices1,
+                            format_func=lambda idx: f"{filtered_df.at[idx, 'Ticket ID']} | {filtered_df.at[idx, 'Name']} | {filtered_df.at[idx, 'Jurisdiction']}",
+                        )
+
+                        # Input comment
+                        comment_input = st.text_area("Comments", placeholder="Enter comments", height=150, key='comm')
+
+                        if st.button("✅ Submit Comments"):
+                            try:
+                                # Find the actual row index in the original df (map back using ID or index)
+                                selected_row_global_index = filtered_df.loc[selected_request_index1].name
+
+                                # Copy and update df
+                                updated_df = df.copy()
+                                updated_df.loc[selected_row_global_index, "Coordinator Comment"] = comment_input
+                                updated_df = updated_df.applymap(
+                                    lambda x: x.strftime("%Y-%m-%d") if isinstance(x, (pd.Timestamp, datetime)) and not pd.isna(x) else x
+                                )
+                                updated_df = updated_df.fillna("") 
+
+                                spreadsheet1 = client.open('Example_TA_Request')
+                                worksheet1 = spreadsheet1.worksheet('Main')
+
+                                # Push to Google Sheets
+                                worksheet1.update([updated_df.columns.values.tolist()] + updated_df.values.tolist())
+
+                                st.success("💬 Comment saved and synced with Google Sheets.")
+                                time.sleep(2)
+                                st.rerun()
+
+                            except Exception as e:
+                                st.error(f"Error updating Google Sheets: {str(e)}")
+
+                    st.markdown("#### ✅ Completed Requests")
+
+
+                    # Filter "Completed" requests
+                    complete_df = df[df["Status"] == "Completed"].copy()
+
+                    if complete_df.empty:
+                        st.info("No requests currently completed.")
+                    else:
+                        # Convert date columns
+                        complete_df["Assigned Date"] = pd.to_datetime(complete_df["Assigned Date"], errors="coerce")
+                        complete_df["Close Date"] = pd.to_datetime(complete_df["Close Date"], errors="coerce")
+                        complete_df["Targeted Due Date"] = pd.to_datetime(complete_df["Targeted Due Date"], errors="coerce")
+                        complete_df['Expected Duration (Days)'] = (complete_df["Targeted Due Date"]-complete_df["Assigned Date"]).dt.days
+                        complete_df['Actual Duration (Days)'] = (complete_df["Close Date"]-complete_df["Assigned Date"]).dt.days
+
+                        # Format dates
+                        complete_df["Assigned Date"] = complete_df["Assigned Date"].dt.strftime("%Y-%m-%d")
+                        complete_df["Targeted Due Date"] = complete_df["Targeted Due Date"].dt.strftime("%Y-%m-%d")
+                        complete_df["Close Date"] = complete_df["Close Date"].dt.strftime("%Y-%m-%d")
+
+                        # --- Filters
+                        st.markdown("##### 🔍 Filter Options")
+
+                        col1, col2, col3 = st.columns(3)
+                        with col1:
+                            priority_filter1 = st.multiselect(
+                                "Filter by Priority",
+                                options=complete_df["Priority"].unique(),
+                                default=complete_df["Priority"].unique(), key='com1'
+                            )
+
+                        with col2:
+                            ta_type_filter1 = st.multiselect(
+                                "Filter by TA Type",
+                                options=complete_df["TA Type"].unique(),
+                                default=complete_df["TA Type"].unique(), key='com2'
+                            )
+
+                        with col3:
+                            focus_area_filter1 = st.multiselect(
+                                "Filter by Focus Area",
+                                options=complete_df["Focus Area"].unique(),
+                                default=complete_df["Focus Area"].unique(), key='com3'
+                            )
+
+                        # Apply filters
+                        filtered_df1 = complete_df[
+                            (complete_df["Priority"].isin(priority_filter1)) &
+                            (complete_df["TA Type"].isin(ta_type_filter1)) &
+                            (complete_df["Focus Area"].isin(focus_area_filter1))
+                        ]
+
+                        # Display filtered table
+                        st.dataframe(filtered_df1[[
+                            "Ticket ID","Jurisdiction", "Organization", "Name", "Title/Position", "Email Address", "Phone Number",
+                            "Focus Area", "TA Type", "Priority", "Assigned Coach", "TA Description","Document","Assigned Date",
+                            "Targeted Due Date", "Close Date", "Expected Duration (Days)",
+                            'Actual Duration (Days)', "Coordinator Comment", "Staff Comment"
+                        ]].reset_index(drop=True))
+
+                st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
+                with st.expander("🗒️ **SUBMIT INTERACTION LOG**"):
+                    st.markdown("""
+                        <div style='background: #f0f4ff; border-radius: 16px; box-shadow: 0 2px 8px rgba(26,35,126,0.08); padding: 1.5em 1em 1em 1em; margin-bottom: 2em; margin-top: 1em;'>
+                            <div style='color: #1a237e; font-family: "Segoe UI", "Arial", sans-serif; font-weight: 700; font-size: 1.4em; margin-bottom: 0.3em;'>🗒️ Submit a New Interaction Log Form</div>
+                            <div style='color: #333; font-size: 1.08em; margin-bottom: 0.8em;'>
+                                Log a new interaction with a jurisdiction. Fill out the form below to record emails, meetings, or other communications related to a TA request.
+                            </div>
                         </div>
                     """, unsafe_allow_html=True)
                     lis_ticket = df["Ticket ID"].unique().tolist()
@@ -1747,7 +1969,7 @@ else:
                     col1, col2 = st.columns(2)
                     with col1:
                         ticket_id_int = st.selectbox("Ticket ID *",lis_ticket, index=None,
-                            placeholder="Select option...",key='interaction1')
+                            placeholder="Select option...",key='interaction')
                     with col2:
                         date_int = st.date_input("Date of Interaction *",value=datetime.today().date())
                     
@@ -1767,7 +1989,7 @@ else:
                         type_interaction_other = st.text_input("Please specify the Type of Interaction *")
                         if type_interaction_other:
                             type_interaction = type_interaction_other 
-                    interaction_description = st.text_area("Short Summary *", placeholder='Enter text', height=150,key='interaction_description1') 
+                    interaction_description = st.text_area("Short Summary *", placeholder='Enter text', height=150,key='interaction_description') 
                     document_int = st.file_uploader(
                         "Upload any files or attachments that are relevant to this interaction.",accept_multiple_files=True
                     )
@@ -1788,30 +2010,8 @@ else:
                         </style>
                     """, unsafe_allow_html=True)
 
-                    # Example usage: Fetch data from Google Sheets
-                    try:
-                        spreadsheet1 = client.open('Example_TA_Request')
-                        worksheet1 = spreadsheet1.worksheet('Main')
-                        df = pd.DataFrame(worksheet1.get_all_records())
-                    except Exception as e:
-                        st.error(f"Error fetching data from Google Sheets: {str(e)}")
-
-                    try:
-                        spreadsheet2 = client.open('Example_TA_Request')
-                        worksheet2 = spreadsheet2.worksheet('Interaction')
-                        df_int = pd.DataFrame(worksheet2.get_all_records())
-                    except Exception as e:
-                        st.error(f"Error fetching data from Google Sheets: {str(e)}")
-
-                    try:
-                        spreadsheet3 = client.open('Example_TA_Request')
-                        worksheet3 = spreadsheet3.worksheet('Delivery')
-                        df_del = pd.DataFrame(worksheet3.get_all_records())
-                    except Exception as e:
-                        st.error(f"Error fetching data from Google Sheets: {str(e)}")
-
                     # Submit logic
-                    if st.button("Submit",key='interaction_submit1'):
+                    if st.button("Submit",key='interaction_submit'):
                         errors = []
                         drive_links = ""
                         # Required field checks
@@ -1862,6 +2062,8 @@ else:
                                 )
                                 # Replace NaN with empty strings to ensure JSON compatibility
                                 updated_sheet1 = updated_sheet1.fillna("")
+                                spreadsheet2 = client.open('Example_TA_Request')
+                                worksheet2 = spreadsheet2.worksheet('Interaction')
                                 worksheet2.update([updated_sheet1.columns.values.tolist()] + updated_sheet1.values.tolist())
 
                                 st.success("✅ Submission successful!")
@@ -1875,30 +2077,13 @@ else:
 
                 st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
 
-                with st.expander("📊 Submit a New Delivery Form"):
+                with st.expander("📦 **SUBMIT DELIVERY FORM**"):
                     st.markdown("""
-                        <div style='
-                            background: #e9ecef;
-                            border-radius: 14px;
-                            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-                            padding: 1.5em 1em 1em 1em;
-                            margin-bottom: 2em;
-                            margin-top: 1em;
-                        '>
-                            <h2 style='
-                                color: #1a237e;
-                                font-family: "Segoe UI", "Arial", sans-serif;
-                                font-weight: 700;
-                                margin-bottom: 0.2em;
-                                font-size: 1.3em;
-                            '>📊 Submit a New Delivery Form with Jurisdiction</h2>
-                            <p style='
-                                color: #333;
-                                font-size: 1em;
-                                margin-bottom: 0.8em;
-                            '>
-                                Use this section to submit a new delivery form with jurisdiction.
-                            </p>
+                        <div style='background: #f0f4ff; border-radius: 16px; box-shadow: 0 2px 8px rgba(26,35,126,0.08); padding: 1.5em 1em 1em 1em; margin-bottom: 2em; margin-top: 1em;'>
+                            <div style='color: #1a237e; font-family: "Segoe UI", "Arial", sans-serif; font-weight: 700; font-size: 1.4em; margin-bottom: 0.3em;'>📦 Submit a New Delivery Form</div>
+                            <div style='color: #333; font-size: 1.08em; margin-bottom: 0.8em;'>
+                                Record a new delivery (e.g., report, dashboard, data) for a TA request. Use the form below to upload files and provide a summary of the delivery.
+                            </div>
                         </div>
                     """, unsafe_allow_html=True)
                     lis_ticket1 = df["Ticket ID"].unique().tolist()
@@ -1907,7 +2092,7 @@ else:
                     col1, col2 = st.columns(2)
                     with col1:
                         ticket_id_del = st.selectbox("Ticket ID *",lis_ticket1, index=None,
-                            placeholder="Select option...",key='delivery1')
+                            placeholder="Select option...",key='delivery')
                     with col2:
                         date_del = st.date_input("Date of Delivery *",value=datetime.today().date())
                     
@@ -1927,7 +2112,7 @@ else:
                         type_delivery_other = st.text_input("Please specify the Type of Delivery *")
                         if type_delivery_other:
                             type_delivery = type_delivery_other 
-                    delivery_description = st.text_area("Short Summary *", placeholder='Enter text', height=150,key='delivery_description1') 
+                    delivery_description = st.text_area("Short Summary *", placeholder='Enter text', height=150,key='delivery_description') 
                     document_del = st.file_uploader(
                         "Upload any files or attachments that are relevant to this delivery.",accept_multiple_files=True
                     )
@@ -1949,9 +2134,9 @@ else:
                     """, unsafe_allow_html=True)
 
                     # Submit logic
-                    if st.button("Submit",key='delivery_submit1'):
+                    if st.button("Submit",key='delivery_submit'):
                         errors = []
-                        drive_links_del = ""  # Ensure always defined
+                        drive_links_del = ""
                         # Required field checks
                         if not ticket_id_del: errors.append("Ticket ID is required.")
                         if not date_del: errors.append("Date of delivery is required.")
@@ -2000,6 +2185,8 @@ else:
                                 )
                                 # Replace NaN with empty strings to ensure JSON compatibility
                                 updated_sheet2 = updated_sheet2.fillna("")
+                                spreadsheet3 = client.open('Example_TA_Request')
+                                worksheet3 = spreadsheet3.worksheet('Delivery')
                                 worksheet3.update([updated_sheet2.columns.values.tolist()] + updated_sheet2.values.tolist())
 
                                 st.success("✅ Submission successful!")
