@@ -1938,7 +1938,7 @@ else:
                     # Submit logic
                     if st.button("Submit",key='delivery_submit1'):
                         errors = []
-                        drive_links_del = ""  # <-- Add this line
+                        drive_links_del = ""  # Ensure always defined
                         # Required field checks
                         if not ticket_id_del: errors.append("Ticket ID is required.")
                         if not date_del: errors.append("Date of delivery is required.")
@@ -1951,7 +1951,7 @@ else:
                                 st.warning(error)
                         else:
                             # Only upload files if all validation passes
-                            if document_int:
+                            if document_del:
                                 try:
                                     folder_id_del = "1gXfWxys2cxd67YDk8zKPmG_mLGID4qL2" 
                                     links_del = []
@@ -1987,6 +1987,8 @@ else:
                                 )
                                 # Replace NaN with empty strings to ensure JSON compatibility
                                 updated_sheet2 = updated_sheet2.fillna("")
+                                spreadsheet3 = client.open('Example_TA_Request')
+                                worksheet3 = spreadsheet3.worksheet('Delivery')
                                 worksheet3.update([updated_sheet2.columns.values.tolist()] + updated_sheet2.values.tolist())
 
                                 st.success("✅ Submission successful!")
