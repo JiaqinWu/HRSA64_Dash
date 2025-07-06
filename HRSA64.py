@@ -15,6 +15,11 @@ from googleapiclient.http import MediaIoBaseUpload
 import io
 from mailjet_rest import Client
 
+st.set_page_config(
+        page_title="GU TAP System",
+        page_icon="https://raw.githubusercontent.com/JiaqinWu/HRSA64_Dash/main/Georgetown_logo_blueRGB.png", 
+        layout="centered"
+    ) 
 
 scope = ["https://spreadsheets.google.com/feeds", 'https://www.googleapis.com/auth/spreadsheets', "https://www.googleapis.com/auth/drive.file", "https://www.googleapis.com/auth/drive"]
 #creds = ServiceAccountCredentials.from_json_keyfile_name('client_secret.json', scope)
@@ -164,8 +169,8 @@ df["Phone Number"] = df["Phone Number"].astype(str).apply(format_phone)
 # --- Demo user database
 USERS = {
     "jw2104@georgetown.edu": {
-        "Coordinator": {"password": "Qin8851216!", "name": "Jiaqin Wu"},
-        "Assignee/Staff": {"password": "Qin8851216!", "name": "Jiaqin Wu"}
+        "Coordinator": {"password": "Qin8851216", "name": "Jiaqin Wu"},
+        "Assignee/Staff": {"password": "Qin8851216", "name": "Jiaqin Wu"}
     },
     "Jenevieve.Opoku@georgetown.edu": {
         "Coordinator": {"password": "Tootles82!", "name": "Jenevieve Opoku"},
@@ -230,11 +235,6 @@ if "user_email" not in st.session_state:
 if st.session_state.role is None:
     #st.image("Georgetown_logo_blueRGB.png",width=200)
     #st.title("Welcome to the GU Technical Assistance Provider System")
-    st.set_page_config(
-        page_title="GU TAP System",
-        page_icon="https://raw.githubusercontent.com/JiaqinWu/HRSA64_Dash/main/Georgetown_logo_blueRGB.png", 
-        layout="centered"
-    ) 
     st.markdown(
         """
         <div style='
