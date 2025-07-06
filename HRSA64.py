@@ -1543,156 +1543,434 @@ else:
                 style_metric_cards(border_left_color="#DBF227")
 
                 # --- Section 1: Mark as Completed
-                st.markdown("#### ✅ Mark Requests as Completed")
-                # Format dates
-                staff_df["Assigned Date"] = staff_df["Assigned Date"].dt.strftime("%Y-%m-%d")
-                staff_df["Targeted Due Date"] = staff_df["Targeted Due Date"].dt.strftime("%Y-%m-%d")
-
-                # Display clean table (exclude PriorityOrder column)
-                st.dataframe(staff_df[[
-                    "Ticket ID","Jurisdiction", "Organization", "Name", "Title/Position", "Email Address", "Phone Number",
-                    "Focus Area", "TA Type", "Assigned Date", "Targeted Due Date", "Priority", "TA Description","Document","Coordinator Comment"
-                ]].reset_index(drop=True))
-
-                # Select request by index (row number in submitted_requests)
-                request_indices = staff_df.index.tolist()
-                selected_request_index = st.selectbox(
-                    "Select a request to marked as completed",
-                    options=request_indices,
-                    format_func=lambda idx: f"{staff_df.at[idx, 'Ticket ID']} | {staff_df.at[idx, 'Name']} | {staff_df.at[idx, 'Jurisdiction']}",
-                )
-          
-
-                # Submit completion
-                if st.button("✅ Mark as Completed"):
-                    try:
-                        # Map back to original df index
-                        global_index = staff_df.loc[selected_request_index].name
-
-                        # Copy + update
-                        updated_df = df.copy()
-                        updated_df.loc[global_index, "Status"] = "Completed"
-                        updated_df.loc[global_index, "Close Date"] = datetime.today().strftime("%Y-%m-%d")
-
-                        updated_df = updated_df.applymap(
-                            lambda x: x.strftime("%Y-%m-%d") if isinstance(x, (pd.Timestamp, datetime)) and not pd.isna(x) else x
-                        )
-                        updated_df = updated_df.fillna("") 
-
-                        # Push to Google Sheet
-                        worksheet1.update([updated_df.columns.values.tolist()] + updated_df.values.tolist())
-
-                        st.success("✅ Request marked as completed.")
-                        time.sleep(2)
-                        st.rerun()
-
-                    except Exception as e:
-                        st.error(f"Error updating Google Sheets: {str(e)}")
-
-                # --- Submit button styling (CSS injection)
-                st.markdown("""
-                    <style>
-                    .stButton > button {
-                        width: 100%;
-                        background-color: #cdb4db;
-                        color: black;
-                        font-weight: 600;
-                        border-radius: 8px;
-                        padding: 0.6em;
-                        margin-top: 1em;
-                    }
-                    </style>
-                """, unsafe_allow_html=True)
-
-                # --- Section 2: Filter, Sort, Comment
-                st.markdown("#### 🚧 In-progress Requests")
-
-                # Filter "In Progress" requests
-                if staff_df.empty:
-                    st.info("No requests currently in progress.")
-                else:
-                    # Convert date columns
-                    staff_df["Assigned Date"] = pd.to_datetime(staff_df["Assigned Date"], errors="coerce")
-                    staff_df["Targeted Due Date"] = pd.to_datetime(staff_df["Targeted Due Date"], errors="coerce")
-                    staff_df['Expected Duration (Days)'] = (staff_df["Targeted Due Date"]-staff_df["Assigned Date"]).dt.days
-
+                with st.expander("✅ Mark Requests as Completed"):
+                    st.markdown("#### ✅ Mark Requests as Completed")
                     # Format dates
                     staff_df["Assigned Date"] = staff_df["Assigned Date"].dt.strftime("%Y-%m-%d")
                     staff_df["Targeted Due Date"] = staff_df["Targeted Due Date"].dt.strftime("%Y-%m-%d")
-                    
 
-                    # --- Filters
-                    st.markdown("##### 🔍 Filter Options")
-
-                    col1, col2, col3 = st.columns(3)
-                    with col1:
-                        priority_filter = st.multiselect(
-                            "Filter by Priority",
-                            options=staff_df["Priority"].unique(),
-                            default=staff_df["Priority"].unique(), key='sta1'
-                        )
-
-                    with col2:
-                        ta_type_filter = st.multiselect(
-                            "Filter by TA Type",
-                            options=staff_df["TA Type"].unique(),
-                            default=staff_df["TA Type"].unique(), key='sta2'
-                        )
-
-                    with col3:
-                        focus_area_filter = st.multiselect(
-                            "Filter by Focus Area",
-                            options=staff_df["Focus Area"].unique(),
-                            default=staff_df["Focus Area"].unique(), key='sta3'
-                        )
-
-                    # Apply filters
-                    filtered_df2 = staff_df[
-                        (staff_df["Priority"].isin(priority_filter)) &
-                        (staff_df["TA Type"].isin(ta_type_filter)) &
-                        (staff_df["Focus Area"].isin(focus_area_filter))
-                    ]
-
-                    # Display filtered table
-                    st.dataframe(filtered_df2[[
+                    # Display clean table (exclude PriorityOrder column)
+                    st.dataframe(staff_df[[
                         "Ticket ID","Jurisdiction", "Organization", "Name", "Title/Position", "Email Address", "Phone Number",
-                        "Focus Area", "TA Type", "Assigned Date", "Targeted Due Date","Expected Duration (Days)","Priority", "Assigned Coach", "TA Description",
-                        "Document","Coordinator Comment", "Staff Comment"
-                    ]].sort_values(by="Expected Duration (Days)").reset_index(drop=True))
+                        "Focus Area", "TA Type", "Assigned Date", "Targeted Due Date", "Priority", "TA Description","Document","Coordinator Comment"
+                    ]].reset_index(drop=True))
 
                     # Select request by index (row number in submitted_requests)
-                    request_indices2 = filtered_df2.index.tolist()
-                    selected_request_index1 = st.selectbox(
-                        "Select a request to comment",
-                        options=request_indices2,
-                        format_func=lambda idx: f"{filtered_df2.at[idx, 'Ticket ID']} | {filtered_df2.at[idx, 'Name']} | {filtered_df2.at[idx, 'Jurisdiction']}",
+                    request_indices = staff_df.index.tolist()
+                    selected_request_index = st.selectbox(
+                        "Select a request to marked as completed",
+                        options=request_indices,
+                        format_func=lambda idx: f"{staff_df.at[idx, 'Ticket ID']} | {staff_df.at[idx, 'Name']} | {staff_df.at[idx, 'Jurisdiction']}",
                     )
+            
 
-                    # Input comment
-                    comment_text = st.text_area("Staff Comment", placeholder="Enter comments", height=150, key='commm')
-
-                    # Submit
-                    if st.button("✅ Submit Comments"):
+                    # Submit completion
+                    if st.button("✅ Mark as Completed"):
                         try:
-                            # Get the index of the selected row in the full df
-                            global_index = filtered_df2.loc[selected_request_index1].name
+                            # Map back to original df index
+                            global_index = staff_df.loc[selected_request_index].name
 
-                            # Copy df and update
+                            # Copy + update
                             updated_df = df.copy()
-                            updated_df.loc[global_index, "Staff Comment"] = comment_text
+                            updated_df.loc[global_index, "Status"] = "Completed"
+                            updated_df.loc[global_index, "Close Date"] = datetime.today().strftime("%Y-%m-%d")
+
                             updated_df = updated_df.applymap(
                                 lambda x: x.strftime("%Y-%m-%d") if isinstance(x, (pd.Timestamp, datetime)) and not pd.isna(x) else x
                             )
                             updated_df = updated_df.fillna("") 
 
-                            # Push to Google Sheets
+                            # Push to Google Sheet
                             worksheet1.update([updated_df.columns.values.tolist()] + updated_df.values.tolist())
 
-                            st.success("💬 Comment saved successfully!.")
+                            st.success("✅ Request marked as completed.")
                             time.sleep(2)
                             st.rerun()
 
                         except Exception as e:
-                            st.error(f"Error saving comment: {str(e)}")
+                            st.error(f"Error updating Google Sheets: {str(e)}")
+
+                    # --- Submit button styling (CSS injection)
+                    st.markdown("""
+                        <style>
+                        .stButton > button {
+                            width: 100%;
+                            background-color: #cdb4db;
+                            color: black;
+                            font-weight: 600;
+                            border-radius: 8px;
+                            padding: 0.6em;
+                            margin-top: 1em;
+                        }
+                        </style>
+                    """, unsafe_allow_html=True)
+
+                # --- Section 2: Filter, Sort, Comment
+                with st.expander("🚧 In-progress Requests"):
+                    st.markdown("#### 🚧 In-progress Requests")
+
+                    # Filter "In Progress" requests
+                    if staff_df.empty:
+                        st.info("No requests currently in progress.")
+                    else:
+                        # Convert date columns
+                        staff_df["Assigned Date"] = pd.to_datetime(staff_df["Assigned Date"], errors="coerce")
+                        staff_df["Targeted Due Date"] = pd.to_datetime(staff_df["Targeted Due Date"], errors="coerce")
+                        staff_df['Expected Duration (Days)'] = (staff_df["Targeted Due Date"]-staff_df["Assigned Date"]).dt.days
+
+                        # Format dates
+                        staff_df["Assigned Date"] = staff_df["Assigned Date"].dt.strftime("%Y-%m-%d")
+                        staff_df["Targeted Due Date"] = staff_df["Targeted Due Date"].dt.strftime("%Y-%m-%d")
+                        
+
+                        # --- Filters
+                        st.markdown("##### 🔍 Filter Options")
+
+                        col1, col2, col3 = st.columns(3)
+                        with col1:
+                            priority_filter = st.multiselect(
+                                "Filter by Priority",
+                                options=staff_df["Priority"].unique(),
+                                default=staff_df["Priority"].unique(), key='sta1'
+                            )
+
+                        with col2:
+                            ta_type_filter = st.multiselect(
+                                "Filter by TA Type",
+                                options=staff_df["TA Type"].unique(),
+                                default=staff_df["TA Type"].unique(), key='sta2'
+                            )
+
+                        with col3:
+                            focus_area_filter = st.multiselect(
+                                "Filter by Focus Area",
+                                options=staff_df["Focus Area"].unique(),
+                                default=staff_df["Focus Area"].unique(), key='sta3'
+                            )
+
+                        # Apply filters
+                        filtered_df2 = staff_df[
+                            (staff_df["Priority"].isin(priority_filter)) &
+                            (staff_df["TA Type"].isin(ta_type_filter)) &
+                            (staff_df["Focus Area"].isin(focus_area_filter))
+                        ]
+
+                        # Display filtered table
+                        st.dataframe(filtered_df2[[
+                            "Ticket ID","Jurisdiction", "Organization", "Name", "Title/Position", "Email Address", "Phone Number",
+                            "Focus Area", "TA Type", "Assigned Date", "Targeted Due Date","Expected Duration (Days)","Priority", "Assigned Coach", "TA Description",
+                            "Document","Coordinator Comment", "Staff Comment"
+                        ]].sort_values(by="Expected Duration (Days)").reset_index(drop=True))
+
+                        # Select request by index (row number in submitted_requests)
+                        request_indices2 = filtered_df2.index.tolist()
+                        selected_request_index1 = st.selectbox(
+                            "Select a request to comment",
+                            options=request_indices2,
+                            format_func=lambda idx: f"{filtered_df2.at[idx, 'Ticket ID']} | {filtered_df2.at[idx, 'Name']} | {filtered_df2.at[idx, 'Jurisdiction']}",
+                        )
+
+                        # Input comment
+                        comment_text = st.text_area("Staff Comment", placeholder="Enter comments", height=150, key='commm')
+
+                        # Submit
+                        if st.button("✅ Submit Comments"):
+                            try:
+                                # Get the index of the selected row in the full df
+                                global_index = filtered_df2.loc[selected_request_index1].name
+
+                                # Copy df and update
+                                updated_df = df.copy()
+                                updated_df.loc[global_index, "Staff Comment"] = comment_text
+                                updated_df = updated_df.applymap(
+                                    lambda x: x.strftime("%Y-%m-%d") if isinstance(x, (pd.Timestamp, datetime)) and not pd.isna(x) else x
+                                )
+                                updated_df = updated_df.fillna("") 
+
+                                # Push to Google Sheets
+                                worksheet1.update([updated_df.columns.values.tolist()] + updated_df.values.tolist())
+
+                                st.success("💬 Comment saved successfully!.")
+                                time.sleep(2)
+                                st.rerun()
+
+                            except Exception as e:
+                                st.error(f"Error saving comment: {str(e)}")
+
+                with st.expander("📊 Submit a New Interaction Log Form"):
+                    st.markdown("""
+                        <div style='
+                            background: #e9ecef;
+                            border-radius: 14px;
+                            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+                            padding: 1.5em 1em 1em 1em;
+                            margin-bottom: 2em;
+                            margin-top: 1em;
+                        '>
+                            <h2 style='
+                                color: #1a237e;
+                                font-family: "Segoe UI", "Arial", sans-serif;
+                                font-weight: 700;
+                                margin-bottom: 0.2em;
+                                font-size: 1.3em;
+                            '>📊 Submit a New Interaction Log Form with Jurisdiction</h2>
+                            <p style='
+                                color: #333;
+                                font-size: 1em;
+                                margin-bottom: 0.8em;
+                            '>
+                                Use this section to submit a new interaction log form with jurisdiction.
+                            </p>
+                        </div>
+                    """, unsafe_allow_html=True)
+                    lis_ticket = df["Ticket ID"].unique().tolist()
+
+                    # Interaction Log form
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        ticket_id_int = st.selectbox("Ticket ID *",lis_ticket, index=None,
+                            placeholder="Select option...",key='interaction1')
+                    with col2:
+                        date_int = st.date_input("Date of Interaction *",value=datetime.today().date())
+                    
+                    list_interaction = [
+                        "Email", "Phone Call", "In-Person Meeting", "Online Meeting", "Other"
+                    ]
+
+                    type_interaction = st.selectbox(
+                        "Type of Interaction *",
+                        list_interaction,
+                        index=None,
+                        placeholder="Select option..."
+                    )
+
+                    # If "Other" is selected, show a text input for custom value
+                    if type_interaction == "Other":
+                        type_interaction_other = st.text_input("Please specify the Type of Interaction *")
+                        if type_interaction_other:
+                            type_interaction = type_interaction_other 
+                    interaction_description = st.text_area("Short Summary *", placeholder='Enter text', height=150,key='interaction_description1') 
+                    document_int = st.file_uploader(
+                        "Upload any files or attachments that are relevant to this interaction.",accept_multiple_files=True
+                    )
+                    
+                    # Submit button
+                    st.markdown("""
+                        <style>
+                        .stButton > button {
+                            width: 100%;
+                            background-color: #cdb4db;
+                            color: black;
+                            font-family: Arial, "Segoe UI", sans-serif;
+                            font-weight: 600;
+                            border-radius: 8px;
+                            padding: 0.6em;
+                            margin-top: 1em;
+                        }
+                        </style>
+                    """, unsafe_allow_html=True)
+
+                    # Submit logic
+                    if st.button("Submit",key='interaction_submit1'):
+                        errors = []
+                        drive_links = ""
+                        # Required field checks
+                        if not ticket_id_int: errors.append("Ticket ID is required.")
+                        if not date_int: errors.append("Date of interaction is required.")
+                        if not type_interaction: errors.append("Type of interaction is required.")
+                        if not interaction_description: errors.append("Short summary is required.")
+
+                        # Show warnings or success
+                        if errors:
+                            for error in errors:
+                                st.warning(error)
+                        else:
+                            # Only upload files if all validation passes
+                            if document_int:
+                                try:
+                                    folder_id_int = "19-Sm8W151tg1zyDN0Nh14DUvOVUieqq7" 
+                                    links_int = []
+                                    for file in document_int:
+                                        # Rename file as: GU0001_filename.pdf
+                                        renamed_filename = f"{ticket_id_int}_{file.name}"
+                                        link = upload_file_to_drive(
+                                            file=file,
+                                            filename=renamed_filename,
+                                            folder_id=folder_id_int,
+                                            creds_dict=st.secrets["gcp_service_account"]
+                                        )
+                                        links_int.append(link)
+                                    drive_links_int = ", ".join(links_int)
+                                    st.success("File(s) uploaded to Google Drive.")    
+                                except Exception as e:
+                                    st.error(f"Error uploading file(s) to Google Drive: {str(e)}")
+
+                            new_row_int = {
+                                'Ticket ID': ticket_id_int,
+                                "Date of Interaction": date_int,
+                                "Type of Interaction": type_interaction,
+                                "Short Summary": interaction_description,
+                                "Document": drive_links_int
+                            }
+                            new_data_int = pd.DataFrame([new_row_int])
+
+                            try:
+                                # Append new data to Google Sheet
+                                updated_sheet1 = pd.concat([df_int, new_data_int], ignore_index=True)
+                                updated_sheet1= updated_sheet1.applymap(
+                                    lambda x: x.strftime("%Y-%m-%d") if isinstance(x, (datetime, pd.Timestamp)) else x
+                                )
+                                # Replace NaN with empty strings to ensure JSON compatibility
+                                updated_sheet1 = updated_sheet1.fillna("")
+                                worksheet2.update([updated_sheet1.columns.values.tolist()] + updated_sheet1.values.tolist())
+
+                                st.success("✅ Submission successful!")
+                                for key in list(st.session_state.keys()):
+                                    del st.session_state[key]
+                                time.sleep(5)
+                                st.rerun()
+
+                            except Exception as e:
+                                st.error(f"Error updating Google Sheets: {str(e)}")
+
+                st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
+
+                with st.expander("📊 Submit a New Delivery Form"):
+                    st.markdown("""
+                        <div style='
+                            background: #e9ecef;
+                            border-radius: 14px;
+                            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+                            padding: 1.5em 1em 1em 1em;
+                            margin-bottom: 2em;
+                            margin-top: 1em;
+                        '>
+                            <h2 style='
+                                color: #1a237e;
+                                font-family: "Segoe UI", "Arial", sans-serif;
+                                font-weight: 700;
+                                margin-bottom: 0.2em;
+                                font-size: 1.3em;
+                            '>📊 Submit a New Delivery Form with Jurisdiction</h2>
+                            <p style='
+                                color: #333;
+                                font-size: 1em;
+                                margin-bottom: 0.8em;
+                            '>
+                                Use this section to submit a new delivery form with jurisdiction.
+                            </p>
+                        </div>
+                    """, unsafe_allow_html=True)
+                    lis_ticket1 = df["Ticket ID"].unique().tolist()
+
+                    # Interaction Log form
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        ticket_id_del = st.selectbox("Ticket ID *",lis_ticket1, index=None,
+                            placeholder="Select option...",key='delivery1')
+                    with col2:
+                        date_del = st.date_input("Date of Delivery *",value=datetime.today().date())
+                    
+                    list_delivery = [
+                        "Report", "Email Reply", "Dashboard", "New Data Points", "Other"
+                    ]
+
+                    type_delivery = st.selectbox(
+                        "Type of Delivery *",
+                        list_delivery,
+                        index=None,
+                        placeholder="Select option..."
+                    )
+
+                    # If "Other" is selected, show a text input for custom value
+                    if type_delivery == "Other":
+                        type_delivery_other = st.text_input("Please specify the Type of Delivery *")
+                        if type_delivery_other:
+                            type_delivery = type_delivery_other 
+                    delivery_description = st.text_area("Short Summary *", placeholder='Enter text', height=150,key='delivery_description1') 
+                    document_del = st.file_uploader(
+                        "Upload any files or attachments that are relevant to this delivery.",accept_multiple_files=True
+                    )
+                    
+                    # Submit button
+                    st.markdown("""
+                        <style>
+                        .stButton > button {
+                            width: 100%;
+                            background-color: #cdb4db;
+                            color: black;
+                            font-family: Arial, "Segoe UI", sans-serif;
+                            font-weight: 600;
+                            border-radius: 8px;
+                            padding: 0.6em;
+                            margin-top: 1em;
+                        }
+                        </style>
+                    """, unsafe_allow_html=True)
+
+                    # Submit logic
+                    if st.button("Submit",key='delivery_submit1'):
+                        errors = []
+                        drive_links = ""
+                        # Required field checks
+                        if not ticket_id_del: errors.append("Ticket ID is required.")
+                        if not date_del: errors.append("Date of delivery is required.")
+                        if not type_delivery: errors.append("Type of delivery is required.")
+                        if not delivery_description: errors.append("Short summary is required.")
+
+                        # Show warnings or success
+                        if errors:
+                            for error in errors:
+                                st.warning(error)
+                        else:
+                            # Only upload files if all validation passes
+                            if document_int:
+                                try:
+                                    folder_id_del = "1gXfWxys2cxd67YDk8zKPmG_mLGID4qL2" 
+                                    links_del = []
+                                    for file in document_del:
+                                        # Rename file as: GU0001_filename.pdf
+                                        renamed_filename = f"{ticket_id_del}_{file.name}"
+                                        link = upload_file_to_drive(
+                                            file=file,
+                                            filename=renamed_filename,
+                                            folder_id=folder_id_del,
+                                            creds_dict=st.secrets["gcp_service_account"]
+                                        )
+                                        links_del.append(link)
+                                    drive_links_del = ", ".join(links_del)
+                                    st.success("File(s) uploaded to Google Drive.")    
+                                except Exception as e:
+                                    st.error(f"Error uploading file(s) to Google Drive: {str(e)}")
+
+                            new_row_del = {
+                                'Ticket ID': ticket_id_del,
+                                "Date of Delivery": date_del,
+                                "Type of Delivery": type_delivery,
+                                "Short Summary": delivery_description,
+                                "Document": drive_links_del
+                            }
+                            new_data_del = pd.DataFrame([new_row_del])
+
+                            try:
+                                # Append new data to Google Sheet
+                                updated_sheet2 = pd.concat([df_del, new_data_del], ignore_index=True)
+                                updated_sheet2= updated_sheet2.applymap(
+                                    lambda x: x.strftime("%Y-%m-%d") if isinstance(x, (datetime, pd.Timestamp)) else x
+                                )
+                                # Replace NaN with empty strings to ensure JSON compatibility
+                                updated_sheet2 = updated_sheet2.fillna("")
+                                worksheet3.update([updated_sheet2.columns.values.tolist()] + updated_sheet2.values.tolist())
+
+                                st.success("✅ Submission successful!")
+                                for key in list(st.session_state.keys()):
+                                    del st.session_state[key]
+                                time.sleep(5)
+                                st.rerun()
+
+                            except Exception as e:
+                                st.error(f"Error updating Google Sheets: {str(e)}")
+
+                st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
 
 
