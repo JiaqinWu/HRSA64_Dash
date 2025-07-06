@@ -1455,41 +1455,40 @@ else:
                     col1.metric("🟡 # of Interactions", num_interaction)
                     col2.metric("🟡 # of Deliveries", num_delivery)
 
-                    col3, col4 = st.columns(2)
                     # Group by Ticket ID and Type of Interaction, count occurrences
                     interaction_counts = df_int.groupby(['Ticket ID', 'Type of Interaction']).size().reset_index(name='Count')
                     delivery_counts = df_del.groupby(['Ticket ID', 'Type of Delivery']).size().reset_index(name='Count')
 
-                    with col3: 
-                        st.markdown("##### 🟡 Top 10 with most Interactions by Interaction Type")
-                        if not interaction_counts.empty:
-                            pie1 = alt.Chart(interaction_counts).mark_bar().encode(
-                                y=alt.Y('Ticket ID:N', sort='-x', title='Ticket ID'),
-                                x=alt.X('Count:Q', title='Number of Interactions'),
-                                color=alt.Color('Type of Interaction:N', title='Interaction Type'),
-                                tooltip=['Ticket ID', 'Type of Interaction', 'Count']
-                            ).properties(
-                                width=600,
-                                height=400
-                            )
-                            st.altair_chart(pie1, use_container_width=True)
-                        else:
-                            st.info("No any interaction to show.")
-                    with col4: 
-                        st.markdown("##### 🟡 Top 10 with most Deliveries by Delivery Type")
-                        if not delivery_counts.empty:
-                            pie1 = alt.Chart(delivery_counts).mark_bar().encode(
-                                y=alt.Y('Ticket ID:N', sort='-x', title='Ticket ID'),
-                                x=alt.X('Count:Q', title='Number of Deliveries'),
-                                color=alt.Color('Type of Delivery:N', title='Delivery Type'),
-                                tooltip=['Ticket ID', 'Type of Delivery', 'Count']
-                            ).properties(
-                                width=600,
-                                height=400
-                            )
-                            st.altair_chart(pie1, use_container_width=True)
-                        else:
-                            st.info("No any delivery to show.")
+
+                    st.markdown("##### 🟡 Top 10 with most Interactions by Interaction Type")
+                    if not interaction_counts.empty:
+                        pie1 = alt.Chart(interaction_counts).mark_bar().encode(
+                            y=alt.Y('Ticket ID:N', sort='-x', title='Ticket ID'),
+                            x=alt.X('Count:Q', title='Number of Interactions'),
+                            color=alt.Color('Type of Interaction:N', title='Interaction Type'),
+                            tooltip=['Ticket ID', 'Type of Interaction', 'Count']
+                        ).properties(
+                            width=600,
+                            height=400
+                        )
+                        st.altair_chart(pie1, use_container_width=True)
+                    else:
+                        st.info("No any interaction to show.")
+
+                    st.markdown("##### 🟡 Top 10 with most Deliveries by Delivery Type")
+                    if not delivery_counts.empty:
+                        pie1 = alt.Chart(delivery_counts).mark_bar().encode(
+                            y=alt.Y('Ticket ID:N', sort='-x', title='Ticket ID'),
+                            x=alt.X('Count:Q', title='Number of Deliveries'),
+                            color=alt.Color('Type of Delivery:N', title='Delivery Type'),
+                            tooltip=['Ticket ID', 'Type of Delivery', 'Count']
+                        ).properties(
+                            width=600,
+                            height=400
+                        )
+                        st.altair_chart(pie1, use_container_width=True)
+                    else:
+                        st.info("No any delivery to show.")
                         
 
                     
