@@ -723,30 +723,30 @@ else:
                 col2.metric(label="# of Requests from past week", value= millify(pastweek_request, precision=2))
                 col3.metric(label="# of Requests from past month", value= millify(pastmonth_request, precision=2))
                 style_metric_cards(border_left_color="#DBF227")
-                with st.expander("📊 Monitoring In-Progress TA Requests"):
+                with st.expander("🔎 **MONITOR IN-PROGRESS REQUESTS**"):
                     st.markdown("""
                         <div style='
-                            background: #e9ecef;
-                            border-radius: 14px;
-                            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+                            background: #f0f4ff;
+                            border-radius: 16px;
+                            box-shadow: 0 2px 8px rgba(26,35,126,0.08);
                             padding: 1.5em 1em 1em 1em;
                             margin-bottom: 2em;
                             margin-top: 1em;
                         '>
-                            <h2 style='
+                            <div style='
                                 color: #1a237e;
                                 font-family: "Segoe UI", "Arial", sans-serif;
                                 font-weight: 700;
-                                margin-bottom: 0.2em;
-                                font-size: 1.3em;
-                            '>📊 Monitoring In-Progress TA Requests</h2>
-                            <p style='
+                                font-size: 1.4em;
+                                margin-bottom: 0.3em;
+                            '>📊 Monitor In-Progress TA Requests</div>
+                            <div style='
                                 color: #333;
-                                font-size: 1em;
+                                font-size: 1.08em;
                                 margin-bottom: 0.8em;
                             '>
-                                This section provides an overview and monitoring tools for all Technical Assistance (TA) requests that are currently in progress. Use the charts and filters below to track assignments, due dates, and staff workload.
-                            </p>
+                                Track all active Technical Assistance requests, view staff assignments, and monitor upcoming deadlines. Use the interactive charts and filters below to stay on top of your team's workload.
+                            </div>
                         </div>
                     """, unsafe_allow_html=True)
                     # Convert date columns
