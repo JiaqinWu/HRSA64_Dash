@@ -1419,10 +1419,10 @@ else:
 
                 with st.expander("📦 **CHECK INTERACTION & DELIVERY PATTERNS**"):
                     st.markdown("""
-                        <div style='background: #f0f4ff; border-radius: 16px; box-shadow: 0 2px 8px rgba(26,35,126,0.08); padding: 1.5em 1em 1em 1em; margin-bottom: 2em; margin-top: 1em;'>
-                            <div style='color: #1a237e; font-family: "Segoe UI", "Arial", sans-serif; font-weight: 700; font-size: 1.4em; margin-bottom: 0.3em;'>📦 Check Interaction & Delivery Patterns</div>
-                            <div style='color: #333; font-size: 1.08em; margin-bottom: 0.8em;'>
-                                Check this section to see the interaction and delivery patterns of the TA requests.
+                        <div style='background: #e3e8fa; border-radius: 18px; box-shadow: 0 4px 18px rgba(26,35,126,0.10); padding: 2em 1.5em 1.5em 1.5em; margin-bottom: 2em; margin-top: 1em;'>
+                            <div style='color: #1a237e; font-family: "Segoe UI", "Arial", sans-serif; font-weight: 800; font-size: 1.5em; margin-bottom: 0.4em;'>📦 Explore TA Request Activity</div>
+                            <div style='color: #333; font-size: 1.13em; margin-bottom: 0.7em;'>
+                                Visualize and analyze the communication and delivery patterns for all Technical Assistance requests. Use the charts and filters below to spot trends, monitor engagement, and drill down into specific Ticket IDs for detailed activity logs.
                             </div>
                         </div>
                     """, unsafe_allow_html=True)
