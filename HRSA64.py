@@ -113,20 +113,16 @@ def upload_file_to_drive(file, filename, folder_id, creds_dict):
     return f"https://drive.google.com/file/d/{uploaded['id']}/view"
 
 
-# Example usage: Fetch data from Google Sheets
-df = None
-try:
+@st.cache_data(ttl=60)
+def load_main_sheet():
     spreadsheet1 = client.open('Example_TA_Request')
     worksheet1 = spreadsheet1.worksheet('Main')
     df = pd.DataFrame(worksheet1.get_all_records())
-except Exception as e:
-    st.error(f"Error fetching data from Google Sheets: {str(e)}")
-
-if df is not None:
     df['Submit Date'] = pd.to_datetime(df['Submit Date'], errors='coerce')
     df["Phone Number"] = df["Phone Number"].astype(str)
-else:
-    st.stop()  # Stop the app if data is not loaded
+    return df
+
+df = load_main_sheet()
 
 @st.cache_data(ttl=60)
 def load_interaction_sheet():
