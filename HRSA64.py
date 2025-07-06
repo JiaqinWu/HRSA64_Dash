@@ -114,12 +114,19 @@ def upload_file_to_drive(file, filename, folder_id, creds_dict):
 
 
 # Example usage: Fetch data from Google Sheets
+df = None
 try:
     spreadsheet1 = client.open('Example_TA_Request')
     worksheet1 = spreadsheet1.worksheet('Main')
     df = pd.DataFrame(worksheet1.get_all_records())
 except Exception as e:
     st.error(f"Error fetching data from Google Sheets: {str(e)}")
+
+if df is not None:
+    df['Submit Date'] = pd.to_datetime(df['Submit Date'], errors='coerce')
+    df["Phone Number"] = df["Phone Number"].astype(str)
+else:
+    st.stop()  # Stop the app if data is not loaded
 
 try:
     spreadsheet2 = client.open('Example_TA_Request')
@@ -134,9 +141,6 @@ try:
     df_del = pd.DataFrame(worksheet3.get_all_records())
 except Exception as e:
     st.error(f"Error fetching data from Google Sheets: {str(e)}")
-
-df['Submit Date'] = pd.to_datetime(df['Submit Date'], errors='coerce')
-df["Phone Number"] = df["Phone Number"].astype(str)
 
 # Extract last Ticket ID from the existing sheet
 last_ticket = df["Ticket ID"].dropna().astype(str).str.extract(r"GU(\d+)", expand=False).astype(int).max()
