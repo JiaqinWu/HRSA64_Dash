@@ -1418,7 +1418,7 @@ else:
                                 st.warning(error)
                         else:
                             # Only upload files if all validation passes
-                            if document_int:
+                            if document_del:
                                 try:
                                     folder_id_del = "1gXfWxys2cxd67YDk8zKPmG_mLGID4qL2" 
                                     links_del = []
