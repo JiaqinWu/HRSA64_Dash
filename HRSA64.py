@@ -537,6 +537,8 @@ else:
                     )
                     # Replace NaN with empty strings to ensure JSON compatibility
                     updated_sheet = updated_sheet.fillna("")
+                    spreadsheet1 = client.open('Example_TA_Request')
+                    worksheet1 = spreadsheet1.worksheet('Main')
                     worksheet1.update([updated_sheet.columns.values.tolist()] + updated_sheet.values.tolist())
                     # Send email notifications to all coordinators
                     coordinator_emails = [email for email, user in USERS.items() if "Coordinator" in user]
@@ -933,6 +935,8 @@ else:
                                     lambda x: x.strftime("%Y-%m-%d") if isinstance(x, (pd.Timestamp, datetime)) and not pd.isna(x) else x
                                 )
                                 updated_df = updated_df.fillna("") 
+                                spreadsheet1 = client.open('Example_TA_Request')
+                                worksheet1 = spreadsheet1.worksheet('Main')
 
                                 # Push to Google Sheet
                                 worksheet1.update([updated_df.columns.values.tolist()] + updated_df.values.tolist())
@@ -1109,6 +1113,9 @@ else:
                                     lambda x: x.strftime("%Y-%m-%d") if isinstance(x, (pd.Timestamp, datetime)) and not pd.isna(x) else x
                                 )
                                 updated_df = updated_df.fillna("") 
+
+                                spreadsheet1 = client.open('Example_TA_Request')
+                                worksheet1 = spreadsheet1.worksheet('Main')
 
                                 # Push to Google Sheets
                                 worksheet1.update([updated_df.columns.values.tolist()] + updated_df.values.tolist())
@@ -1307,6 +1314,8 @@ else:
                                 )
                                 # Replace NaN with empty strings to ensure JSON compatibility
                                 updated_sheet1 = updated_sheet1.fillna("")
+                                spreadsheet2 = client.open('Example_TA_Request')
+                                worksheet2 = spreadsheet2.worksheet('Interaction')
                                 worksheet2.update([updated_sheet1.columns.values.tolist()] + updated_sheet1.values.tolist())
 
                                 st.success("✅ Submission successful!")
@@ -1445,6 +1454,8 @@ else:
                                 )
                                 # Replace NaN with empty strings to ensure JSON compatibility
                                 updated_sheet2 = updated_sheet2.fillna("")
+                                spreadsheet3 = client.open('Example_TA_Request')
+                                worksheet3 = spreadsheet3.worksheet('Delivery')
                                 worksheet3.update([updated_sheet2.columns.values.tolist()] + updated_sheet2.values.tolist())
 
                                 st.success("✅ Submission successful!")
@@ -1581,6 +1592,8 @@ else:
                                 lambda x: x.strftime("%Y-%m-%d") if isinstance(x, (pd.Timestamp, datetime)) and not pd.isna(x) else x
                             )
                             updated_df = updated_df.fillna("") 
+                            spreadsheet1 = client.open('Example_TA_Request')
+                            worksheet1 = spreadsheet1.worksheet('Main')
 
                             # Push to Google Sheet
                             worksheet1.update([updated_df.columns.values.tolist()] + updated_df.values.tolist())
