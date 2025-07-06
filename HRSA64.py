@@ -1290,7 +1290,7 @@ else:
 
                             new_row_int = {
                                 'Ticket ID': ticket_id_int,
-                                "Date of Interaction": date_int,
+                                "Date of Interaction": date_int.strftime("%Y-%m-%d"),  # Convert to string
                                 "Type of Interaction": type_interaction,
                                 "Short Summary": interaction_description,
                                 "Document": drive_links_int
@@ -1428,7 +1428,7 @@ else:
 
                             new_row_del = {
                                 'Ticket ID': ticket_id_del,
-                                "Date of Delivery": date_del,
+                                "Date of Delivery": date_del.strftime("%Y-%m-%d"),  # Convert to string
                                 "Type of Delivery": type_delivery,
                                 "Short Summary": delivery_description,
                                 "Document": drive_links_del
@@ -1810,7 +1810,7 @@ else:
 
                             new_row_int = {
                                 'Ticket ID': ticket_id_int,
-                                "Date of Interaction": date_int,
+                                "Date of Interaction": date_int.strftime("%Y-%m-%d"),  # Convert to string
                                 "Type of Interaction": type_interaction,
                                 "Short Summary": interaction_description,
                                 "Document": drive_links_int
@@ -1948,7 +1948,7 @@ else:
 
                             new_row_del = {
                                 'Ticket ID': ticket_id_del,
-                                "Date of Delivery": date_del,
+                                "Date of Delivery": date_del.strftime("%Y-%m-%d"),  # Convert to string
                                 "Type of Delivery": type_delivery,
                                 "Short Summary": delivery_description,
                                 "Document": drive_links_del
