@@ -128,19 +128,21 @@ if df is not None:
 else:
     st.stop()  # Stop the app if data is not loaded
 
-try:
+@st.cache_data(ttl=60)
+def load_interaction_sheet():
     spreadsheet2 = client.open('Example_TA_Request')
     worksheet2 = spreadsheet2.worksheet('Interaction')
-    df_int = pd.DataFrame(worksheet2.get_all_records())
-except Exception as e:
-    st.error(f"Error fetching data from Google Sheets: {str(e)}")
+    return pd.DataFrame(worksheet2.get_all_records())
 
-try:
+df_int = load_interaction_sheet()
+
+@st.cache_data(ttl=60)
+def load_delivery_sheet():
     spreadsheet3 = client.open('Example_TA_Request')
     worksheet3 = spreadsheet3.worksheet('Delivery')
-    df_del = pd.DataFrame(worksheet3.get_all_records())
-except Exception as e:
-    st.error(f"Error fetching data from Google Sheets: {str(e)}")
+    return pd.DataFrame(worksheet3.get_all_records())
+
+df_del = load_delivery_sheet()
 
 # Extract last Ticket ID from the existing sheet
 last_ticket = df["Ticket ID"].dropna().astype(str).str.extract(r"GU(\d+)", expand=False).astype(int).max()
