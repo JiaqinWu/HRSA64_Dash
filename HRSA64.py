@@ -986,7 +986,7 @@ else:
                         """, unsafe_allow_html=True)
 
                 st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
-                with st.expander("👍 Details of In-progress & Completed Requests"):
+                with st.expander("👍 **DETAILS OF IN-PROGRESS & COMPLETED REQUESTS**"):
                     st.markdown("""
                         <div style='
                             background: #e9ecef;
@@ -1668,7 +1668,7 @@ else:
                 st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
 
                 # --- Section 2: Filter, Sort, Comment
-                with st.expander("🚧 IN-PROGRESS REQUESTS"):
+                with st.expander("🚧 **IN-PROGRESS REQUESTS**"):
                     st.markdown("#### 🚧 In-progress Requests")
 
                     # Filter "In Progress" requests
