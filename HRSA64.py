@@ -169,8 +169,8 @@ df["Phone Number"] = df["Phone Number"].astype(str).apply(format_phone)
 # --- Demo user database
 USERS = {
     "jw2104@georgetown.edu": {
-        "Coordinator": {"password": "Qin8851216", "name": "Jiaqin Wu"},
-        "Assignee/Staff": {"password": "Qin8851216", "name": "Jiaqin Wu"}
+        "Coordinator": {"password": "Qin88251216", "name": "Jiaqin Wu"},
+        "Assignee/Staff": {"password": "Qin88251216", "name": "Jiaqin Wu"}
     },
     "Jenevieve.Opoku@georgetown.edu": {
         "Coordinator": {"password": "Tootles82!", "name": "Jenevieve Opoku"},
@@ -1230,7 +1230,7 @@ else:
                     # Submit logic
                     if st.button("Submit",key='interaction_submit'):
                         errors = []
-                        drive_links = ""
+                        drive_links_int = ""  # Initialize here
                         # Required field checks
                         if not ticket_id_int: errors.append("Ticket ID is required.")
                         if not date_int: errors.append("Date of interaction is required.")
@@ -1841,7 +1841,7 @@ else:
                     # Submit logic
                     if st.button("Submit",key='interaction_submit1'):
                         errors = []
-                        drive_links = ""
+                        drive_links_int = ""  # Initialize here
                         # Required field checks
                         if not ticket_id_int: errors.append("Ticket ID is required.")
                         if not date_int: errors.append("Date of interaction is required.")
