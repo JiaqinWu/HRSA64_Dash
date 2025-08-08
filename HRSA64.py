@@ -118,7 +118,7 @@ def upload_file_to_drive(file, filename, folder_id, creds_dict):
     return f"https://drive.google.com/file/d/{uploaded['id']}/view"
 
 
-@st.cache_data(ttl=60)
+@st.cache_data(ttl=30)
 def load_main_sheet():
     spreadsheet1 = client.open('Example_TA_Request')
     worksheet1 = spreadsheet1.worksheet('Main')
@@ -129,7 +129,7 @@ def load_main_sheet():
 
 df = load_main_sheet()
 
-@st.cache_data(ttl=60)
+@st.cache_data(ttl=30)
 def load_interaction_sheet():
     spreadsheet2 = client.open('Example_TA_Request')
     worksheet2 = spreadsheet2.worksheet('Interaction')
@@ -137,7 +137,7 @@ def load_interaction_sheet():
 
 df_int = load_interaction_sheet()
 
-@st.cache_data(ttl=60)
+@st.cache_data(ttl=30)
 def load_delivery_sheet():
     spreadsheet3 = client.open('Example_TA_Request')
     worksheet3 = spreadsheet3.worksheet('Delivery')
