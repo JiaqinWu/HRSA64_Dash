@@ -540,6 +540,10 @@ else:
                     spreadsheet1 = client.open('Example_TA_Request')
                     worksheet1 = spreadsheet1.worksheet('Main')
                     worksheet1.update([updated_sheet.columns.values.tolist()] + updated_sheet.values.tolist())
+                    
+                    # Clear cache to refresh data
+                    st.cache_data.clear()
+                    
                     # Send email notifications to all coordinators
                     coordinator_emails = [email for email, user in USERS.items() if "Coordinator" in user]
                     #coordinator_emails = ["jw2104@georgetown.edu"]
@@ -923,6 +927,9 @@ else:
                                 # Push to Google Sheet
                                 worksheet1.update([updated_df.columns.values.tolist()] + updated_df.values.tolist())
 
+                                # Clear cache to refresh data
+                                st.cache_data.clear()
+                                
                                 st.success(f"Coach {selected_coach} assigned! Status updated to 'In Progress'.")
 
                                 # Send email to staff   
@@ -1102,6 +1109,9 @@ else:
                                 # Push to Google Sheets
                                 worksheet1.update([updated_df.columns.values.tolist()] + updated_df.values.tolist())
 
+                                # Clear cache to refresh data
+                                st.cache_data.clear()
+                                
                                 st.success("💬 Comment saved and synced with Google Sheets.")
                                 time.sleep(2)
                                 st.rerun()
@@ -1283,6 +1293,9 @@ else:
                                 worksheet2 = spreadsheet2.worksheet('Interaction')
                                 worksheet2.update([updated_sheet1.columns.values.tolist()] + updated_sheet1.values.tolist())
 
+                                # Clear cache to refresh data
+                                st.cache_data.clear()
+                                
                                 st.success("✅ Submission successful!")
                                 for key in list(st.session_state.keys()):
                                     del st.session_state[key]
@@ -1406,6 +1419,9 @@ else:
                                 worksheet3 = spreadsheet3.worksheet('Delivery')
                                 worksheet3.update([updated_sheet2.columns.values.tolist()] + updated_sheet2.values.tolist())
 
+                                # Clear cache to refresh data
+                                st.cache_data.clear()
+                                
                                 st.success("✅ Submission successful!")
                                 for key in list(st.session_state.keys()):
                                     del st.session_state[key]
@@ -1643,6 +1659,9 @@ else:
                             # Push to Google Sheet
                             worksheet1.update([updated_df.columns.values.tolist()] + updated_df.values.tolist())
 
+                            # Clear cache to refresh data
+                            st.cache_data.clear()
+                            
                             st.success("✅ Request marked as completed.")
                             time.sleep(2)
                             st.rerun()
@@ -1751,6 +1770,8 @@ else:
 
                                 # Push to Google Sheets
                                 worksheet1.update([updated_df.columns.values.tolist()] + updated_df.values.tolist())
+
+                                st.cache_data.clear()
 
                                 st.success("💬 Comment saved successfully!.")
                                 time.sleep(2)
@@ -1892,6 +1913,8 @@ else:
                                 updated_sheet1 = updated_sheet1.fillna("")
                                 worksheet2.update([updated_sheet1.columns.values.tolist()] + updated_sheet1.values.tolist())
 
+                                st.cache_data.clear()
+                                
                                 st.success("✅ Submission successful!")
                                 for key in list(st.session_state.keys()):
                                     del st.session_state[key]
@@ -2013,6 +2036,9 @@ else:
                                 updated_sheet2 = updated_sheet2.fillna("")
                                 worksheet3.update([updated_sheet2.columns.values.tolist()] + updated_sheet2.values.tolist())
 
+                                # Clear cache to refresh data
+                                st.cache_data.clear()
+                                
                                 st.success("✅ Submission successful!")
                                 for key in list(st.session_state.keys()):
                                     del st.session_state[key]
