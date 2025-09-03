@@ -209,6 +209,12 @@ USERS = {
     "carod@bu.edu": {
         "Assignee/Staff": {"password": "Carlos123!", "name": "Carlos Rodriguez-Diaz"}
     },
+    "km2079@georgetown.edu": {
+        "Assignee/Staff": {"password": "Kiah123!", "name": "Kiah Moorehead"}
+    },
+    "vd294@georgetown.edu": {
+        "Assignee/Staff": {"password": "Vanessa123!", "name": "Vanessa Da Costa"}
+    },
 }
 
 lis_location = ["Maricopa Co. - Arizona", "Alameda Co. - California", "Los Angeles Co. - California", "Orange Co. - California", "Riverside Co. - California",\
