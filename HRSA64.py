@@ -1155,6 +1155,46 @@ else:
                                         except Exception as e:
                                             st.warning(f"⚠️ Failed to send transfer email to staff {new_coach}: {e}")
 
+                                    # Email notification to previous coach (if exists)
+                                    if old_coach and old_coach != new_coach:
+                                        previous_coach_email = None
+                                        for _email, roles in USERS.items():
+                                            if "Assignee/Staff" in roles and roles["Assignee/Staff"]["name"] == old_coach:
+                                                previous_coach_email = _email
+                                                break
+
+                                        if previous_coach_email:
+                                            previous_subject = f"TA Request Transferred: {updated_df.loc[selected_transfer_index, 'Ticket ID']}"
+                                            previous_body = f"""
+                                            Hi {old_coach},
+
+                                            The following Technical Assistance request has been transferred from you to another coach:
+
+                                            Ticket ID: {updated_df.loc[selected_transfer_index, 'Ticket ID']}
+                                            Jurisdiction: {updated_df.loc[selected_transfer_index, 'Jurisdiction']}
+                                            Organization: {updated_df.loc[selected_transfer_index, 'Organization']}
+                                            New Coach: {new_coach}
+                                            Description: {updated_df.loc[selected_transfer_index, 'TA Description']}
+                                            Priority: {updated_df.loc[selected_transfer_index, 'Priority']}
+                                            Targeted Due Date: {updated_df.loc[selected_transfer_index, 'Targeted Due Date']}
+
+                                            Decision by: {coordinator_name}
+                                            {('Reason: ' + reason_transfer) if reason_transfer else ''}
+
+                                            You no longer need to work on this request. Please contact gutap@georgetown.edu for any questions or concerns.
+
+                                            Best,
+                                            GU-TAP System
+                                            """
+                                            try:
+                                                send_email_mailjet(
+                                                    to_email=previous_coach_email,
+                                                    subject=previous_subject,
+                                                    body=previous_body,
+                                                )
+                                            except Exception as e:
+                                                st.warning(f"⚠️ Failed to send transfer notification to previous coach {old_coach}: {e}")
+
                                     time.sleep(2)
                                     st.rerun()
                                 except Exception as e:
