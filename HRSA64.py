@@ -215,6 +215,9 @@ USERS = {
     "vd294@georgetown.edu": {
         "Assignee/Staff": {"password": "Vanessa123!", "name": "Vanessa Da Costa"}
     },
+    "tm1649@georgetown.edu": {
+        "Assignee/Staff": {"password": "Trena123!", "name": "Trena Mukherjee"}
+    },
 }
 
 lis_location = ["Maricopa Co. - Arizona", "Alameda Co. - California", "Los Angeles Co. - California", "Orange Co. - California", "Riverside Co. - California",\
@@ -800,7 +803,8 @@ else:
 
 
                     staff_list = ["Jenevieve Opoku", "Deus Bazira", "Kemisha Denny", "Katherine Robsky", 
-                    "Martine Etienne-Mesubi", "Seble Kassaye", "Weijun Yu", "Jiaqin Wu", "Zelalem Temesgen", "Carlos Rodriguez-Diaz"]
+                    "Martine Etienne-Mesubi", "Seble Kassaye", "Weijun Yu", "Jiaqin Wu", "Zelalem Temesgen", "Carlos Rodriguez-Diaz",
+                    "Kiah Moorehead","Vanessa Da Costa","Trena Mukherjee"]
 
                     staff_list_sorted = sorted(staff_list, key=lambda x: x.split()[0])
 
