@@ -141,6 +141,15 @@ for _col in transfer_columns:
     if _col not in df.columns:
         df[_col] = ""
 
+# Ensure comment history columns exist
+comment_history_columns = [
+    "Coordinator Comment History",
+    "Staff Comment History",
+]
+for _col in comment_history_columns:
+    if _col not in df.columns:
+        df[_col] = ""
+
 @st.cache_data(ttl=30)
 def load_interaction_sheet():
     spreadsheet2 = client.open('Example_TA_Request')
@@ -1235,7 +1244,7 @@ else:
                         st.dataframe(filtered_df[[
                             "Ticket ID","Jurisdiction", "Organization", "Name", "Title/Position", "Email Address", "Phone Number",
                             "Focus Area", "TA Type", "Assigned Date", "Targeted Due Date","Expected Duration (Days)","Priority",
-                            "Assigned Coach", "TA Description","Document","Coordinator Comment"
+                            "Assigned Coach", "TA Description","Document","Coordinator Comment History"
                         ]].sort_values(by="Expected Duration (Days)").reset_index(drop=True))
 
                         # Select request by index (row number in submitted_requests)
@@ -1256,7 +1265,18 @@ else:
 
                                 # Copy and update df
                                 updated_df = df.copy()
+                                # Keep latest comment in main field
                                 updated_df.loc[selected_row_global_index, "Coordinator Comment"] = comment_input
+                                # Append to history with timestamp and author
+                                ts = datetime.today().strftime("%Y-%m-%d %H:%M")
+                                author = coordinator_name
+                                entry = f"{ts} | {author}: {comment_input}" if comment_input else ""
+                                if entry:
+                                    existing = str(updated_df.loc[selected_row_global_index, "Coordinator Comment History"]).strip()
+                                    if existing and existing.lower() != "nan":
+                                        updated_df.loc[selected_row_global_index, "Coordinator Comment History"] = existing + "\n" + entry
+                                    else:
+                                        updated_df.loc[selected_row_global_index, "Coordinator Comment History"] = entry
                                 updated_df = updated_df.applymap(
                                     lambda x: x.strftime("%Y-%m-%d") if isinstance(x, (pd.Timestamp, datetime)) and not pd.isna(x) else x
                                 )
@@ -1336,7 +1356,7 @@ else:
                             "Ticket ID","Jurisdiction", "Organization", "Name", "Title/Position", "Email Address", "Phone Number",
                             "Focus Area", "TA Type", "Priority", "Assigned Coach", "TA Description","Document","Assigned Date",
                             "Targeted Due Date", "Close Date", "Expected Duration (Days)",
-                            'Actual Duration (Days)', "Coordinator Comment", "Staff Comment"
+                            'Actual Duration (Days)', "Coordinator Comment History", "Staff Comment History", "Transfer History"
                         ]].reset_index(drop=True))
 
                 st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
@@ -1785,7 +1805,7 @@ else:
                     # Display clean table (exclude PriorityOrder column)
                     st.dataframe(staff_df[[
                         "Ticket ID","Jurisdiction", "Organization", "Name", "Title/Position", "Email Address", "Phone Number",
-                        "Focus Area", "TA Type", "Assigned Date", "Targeted Due Date", "Priority", "TA Description","Document","Coordinator Comment"
+                        "Focus Area", "TA Type", "Assigned Date", "Targeted Due Date", "Priority", "TA Description","Document","Coordinator Comment History"
                     ]].reset_index(drop=True))
 
                     # Select request by index (row number in submitted_requests)
@@ -1899,7 +1919,7 @@ else:
                         st.dataframe(filtered_df2[[
                             "Ticket ID","Jurisdiction", "Organization", "Name", "Title/Position", "Email Address", "Phone Number",
                             "Focus Area", "TA Type", "Assigned Date", "Targeted Due Date","Expected Duration (Days)","Priority", "Assigned Coach", "TA Description",
-                            "Document","Coordinator Comment", "Staff Comment"
+                            "Document","Coordinator Comment History", "Staff Comment History", "Transfer History"
                         ]].sort_values(by="Expected Duration (Days)").reset_index(drop=True))
 
                         # Select request by index (row number in submitted_requests)
@@ -1921,7 +1941,18 @@ else:
 
                                 # Copy df and update
                                 updated_df = df.copy()
+                                # Keep latest comment in main field
                                 updated_df.loc[global_index, "Staff Comment"] = comment_text
+                                # Append to history with timestamp and author
+                                ts = datetime.today().strftime("%Y-%m-%d %H:%M")
+                                author = staff_name or "Staff"
+                                entry = f"{ts} | {author}: {comment_text}" if comment_text else ""
+                                if entry:
+                                    existing = str(updated_df.loc[global_index, "Staff Comment History"]).strip()
+                                    if existing and existing.lower() != "nan":
+                                        updated_df.loc[global_index, "Staff Comment History"] = existing + "\n" + entry
+                                    else:
+                                        updated_df.loc[global_index, "Staff Comment History"] = entry
                                 updated_df = updated_df.applymap(
                                     lambda x: x.strftime("%Y-%m-%d") if isinstance(x, (pd.Timestamp, datetime)) and not pd.isna(x) else x
                                 )
