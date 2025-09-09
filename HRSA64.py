@@ -129,6 +129,18 @@ def load_main_sheet():
 
 df = load_main_sheet()
 
+# Ensure transfer-related columns exist
+transfer_columns = [
+    "Last Transfer From",
+    "Last Transfer To",
+    "Last Transfer Date",
+    "Last Transfer By",
+    "Transfer History",
+]
+for _col in transfer_columns:
+    if _col not in df.columns:
+        df[_col] = ""
+
 @st.cache_data(ttl=30)
 def load_interaction_sheet():
     spreadsheet2 = client.open('Example_TA_Request')
@@ -1001,6 +1013,143 @@ else:
                             }
                             </style>
                         """, unsafe_allow_html=True)
+
+                # --- Transfer TA Requests (Coordinator only)
+                st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
+                with st.expander("🔄 **TRANSFER TA REQUESTS**"):
+                    st.markdown("""
+                        <div style='background: #f0f4ff; border-radius: 16px; box-shadow: 0 2px 8px rgba(26,35,126,0.08); padding: 1.5em 1em 1em 1em; margin-bottom: 2em; margin-top: 1em;'>
+                            <div style='color: #1a237e; font-family: "Segoe UI", "Arial", sans-serif; font-weight: 700; font-size: 1.4em; margin-bottom: 0.3em;'>🔄 Transfer In-Progress TA Requests</div>
+                            <div style='color: #333; font-size: 1.08em; margin-bottom: 0.8em;'>
+                                Reassign an in-progress request to another coach if needed.
+                            </div>
+                        </div>
+                    """, unsafe_allow_html=True)
+
+                    inprogress_for_transfer = df[df['Status'] == 'In Progress'].copy()
+
+                    if inprogress_for_transfer.empty:
+                        st.info("No in-progress requests available to transfer.")
+                    else:
+                        # Selection of ticket to transfer
+                        transfer_indices = inprogress_for_transfer.index.tolist()
+                        selected_transfer_index = st.selectbox(
+                            "Select a request to transfer",
+                            options=transfer_indices,
+                            format_func=lambda idx: f"{df.at[idx, 'Ticket ID']} | {df.at[idx, 'Jurisdiction']} (Current: {df.at[idx, 'Assigned Coach']})",
+                        )
+
+                        current_coach = df.at[selected_transfer_index, 'Assigned Coach']
+                        # Exclude current coach from options
+                        available_new_coaches = [c for c in staff_list_sorted if c != current_coach]
+                        new_coach = st.selectbox(
+                            "Transfer to coach",
+                            options=available_new_coaches,
+                            index=None,
+                            placeholder="Select option..."
+                        )
+
+                        reason_transfer = st.text_area("Reason for transfer (optional)", placeholder="Enter text", height=100)
+
+                        st.markdown("""
+                            <style>
+                            .stButton > button {
+                                width: 100%;
+                                background-color: #cdb4db;
+                                color: black;
+                                font-weight: 600;
+                                border-radius: 8px;
+                                padding: 0.6em;
+                                margin-top: 1em;
+                            }
+                            </style>
+                        """, unsafe_allow_html=True)
+
+                        if st.button("✅ Confirm Transfer"):
+                            if not new_coach:
+                                st.warning("Please select a new coach to transfer to.")
+                            else:
+                                try:
+                                    updated_df = df.copy()
+                                    old_coach = current_coach
+
+                                    # Update transfer metadata
+                                    updated_df.loc[selected_transfer_index, "Last Transfer From"] = old_coach or ""
+                                    updated_df.loc[selected_transfer_index, "Last Transfer To"] = new_coach
+                                    updated_df.loc[selected_transfer_index, "Last Transfer Date"] = datetime.today().strftime("%Y-%m-%d")
+                                    updated_df.loc[selected_transfer_index, "Last Transfer By"] = coordinator_name
+                                    updated_df.loc[selected_transfer_index, "Reason for Transfer"] = reason_transfer or ""
+
+                                    # Update active assignment
+                                    updated_df.loc[selected_transfer_index, "Assigned Coach"] = new_coach
+
+                                    # Append transfer history
+                                    history_entry = f"{datetime.today().strftime('%Y-%m-%d')} | By: {coordinator_name} | From: {old_coach or 'N/A'} -> To: {new_coach}" + (f" | Reason: {reason_transfer.strip()}" if reason_transfer else "")
+                                    existing_history = str(updated_df.loc[selected_transfer_index, "Transfer History"]).strip()
+                                    if existing_history and existing_history.lower() != "nan":
+                                        updated_df.loc[selected_transfer_index, "Transfer History"] = existing_history + "\n" + history_entry
+                                    else:
+                                        updated_df.loc[selected_transfer_index, "Transfer History"] = history_entry
+
+                                    # Stringify dates for sheet
+                                    updated_df = updated_df.applymap(
+                                        lambda x: x.strftime("%Y-%m-%d") if isinstance(x, (pd.Timestamp, datetime)) and not pd.isna(x) else x
+                                    )
+                                    updated_df = updated_df.fillna("")
+
+                                    spreadsheet1 = client.open('Example_TA_Request')
+                                    worksheet1 = spreadsheet1.worksheet('Main')
+                                    worksheet1.update([updated_df.columns.values.tolist()] + updated_df.values.tolist())
+
+                                    st.cache_data.clear()
+
+                                    st.success(f"Request {updated_df.loc[selected_transfer_index, 'Ticket ID']} transferred from {old_coach or 'N/A'} to {new_coach}.")
+
+                                    # Email notification to new assignee
+                                    staff_email = None
+                                    for _email, roles in USERS.items():
+                                        if "Assignee/Staff" in roles and roles["Assignee/Staff"]["name"] == new_coach:
+                                            staff_email = _email
+                                            break
+
+                                    if staff_email:
+                                        staff_subject = f"You have been transferred a TA request: {updated_df.loc[selected_transfer_index, 'Ticket ID']}"
+                                        staff_body = f"""
+                                        Hi {new_coach},
+
+                                        You have been assigned (via transfer) as the coach for the following Technical Assistance request:
+
+                                        Ticket ID: {updated_df.loc[selected_transfer_index, 'Ticket ID']}
+                                        Jurisdiction: {updated_df.loc[selected_transfer_index, 'Jurisdiction']}
+                                        Organization: {updated_df.loc[selected_transfer_index, 'Organization']}
+                                        Previous Coach: {old_coach or 'N/A'}
+                                        Description: {updated_df.loc[selected_transfer_index, 'TA Description']}
+                                        Priority: {updated_df.loc[selected_transfer_index, 'Priority']}
+                                        Targeted Due Date: {updated_df.loc[selected_transfer_index, 'Targeted Due Date']}
+                                        Attachments: {updated_df.loc[selected_transfer_index, 'Document'] or 'None'}
+
+                                        Decision by: {coordinator_name}
+                                        {('Reason: ' + reason_transfer) if reason_transfer else ''}
+
+                                        Please view and manage this request via the GU-TAP System: https://hrsagutap.streamlit.app/.
+                                        Please contact gutap@georgetown.edu for any questions or concerns.
+
+                                        Best,
+                                        GU-TAP System
+                                        """
+                                        try:
+                                            send_email_mailjet(
+                                                to_email=staff_email,
+                                                subject=staff_subject,
+                                                body=staff_body,
+                                            )
+                                        except Exception as e:
+                                            st.warning(f"⚠️ Failed to send transfer email to staff {new_coach}: {e}")
+
+                                    time.sleep(2)
+                                    st.rerun()
+                                except Exception as e:
+                                    st.error(f"Error updating Google Sheets: {str(e)}")
 
                 st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
                 with st.expander("👍 **DETAILS OF IN-PROGRESS & COMPLETED REQUESTS**"):
