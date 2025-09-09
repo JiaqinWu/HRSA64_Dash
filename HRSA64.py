@@ -1286,6 +1286,8 @@ else:
                                 worksheet1 = spreadsheet1.worksheet('Main')
 
                                 # Push to Google Sheets
+                                spreadsheet1 = client.open('Example_TA_Request')
+                                worksheet1 = spreadsheet1.worksheet('Main')
                                 worksheet1.update([updated_df.columns.values.tolist()] + updated_df.values.tolist())
 
                                 # Clear cache to refresh data
