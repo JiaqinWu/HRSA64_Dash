@@ -715,9 +715,9 @@ else:
                     </div>
                     """, unsafe_allow_html=True)
                 col1, col2, col3 = st.columns(3)
-                total_request = df.shape[0]
-                inprogress_request = df[df['Status'] == 'In Progress'].shape[0]
-                completed_request = df[df['Status'] == 'Completed'].shape[0]
+                total_request = df['Ticket ID'].nunique()
+                inprogress_request = df[df['Status'] == 'In Progress']['Ticket ID'].nunique()
+                completed_request = df[df['Status'] == 'Completed']['Ticket ID'].nunique()
 
                 col1.metric(label="# of Total Requests", value= millify(total_request, precision=2))
                 col2.metric(label="# of In-Progress Requests", value= millify(inprogress_request, precision=2))
@@ -729,9 +729,9 @@ else:
                 today = datetime.today()
                 last_week = today - timedelta(days=7)
                 last_month = today - timedelta(days=30)
-                undone_request = df[df['Status'] == 'Submitted'].shape[0]
-                pastweek_request = df[df['Submit Date'] >= last_week].shape[0]
-                pastmonth_request = df[df['Submit Date'] >= last_month].shape[0]
+                undone_request = df[df['Status'] == 'Submitted']['Ticket ID'].nunique()
+                pastweek_request = df[df['Submit Date'] >= last_week]['Ticket ID'].nunique()
+                pastmonth_request = df[df['Submit Date'] >= last_month]['Ticket ID'].nunique()
                 col1.metric(label="# of Unassigned Requests", value= millify(undone_request, precision=2))
                 col2.metric(label="# of Requests from past week", value= millify(pastweek_request, precision=2))
                 col3.metric(label="# of Requests from past month", value= millify(pastmonth_request, precision=2))
@@ -814,15 +814,15 @@ else:
                     today = datetime.today()
                     last_month = today - timedelta(days=30)
                     staff_dff = df[df["Assigned Coach"] == selected_staff].copy()
-                    in_progress_count = staff_dff[staff_dff["Status"] == "In Progress"].shape[0]
+                    in_progress_count = staff_dff[staff_dff["Status"] == "In Progress"]['Ticket ID'].nunique()
                     due_soon_count = staff_dff[
                         (staff_dff["Status"] == "In Progress") & 
                         (staff_dff["Targeted Due Date"] <= next_month)
-                    ].shape[0]
+                    ]['Ticket ID'].nunique()
                     completed_recently = staff_dff[
                         (staff_dff["Status"] == "Completed") & 
                         (staff_dff["Submit Date"] >= last_month)
-                    ].shape[0]
+                    ]['Ticket ID'].nunique()
 
                     # Metric 
                     col1, col2, col3 = st.columns(3)
@@ -1608,16 +1608,16 @@ else:
                 col1, col2 = st.columns(2)
                 col3, col4 = st.columns(2)
                 # 1. Total In Progress
-                total_in_progress = staff_df.shape[0]
-                total_complete = com_df.shape[0]
+                total_in_progress = staff_df['Ticket ID'].nunique()
+                total_complete = com_df['Ticket ID'].nunique()
 
                 # 2. Newly Assigned: within last 3 days
                 recent_cutoff = datetime.today() - timedelta(days=3)
-                newly_assigned = staff_df[staff_df["Assigned Date"] >= recent_cutoff].shape[0]
+                newly_assigned = staff_df[staff_df["Assigned Date"] >= recent_cutoff]['Ticket ID'].nunique()
 
                 # 3. Due within 1 month
                 due_soon_cutoff = datetime.today() + timedelta(days=30)
-                due_soon = staff_df[staff_df["Targeted Due Date"] <= due_soon_cutoff].shape[0]
+                due_soon = staff_df[staff_df["Targeted Due Date"] <= due_soon_cutoff]['Ticket ID'].nunique()
 
                 col1.metric("🟡 In Progress", total_in_progress)
                 col2.metric("✅ Completed", total_complete)
