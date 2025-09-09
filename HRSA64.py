@@ -1293,7 +1293,7 @@ else:
                                 # Clear cache to refresh data
                                 st.cache_data.clear()
                                 
-                                st.success("💬 Comment saved and synced with Google Sheets.")
+                                st.success("💬 Comment saved successfully!.")
                                 time.sleep(2)
                                 st.rerun()
 
