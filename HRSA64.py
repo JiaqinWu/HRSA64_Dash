@@ -118,11 +118,26 @@ def upload_file_to_drive(file, filename, folder_id, creds_dict):
     return f"https://drive.google.com/file/d/{uploaded['id']}/view"
 
 
+def _get_records_with_retry(spreadsheet_name, worksheet_name, retries=3, base_delay=0.5):
+    """Fetch worksheet records with simple exponential backoff to mitigate 429s."""
+    attempt = 0
+    last_exc = None
+    while attempt < retries:
+        try:
+            spreadsheet = client.open(spreadsheet_name)
+            worksheet = spreadsheet.worksheet(worksheet_name)
+            return worksheet.get_all_records()
+        except Exception as exc:
+            last_exc = exc
+            delay = base_delay * (2 ** attempt)
+            time.sleep(delay)
+            attempt += 1
+    # If all retries failed, re-raise last exception
+    raise last_exc
+
 @st.cache_data(ttl=300)
 def load_main_sheet():
-    spreadsheet1 = client.open('Example_TA_Request')
-    worksheet1 = spreadsheet1.worksheet('Main')
-    df = pd.DataFrame(worksheet1.get_all_records())
+    df = pd.DataFrame(_get_records_with_retry('Example_TA_Request', 'Main'))
     df['Submit Date'] = pd.to_datetime(df['Submit Date'], errors='coerce')
     df["Phone Number"] = df["Phone Number"].astype(str)
     return df
@@ -152,9 +167,7 @@ for _col in comment_history_columns:
 
 @st.cache_data(ttl=300)
 def load_interaction_sheet():
-    spreadsheet2 = client.open('Example_TA_Request')
-    worksheet2 = spreadsheet2.worksheet('Interaction')
-    return pd.DataFrame(worksheet2.get_all_records())
+    return pd.DataFrame(_get_records_with_retry('Example_TA_Request', 'Interaction'))
 
 df_int = load_interaction_sheet()
 
@@ -164,9 +177,7 @@ if "Jurisdiction" not in df_int.columns:
 
 @st.cache_data(ttl=300)
 def load_delivery_sheet():
-    spreadsheet3 = client.open('Example_TA_Request')
-    worksheet3 = spreadsheet3.worksheet('Delivery')
-    return pd.DataFrame(worksheet3.get_all_records())
+    return pd.DataFrame(_get_records_with_retry('Example_TA_Request', 'Delivery'))
 
 df_del = load_delivery_sheet()
 
