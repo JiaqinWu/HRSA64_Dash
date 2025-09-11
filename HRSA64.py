@@ -118,7 +118,7 @@ def upload_file_to_drive(file, filename, folder_id, creds_dict):
     return f"https://drive.google.com/file/d/{uploaded['id']}/view"
 
 
-@st.cache_data(ttl=120)
+@st.cache_data(ttl=300)
 def load_main_sheet():
     spreadsheet1 = client.open('Example_TA_Request')
     worksheet1 = spreadsheet1.worksheet('Main')
@@ -150,7 +150,7 @@ for _col in comment_history_columns:
     if _col not in df.columns:
         df[_col] = ""
 
-@st.cache_data(ttl=120)
+@st.cache_data(ttl=300)
 def load_interaction_sheet():
     spreadsheet2 = client.open('Example_TA_Request')
     worksheet2 = spreadsheet2.worksheet('Interaction')
@@ -162,7 +162,7 @@ df_int = load_interaction_sheet()
 if "Jurisdiction" not in df_int.columns:
     df_int["Jurisdiction"] = ""
 
-@st.cache_data(ttl=120)
+@st.cache_data(ttl=300)
 def load_delivery_sheet():
     spreadsheet3 = client.open('Example_TA_Request')
     worksheet3 = spreadsheet3.worksheet('Delivery')
