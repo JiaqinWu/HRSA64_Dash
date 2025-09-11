@@ -158,6 +158,10 @@ def load_interaction_sheet():
 
 df_int = load_interaction_sheet()
 
+# Ensure Interaction sheet has Jurisdiction column for no-ticket logs
+if "Jurisdiction" not in df_int.columns:
+    df_int["Jurisdiction"] = ""
+
 @st.cache_data(ttl=30)
 def load_delivery_sheet():
     spreadsheet3 = client.open('Example_TA_Request')
@@ -1411,15 +1415,26 @@ else:
                             </div>
                         </div>
                     """, unsafe_allow_html=True)
-                    lis_ticket = df["Ticket ID"].unique().tolist()
+                    lis_ticket = ["No Ticket ID"] + sorted([tid for tid in df["Ticket ID"].dropna().astype(str).unique().tolist()])
 
                     # Interaction Log form
                     col1, col2 = st.columns(2)
                     with col1:
-                        ticket_id_int = st.selectbox("Ticket ID *",lis_ticket, index=None,
-                            placeholder="Select option...",key='interaction')
+                        ticket_id_int = st.selectbox("Ticket ID *", lis_ticket, index=None,
+                            placeholder="Select option...", key='interaction')
                     with col2:
                         date_int = st.date_input("Date of Interaction *",value=datetime.today().date())
+
+                     # If No Ticket ID, ask for Jurisdiction
+                    jurisdiction_for_no_ticket = None
+                    if ticket_id_int == "No Ticket ID":
+                        jurisdiction_for_no_ticket = st.selectbox(
+                            "Jurisdiction *",
+                            lis_location,
+                            index=None,
+                            placeholder="Select option...",
+                            key='juris_interaction'
+                        )
 
                     list_interaction = [
                         "Email", "Phone Call", "In-Person Meeting", "Online Meeting", "Other"
@@ -1438,6 +1453,8 @@ else:
                         if type_interaction_other:
                             type_interaction = type_interaction_other 
                     interaction_description = st.text_area("Short Summary *", placeholder='Enter text', height=150,key='interaction_description') 
+
+                   
                     document_int = st.file_uploader(
                         "Upload any files or attachments that are relevant to this interaction.",accept_multiple_files=True
                     )
@@ -1464,6 +1481,8 @@ else:
                         drive_links_int = ""  # Initialize here
                         # Required field checks
                         if not ticket_id_int: errors.append("Ticket ID is required.")
+                        if ticket_id_int == "No Ticket ID" and not jurisdiction_for_no_ticket:
+                            errors.append("Jurisdiction is required when Ticket ID is not provided.")
                         if not date_int: errors.append("Date of interaction is required.")
                         if not type_interaction: errors.append("Type of interaction is required.")
                         if not interaction_description: errors.append("Short summary is required.")
@@ -1495,10 +1514,11 @@ else:
 
                             new_row_int = {
                                 'Ticket ID': ticket_id_int,
-                                "Date of Interaction": date_int.strftime("%Y-%m-%d"),  # Convert to string
+                                "Date of Interaction": date_int.strftime("%Y-%m-%d"),
                                 "Type of Interaction": type_interaction,
                                 "Short Summary": interaction_description,
-                                "Document": drive_links_int
+                                "Document": drive_links_int,
+                                "Jurisdiction": jurisdiction_for_no_ticket or ""
                             }
                             new_data_int = pd.DataFrame([new_row_int])
 
@@ -2024,15 +2044,27 @@ else:
                             </div>
                         </div>
                     """, unsafe_allow_html=True)
-                    lis_ticket = df["Ticket ID"].unique().tolist()
+                    lis_ticket = ["No Ticket ID"] + sorted([tid for tid in df["Ticket ID"].dropna().astype(str).unique().tolist()])
 
                     # Interaction Log form
                     col1, col2 = st.columns(2)
                     with col1:
-                        ticket_id_int = st.selectbox("Ticket ID *",lis_ticket, index=None,
-                            placeholder="Select option...",key='interaction1')
+                        ticket_id_int = st.selectbox("Ticket ID *", lis_ticket, index=None,
+                            placeholder="Select option...", key='interaction1')
                     with col2:
                         date_int = st.date_input("Date of Interaction *",value=datetime.today().date())
+                    
+                                        
+                    # If No Ticket ID, ask for Jurisdiction
+                    jurisdiction_for_no_ticket1 = None
+                    if ticket_id_int == "No Ticket ID":
+                        jurisdiction_for_no_ticket1 = st.selectbox(
+                            "Jurisdiction *",
+                            lis_location,
+                            index=None,
+                            placeholder="Select option...",
+                            key='juris_interaction1'
+                        )
 
                     list_interaction = [
                         "Email", "Phone Call", "In-Person Meeting", "Online Meeting", "Other"
@@ -2051,6 +2083,7 @@ else:
                         if type_interaction_other:
                             type_interaction = type_interaction_other 
                     interaction_description = st.text_area("Short Summary *", placeholder='Enter text', height=150,key='interaction_description1') 
+
                     document_int = st.file_uploader(
                         "Upload any files or attachments that are relevant to this interaction.",accept_multiple_files=True
                     )
@@ -2099,6 +2132,8 @@ else:
                         drive_links_int = ""  # Initialize here
                         # Required field checks
                         if not ticket_id_int: errors.append("Ticket ID is required.")
+                        if ticket_id_int == "No Ticket ID" and not jurisdiction_for_no_ticket1:
+                            errors.append("Jurisdiction is required when Ticket ID is not provided.")
                         if not date_int: errors.append("Date of interaction is required.")
                         if not type_interaction: errors.append("Type of interaction is required.")
                         if not interaction_description: errors.append("Short summary is required.")
@@ -2133,7 +2168,8 @@ else:
                                 "Date of Interaction": date_int.strftime("%Y-%m-%d"),  # Convert to string
                                 "Type of Interaction": type_interaction,
                                 "Short Summary": interaction_description,
-                                "Document": drive_links_int
+                                "Document": drive_links_int,
+                                "Jurisdiction": jurisdiction_for_no_ticket1 or ""
                             }
                             new_data_int = pd.DataFrame([new_row_int])
 
