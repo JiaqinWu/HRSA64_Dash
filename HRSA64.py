@@ -653,9 +653,7 @@ else:
 
 
                     st.success("✅ Submission successful!")
-                    for key in list(st.session_state.keys()):
-                        del st.session_state[key]
-                    time.sleep(5)
+                    time.sleep(2)
                     st.rerun()
 
                 except Exception as e:
@@ -1538,9 +1536,7 @@ else:
                                 st.cache_data.clear()
                                 
                                 st.success("✅ Submission successful!")
-                                for key in list(st.session_state.keys()):
-                                    del st.session_state[key]
-                                time.sleep(5)
+                                time.sleep(2)
                                 st.rerun()
 
                             except Exception as e:
@@ -1664,9 +1660,7 @@ else:
                                 st.cache_data.clear()
                                 
                                 st.success("✅ Submission successful!")
-                                for key in list(st.session_state.keys()):
-                                    del st.session_state[key]
-                                time.sleep(5)
+                                time.sleep(2)
                                 st.rerun()
 
                             except Exception as e:
@@ -2186,9 +2180,7 @@ else:
                                 st.cache_data.clear()
                                 
                                 st.success("✅ Submission successful!")
-                                for key in list(st.session_state.keys()):
-                                    del st.session_state[key]
-                                time.sleep(5)
+                                time.sleep(2)
                                 st.rerun()
 
                             except Exception as e:
