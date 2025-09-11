@@ -118,7 +118,7 @@ def upload_file_to_drive(file, filename, folder_id, creds_dict):
     return f"https://drive.google.com/file/d/{uploaded['id']}/view"
 
 
-@st.cache_data(ttl=30)
+@st.cache_data(ttl=120)
 def load_main_sheet():
     spreadsheet1 = client.open('Example_TA_Request')
     worksheet1 = spreadsheet1.worksheet('Main')
@@ -150,7 +150,7 @@ for _col in comment_history_columns:
     if _col not in df.columns:
         df[_col] = ""
 
-@st.cache_data(ttl=30)
+@st.cache_data(ttl=120)
 def load_interaction_sheet():
     spreadsheet2 = client.open('Example_TA_Request')
     worksheet2 = spreadsheet2.worksheet('Interaction')
@@ -162,7 +162,7 @@ df_int = load_interaction_sheet()
 if "Jurisdiction" not in df_int.columns:
     df_int["Jurisdiction"] = ""
 
-@st.cache_data(ttl=30)
+@st.cache_data(ttl=120)
 def load_delivery_sheet():
     spreadsheet3 = client.open('Example_TA_Request')
     worksheet3 = spreadsheet3.worksheet('Delivery')
@@ -2104,27 +2104,7 @@ else:
                         </style>
                     """, unsafe_allow_html=True)
 
-                    # Example usage: Fetch data from Google Sheets
-                    try:
-                        spreadsheet1 = client.open('Example_TA_Request')
-                        worksheet1 = spreadsheet1.worksheet('Main')
-                        df = pd.DataFrame(worksheet1.get_all_records())
-                    except Exception as e:
-                        st.error(f"Error fetching data from Google Sheets: {str(e)}")
-
-                    try:
-                        spreadsheet2 = client.open('Example_TA_Request')
-                        worksheet2 = spreadsheet2.worksheet('Interaction')
-                        df_int = pd.DataFrame(worksheet2.get_all_records())
-                    except Exception as e:
-                        st.error(f"Error fetching data from Google Sheets: {str(e)}")
-
-                    try:
-                        spreadsheet3 = client.open('Example_TA_Request')
-                        worksheet3 = spreadsheet3.worksheet('Delivery')
-                        df_del = pd.DataFrame(worksheet3.get_all_records())
-                    except Exception as e:
-                        st.error(f"Error fetching data from Google Sheets: {str(e)}")
+                    # Use cached dataframes df, df_int, df_del to avoid redundant reads
 
                     # Submit logic
                     if st.button("Submit",key='interaction_submit1'):
