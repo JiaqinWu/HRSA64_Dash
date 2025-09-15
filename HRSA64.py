@@ -269,6 +269,9 @@ USERS = {
     "bryan.shaw@georgetown.edu": {
         "Assignee/Staff": {"password": "Bryan123!", "name": "Bryan Shaw"}
     },
+    "th1089@georgetown.edu": {
+        "Assignee/Staff": {"password": "Tara123!", "name": "Tara Hixson"}
+    }
 }
 
 lis_location = ["Maricopa Co. - Arizona", "Alameda Co. - California", "Los Angeles Co. - California", "Orange Co. - California", "Riverside Co. - California",\
