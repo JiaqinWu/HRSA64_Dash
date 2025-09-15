@@ -254,6 +254,18 @@ USERS = {
     "tm1649@georgetown.edu": {
         "Assignee/Staff": {"password": "Trena123!", "name": "Trena Mukherjee"}
     },
+    "aj1202@georgetown.edu": {
+        "Assignee/Staff": {"password": "Abby123!", "name": "Abby Jordan"}
+    },
+    "mh2504@georgetown.edu": {
+        "Assignee/Staff": {"password": "Megan123!", "name": "Megan Highland"}
+    },
+    "jh2861@georgetown.edu": {
+        "Assignee/Staff": {"password": "Jesus123!", "name": "Jesus Hernandez Burgos"}
+    },
+    "sc2710@georgetown.edu": {
+        "Assignee/Staff": {"password": "Samantha123!", "name": "Samantha Cinnick"}
+    },
 }
 
 lis_location = ["Maricopa Co. - Arizona", "Alameda Co. - California", "Los Angeles Co. - California", "Orange Co. - California", "Riverside Co. - California",\
