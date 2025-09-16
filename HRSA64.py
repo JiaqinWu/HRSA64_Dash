@@ -1546,6 +1546,8 @@ else:
                                 "Short Summary": interaction_description,
                                 "Document": drive_links_int,
                                 "Jurisdiction": jurisdiction_for_no_ticket or ""
+                                "Submitted By": coordinator_name,
+                                "Submission Date": datetime.today().strftime("%Y-%m-%d %H:%M")
                             }
                             new_data_int = pd.DataFrame([new_row_int])
 
@@ -1669,7 +1671,9 @@ else:
                                 "Date of Delivery": date_del.strftime("%Y-%m-%d"),  # Convert to string
                                 "Type of Delivery": type_delivery,
                                 "Short Summary": delivery_description,
-                                "Document": drive_links_del
+                                "Document": drive_links_del,
+                                "Submitted By": coordinator_name,
+                                "Submission Date": datetime.today().strftime("%Y-%m-%d %H:%M")
                             }
                             new_data_del = pd.DataFrame([new_row_del])
 
@@ -2192,7 +2196,9 @@ else:
                                 "Type of Interaction": type_interaction,
                                 "Short Summary": interaction_description,
                                 "Document": drive_links_int,
-                                "Jurisdiction": jurisdiction_for_no_ticket1 or ""
+                                "Jurisdiction": jurisdiction_for_no_ticket1 or "",
+                                "Submitted By": staff_name,
+                                "Submission Date": datetime.today().strftime("%Y-%m-%d %H:%M")
                             }
                             new_data_int = pd.DataFrame([new_row_int])
 
@@ -2313,7 +2319,9 @@ else:
                                 "Date of Delivery": date_del.strftime("%Y-%m-%d"),  # Convert to string
                                 "Type of Delivery": type_delivery,
                                 "Short Summary": delivery_description,
-                                "Document": drive_links_del
+                                "Document": drive_links_del,
+                                "Submitted By": staff_name,
+                                "Submission Date": datetime.today().strftime("%Y-%m-%d %H:%M")
                             }
                             new_data_del = pd.DataFrame([new_row_del])
 
