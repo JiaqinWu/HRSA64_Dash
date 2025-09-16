@@ -135,7 +135,7 @@ def _get_records_with_retry(spreadsheet_name, worksheet_name, retries=3, base_de
     # If all retries failed, re-raise last exception
     raise last_exc
 
-@st.cache_data(ttl=300)
+@st.cache_data(ttl=600)
 def load_main_sheet():
     df = pd.DataFrame(_get_records_with_retry('Example_TA_Request', 'Main'))
     df['Submit Date'] = pd.to_datetime(df['Submit Date'], errors='coerce')
@@ -165,7 +165,7 @@ for _col in comment_history_columns:
     if _col not in df.columns:
         df[_col] = ""
 
-@st.cache_data(ttl=300)
+@st.cache_data(ttl=600)
 def load_interaction_sheet():
     return pd.DataFrame(_get_records_with_retry('Example_TA_Request', 'Interaction'))
 
@@ -175,7 +175,7 @@ df_int = load_interaction_sheet()
 if "Jurisdiction" not in df_int.columns:
     df_int["Jurisdiction"] = ""
 
-@st.cache_data(ttl=300)
+@st.cache_data(ttl=600)
 def load_delivery_sheet():
     return pd.DataFrame(_get_records_with_retry('Example_TA_Request', 'Delivery'))
 
