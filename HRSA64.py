@@ -1545,7 +1545,7 @@ else:
                                 "Type of Interaction": type_interaction,
                                 "Short Summary": interaction_description,
                                 "Document": drive_links_int,
-                                "Jurisdiction": jurisdiction_for_no_ticket or ""
+                                "Jurisdiction": jurisdiction_for_no_ticket or "",
                                 "Submitted By": coordinator_name,
                                 "Submission Date": datetime.today().strftime("%Y-%m-%d %H:%M")
                             }
