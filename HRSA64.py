@@ -2123,7 +2123,7 @@ else:
 
                             try:
                                 # Append new data to Google Sheet
-                                updated_sheet2 = pd.concat([df_del, new_data_del], ignore_index=True)
+                                updated_sheet2 = pd.concat([df_int, new_data_int], ignore_index=True)
                                 updated_sheet2= updated_sheet2.applymap(
                                     lambda x: x.strftime("%Y-%m-%d") if isinstance(x, (datetime, pd.Timestamp)) else x
                                 )
@@ -2132,7 +2132,7 @@ else:
                                 
                                 # Get the worksheet first
                                 spreadsheet3 = client.open('Example_TA_Request')
-                                worksheet3 = spreadsheet3.worksheet('Delivery')
+                                worksheet3 = spreadsheet3.worksheet('Interaction')
                                 worksheet3.update([updated_sheet2.columns.values.tolist()] + updated_sheet2.values.tolist())
 
                                 # Clear cache to refresh data
