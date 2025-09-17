@@ -2139,9 +2139,7 @@ else:
                                 st.cache_data.clear()
                                 
                                 st.success("✅ Submission successful!")
-                                for key in list(st.session_state.keys()):
-                                    del st.session_state[key]
-                                time.sleep(5)
+                                time.sleep(2)
                                 st.rerun()
 
                             except Exception as e:
@@ -2259,15 +2257,15 @@ else:
                                 )
                                 # Replace NaN with empty strings to ensure JSON compatibility
                                 updated_sheet2 = updated_sheet2.fillna("")
+                                spreadsheet3 = client.open('Example_TA_Request')
+                                worksheet3 = spreadsheet3.worksheet('Delivery')
                                 worksheet3.update([updated_sheet2.columns.values.tolist()] + updated_sheet2.values.tolist())
 
                                 # Clear cache to refresh data
                                 st.cache_data.clear()
                                 
                                 st.success("✅ Submission successful!")
-                                for key in list(st.session_state.keys()):
-                                    del st.session_state[key]
-                                time.sleep(5)
+                                time.sleep(2)
                                 st.rerun()
 
                             except Exception as e:
