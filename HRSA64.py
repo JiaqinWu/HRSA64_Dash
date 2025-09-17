@@ -856,7 +856,8 @@ else:
 
                     staff_list = ["Jenevieve Opoku", "Deus Bazira", "Kemisha Denny", "Katherine Robsky", 
                     "Martine Etienne-Mesubi", "Seble Kassaye", "Weijun Yu", "Jiaqin Wu", "Zelalem Temesgen", "Carlos Rodriguez-Diaz",
-                    "Kiah Moorehead","Vanessa Da Costa","Trena Mukherjee"]
+                    "Kiah Moorehead","Vanessa Da Costa","Trena Mukherjee","Abby Jordan","Megan Highland","Jesus Hernandez Burgos",
+                    "Samantha Cinnick","Bryan Shaw","Tara Hixson"]
 
                     staff_list_sorted = sorted(staff_list, key=lambda x: x.split()[0])
 
@@ -1884,75 +1885,6 @@ else:
 
                 style_metric_cards(border_left_color="#DBF227")
 
-                # --- Section 1: Mark as Completed
-                with st.expander("✅ **MARK REQUESTS AS COMPLETED**"):
-                    st.markdown("#### ✅ Mark Requests as Completed")
-                    # Format dates
-                    staff_df["Assigned Date"] = staff_df["Assigned Date"].dt.strftime("%Y-%m-%d")
-                    staff_df["Targeted Due Date"] = staff_df["Targeted Due Date"].dt.strftime("%Y-%m-%d")
-
-                    # Display clean table (exclude PriorityOrder column)
-                    st.dataframe(staff_df[[
-                        "Ticket ID","Jurisdiction", "Organization", "Name", "Title/Position", "Email Address", "Phone Number",
-                        "Focus Area", "TA Type", "Assigned Date", "Targeted Due Date", "Priority", "TA Description","Document","Coordinator Comment History"
-                    ]].reset_index(drop=True))
-
-                    # Select request by index (row number in submitted_requests)
-                    request_indices = staff_df.index.tolist()
-                    selected_request_index = st.selectbox(
-                        "Select a request to marked as completed",
-                        options=request_indices,
-                        format_func=lambda idx: f"{staff_df.at[idx, 'Ticket ID']} | {staff_df.at[idx, 'Name']} | {staff_df.at[idx, 'Jurisdiction']}",
-                    )
-
-
-                    # Submit completion
-                    if st.button("✅ Mark as Completed"):
-                        try:
-                            # Map back to original df index
-                            global_index = staff_df.loc[selected_request_index].name
-
-                            # Copy + update
-                            updated_df = df.copy()
-                            updated_df.loc[global_index, "Status"] = "Completed"
-                            updated_df.loc[global_index, "Close Date"] = datetime.today().strftime("%Y-%m-%d")
-
-                            updated_df = updated_df.applymap(
-                                lambda x: x.strftime("%Y-%m-%d") if isinstance(x, (pd.Timestamp, datetime)) and not pd.isna(x) else x
-                            )
-                            updated_df = updated_df.fillna("") 
-                            spreadsheet1 = client.open('Example_TA_Request')
-                            worksheet1 = spreadsheet1.worksheet('Main')
-
-                            # Push to Google Sheet
-                            worksheet1.update([updated_df.columns.values.tolist()] + updated_df.values.tolist())
-
-                            # Clear cache to refresh data
-                            st.cache_data.clear()
-                            
-                            st.success("✅ Request marked as completed.")
-                            time.sleep(2)
-                            st.rerun()
-
-                        except Exception as e:
-                            st.error(f"Error updating Google Sheets: {str(e)}")
-
-                    # --- Submit button styling (CSS injection)
-                    st.markdown("""
-                        <style>
-                        .stButton > button {
-                            width: 100%;
-                            background-color: #cdb4db;
-                            color: black;
-                            font-weight: 600;
-                            border-radius: 8px;
-                            padding: 0.6em;
-                            margin-top: 1em;
-                        }
-                        </style>
-                    """, unsafe_allow_html=True)
-
-                st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
 
                 # --- Section 2: Filter, Sort, Comment
                 with st.expander("🚧 **IN-PROGRESS REQUESTS**"):
@@ -2346,6 +2278,76 @@ else:
 
                             except Exception as e:
                                 st.error(f"Error updating Google Sheets: {str(e)}")
+
+                st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
+
+                # --- Section 1: Mark as Completed
+                with st.expander("✅ **MARK REQUESTS AS COMPLETED**"):
+                    st.markdown("#### ✅ Mark Requests as Completed")
+                    # Format dates
+                    staff_df["Assigned Date"] = staff_df["Assigned Date"].dt.strftime("%Y-%m-%d")
+                    staff_df["Targeted Due Date"] = staff_df["Targeted Due Date"].dt.strftime("%Y-%m-%d")
+
+                    # Display clean table (exclude PriorityOrder column)
+                    st.dataframe(staff_df[[
+                        "Ticket ID","Jurisdiction", "Organization", "Name", "Title/Position", "Email Address", "Phone Number",
+                        "Focus Area", "TA Type", "Assigned Date", "Targeted Due Date", "Priority", "TA Description","Document","Coordinator Comment History"
+                    ]].reset_index(drop=True))
+
+                    # Select request by index (row number in submitted_requests)
+                    request_indices = staff_df.index.tolist()
+                    selected_request_index = st.selectbox(
+                        "Select a request to marked as completed",
+                        options=request_indices,
+                        format_func=lambda idx: f"{staff_df.at[idx, 'Ticket ID']} | {staff_df.at[idx, 'Name']} | {staff_df.at[idx, 'Jurisdiction']}",
+                    )
+
+
+                    # Submit completion
+                    if st.button("✅ Mark as Completed"):
+                        try:
+                            # Map back to original df index
+                            global_index = staff_df.loc[selected_request_index].name
+
+                            # Copy + update
+                            updated_df = df.copy()
+                            updated_df.loc[global_index, "Status"] = "Completed"
+                            updated_df.loc[global_index, "Close Date"] = datetime.today().strftime("%Y-%m-%d")
+
+                            updated_df = updated_df.applymap(
+                                lambda x: x.strftime("%Y-%m-%d") if isinstance(x, (pd.Timestamp, datetime)) and not pd.isna(x) else x
+                            )
+                            updated_df = updated_df.fillna("") 
+                            spreadsheet1 = client.open('Example_TA_Request')
+                            worksheet1 = spreadsheet1.worksheet('Main')
+
+                            # Push to Google Sheet
+                            worksheet1.update([updated_df.columns.values.tolist()] + updated_df.values.tolist())
+
+                            # Clear cache to refresh data
+                            st.cache_data.clear()
+                            
+                            st.success("✅ Request marked as completed.")
+                            time.sleep(2)
+                            st.rerun()
+
+                        except Exception as e:
+                            st.error(f"Error updating Google Sheets: {str(e)}")
+
+                    # --- Submit button styling (CSS injection)
+                    st.markdown("""
+                        <style>
+                        .stButton > button {
+                            width: 100%;
+                            background-color: #cdb4db;
+                            color: black;
+                            font-weight: 600;
+                            border-radius: 8px;
+                            padding: 0.6em;
+                            margin-top: 1em;
+                        }
+                        </style>
+                    """, unsafe_allow_html=True)
 
                 st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
 
