@@ -682,7 +682,12 @@ else:
 
 
                     st.success("✅ Submission successful!")
-                    time.sleep(2)
+                    
+                    # Clear cache to refresh data
+                    st.cache_data.clear()
+                    
+                    # Wait a moment then redirect to main page
+                    time.sleep(3)
                     st.rerun()
 
                 except Exception as e:
