@@ -1607,7 +1607,7 @@ else:
                         date_del = st.date_input("Date of Delivery *",value=datetime.today().date())
 
                     list_delivery = [
-                        "Report", "Email Reply", "Dashboard", "New Data Points", "Peer Learning Facilitation", "Other"
+                        "Report", "Email Reply", "Dashboard", "New Data Points", "Peer Learning Facilitation", "TA Meeting", "Other"
                     ]
 
                     type_delivery = st.selectbox(
@@ -2178,7 +2178,7 @@ else:
                         date_del = st.date_input("Date of Delivery *",value=datetime.today().date())
 
                     list_delivery = [
-                        "Report", "Email Reply", "Dashboard", "New Data Points","Peer Learning Facilitation", "Other"
+                        "Report", "Email Reply", "Dashboard", "New Data Points","Peer Learning Facilitation", "TA Meeting", "Other"
                     ]
 
                     type_delivery = st.selectbox(
