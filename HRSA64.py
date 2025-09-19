@@ -271,6 +271,12 @@ USERS = {
     },
     "th1089@georgetown.edu": {
         "Assignee/Staff": {"password": "Tara123!", "name": "Tara Hixson"}
+    },
+    "da988@georgetown.edu":{
+        "Assignee/Staff": {"password": "Dzifa123!", "name": "Dzifa Awunyo-Akaba"}
+    },
+    "mm5674@georgetown.edu":{
+        "Assignee/Staff": {"password": "Masill123!", "name": "Masill Miranda"}
     }
 }
 
@@ -862,7 +868,7 @@ else:
                     staff_list = ["Jenevieve Opoku", "Deus Bazira", "Kemisha Denny", "Katherine Robsky", 
                     "Martine Etienne-Mesubi", "Seble Kassaye", "Weijun Yu", "Jiaqin Wu", "Zelalem Temesgen", "Carlos Rodriguez-Diaz",
                     "Kiah Moorehead","Vanessa Da Costa","Trena Mukherjee","Abby Jordan","Megan Highland","Jesus Hernandez Burgos",
-                    "Samantha Cinnick","Bryan Shaw","Tara Hixson"]
+                    "Samantha Cinnick","Bryan Shaw","Tara Hixson","Dzifa Awunyo-Akaba","Masill Miranda"]
 
                     staff_list_sorted = sorted(staff_list, key=lambda x: x.split()[0])
 
