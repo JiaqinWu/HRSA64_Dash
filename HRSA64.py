@@ -2297,55 +2297,62 @@ else:
                 # --- Section 1: Mark as Completed
                 with st.expander("✅ **MARK REQUESTS AS COMPLETED**"):
                     st.markdown("#### ✅ Mark Requests as Completed")
-                    # Format dates
-                    staff_df["Assigned Date"] = staff_df["Assigned Date"].dt.strftime("%Y-%m-%d")
-                    staff_df["Targeted Due Date"] = staff_df["Targeted Due Date"].dt.strftime("%Y-%m-%d")
+                    if staff_df.empty:
+                        st.info("No requests currently in progress to mark as completed.")
+                    else:
+                        # Ensure datetime before using .dt
+                        staff_df["Assigned Date"] = pd.to_datetime(staff_df["Assigned Date"], errors="coerce")
+                        staff_df["Targeted Due Date"] = pd.to_datetime(staff_df["Targeted Due Date"], errors="coerce")
 
-                    # Display clean table (exclude PriorityOrder column)
-                    st.dataframe(staff_df[[
-                        "Ticket ID","Jurisdiction", "Organization", "Name", "Title/Position", "Email Address", "Phone Number",
-                        "Focus Area", "TA Type", "Assigned Date", "Targeted Due Date", "Priority", "TA Description","Document","Coordinator Comment History"
-                    ]].reset_index(drop=True))
+                        # Format dates
+                        staff_df["Assigned Date"] = staff_df["Assigned Date"].dt.strftime("%Y-%m-%d")
+                        staff_df["Targeted Due Date"] = staff_df["Targeted Due Date"].dt.strftime("%Y-%m-%d")
 
-                    # Select request by index (row number in submitted_requests)
-                    request_indices = staff_df.index.tolist()
-                    selected_request_index = st.selectbox(
-                        "Select a request to marked as completed",
-                        options=request_indices,
-                        format_func=lambda idx: f"{staff_df.at[idx, 'Ticket ID']} | {staff_df.at[idx, 'Name']} | {staff_df.at[idx, 'Jurisdiction']}",
-                    )
+                        # Display clean table (exclude PriorityOrder column)
+                        st.dataframe(staff_df[[
+                            "Ticket ID","Jurisdiction", "Organization", "Name", "Title/Position", "Email Address", "Phone Number",
+                            "Focus Area", "TA Type", "Assigned Date", "Targeted Due Date", "Priority", "TA Description","Document","Coordinator Comment History"
+                        ]].reset_index(drop=True))
+
+                        # Select request by index (row number in submitted_requests)
+                        request_indices = staff_df.index.tolist()
+                        selected_request_index = st.selectbox(
+                            "Select a request to marked as completed",
+                            options=request_indices,
+                            format_func=lambda idx: f"{staff_df.at[idx, 'Ticket ID']} | {staff_df.at[idx, 'Name']} | {staff_df.at[idx, 'Jurisdiction']}",
+                        )
 
 
-                    # Submit completion
-                    if st.button("✅ Mark as Completed"):
-                        try:
-                            # Map back to original df index
-                            global_index = staff_df.loc[selected_request_index].name
+                        # Submit completion
+                        if st.button("✅ Mark as Completed"):
+                            try:
+                                # Map back to original df index
+                                global_index = staff_df.loc[selected_request_index].name
 
-                            # Copy + update
-                            updated_df = df.copy()
-                            updated_df.loc[global_index, "Status"] = "Completed"
-                            updated_df.loc[global_index, "Close Date"] = datetime.today().strftime("%Y-%m-%d")
+                                # Copy + update
+                                updated_df = df.copy()
+                                updated_df.loc[global_index, "Status"] = "Completed"
+                                updated_df.loc[global_index, "Close Date"] = datetime.today().strftime("%Y-%m-%d")
 
-                            updated_df = updated_df.applymap(
-                                lambda x: x.strftime("%Y-%m-%d") if isinstance(x, (pd.Timestamp, datetime)) and not pd.isna(x) else x
-                            )
-                            updated_df = updated_df.fillna("") 
-                            spreadsheet1 = client.open('Example_TA_Request')
-                            worksheet1 = spreadsheet1.worksheet('Main')
+                                updated_df = updated_df.applymap(
+                                    lambda x: x.strftime("%Y-%m-%d") if isinstance(x, (pd.Timestamp, datetime)) and not pd.isna(x) else x
+                                )
+                                updated_df = updated_df.fillna("") 
+                                spreadsheet1 = client.open('Example_TA_Request')
+                                worksheet1 = spreadsheet1.worksheet('Main')
 
-                            # Push to Google Sheet
-                            worksheet1.update([updated_df.columns.values.tolist()] + updated_df.values.tolist())
+                                # Push to Google Sheet
+                                worksheet1.update([updated_df.columns.values.tolist()] + updated_df.values.tolist())
 
-                            # Clear cache to refresh data
-                            st.cache_data.clear()
-                            
-                            st.success("✅ Request marked as completed.")
-                            time.sleep(2)
-                            st.rerun()
+                                # Clear cache to refresh data
+                                st.cache_data.clear()
+                                
+                                st.success("✅ Request marked as completed.")
+                                time.sleep(2)
+                                st.rerun()
 
-                        except Exception as e:
-                            st.error(f"Error updating Google Sheets: {str(e)}")
+                            except Exception as e:
+                                st.error(f"Error updating Google Sheets: {str(e)}")
 
                     # --- Submit button styling (CSS injection)
                     st.markdown("""
