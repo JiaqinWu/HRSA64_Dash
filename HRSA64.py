@@ -1567,7 +1567,12 @@ else:
                                 "Type of Interaction": type_interaction,
                                 "Short Summary": interaction_description,
                                 "Document": drive_links_int,
-                                "Jurisdiction": jurisdiction_for_no_ticket or "",
+                                "Jurisdiction": (lambda: (
+                                    # If a Ticket ID is provided, extract jurisdiction from Main sheet
+                                    str(df.loc[df["Ticket ID"].astype(str) == str(ticket_id_int), "Jurisdiction"].iloc[0])
+                                    if ticket_id_int != "No Ticket ID" and not df.loc[df["Ticket ID"].astype(str) == str(ticket_id_int), "Jurisdiction"].empty
+                                    else (jurisdiction_for_no_ticket or "")
+                                ))(),
                                 "Submitted By": coordinator_name,
                                 "Submission Date": datetime.today().strftime("%Y-%m-%d %H:%M")
                             }
@@ -2136,7 +2141,11 @@ else:
                                 "Type of Interaction": type_interaction,
                                 "Short Summary": interaction_description,
                                 "Document": drive_links_int,
-                                "Jurisdiction": jurisdiction_for_no_ticket1 or "",
+                                "Jurisdiction": (lambda: (
+                                    str(df.loc[df["Ticket ID"].astype(str) == str(ticket_id_int), "Jurisdiction"].iloc[0])
+                                    if ticket_id_int != "No Ticket ID" and not df.loc[df["Ticket ID"].astype(str) == str(ticket_id_int), "Jurisdiction"].empty
+                                    else (jurisdiction_for_no_ticket1 or "")
+                                ))(),
                                 "Submitted By": staff_name,
                                 "Submission Date": datetime.today().strftime("%Y-%m-%d %H:%M")
                             }
