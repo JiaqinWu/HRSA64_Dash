@@ -383,6 +383,11 @@ else:
         "user_email": ""
     }))
 
+    # Sidebar: refresh cached datasets
+    if st.sidebar.button("🔁 Refresh Data"):
+        st.cache_data.clear()
+        st.rerun()
+
     st.markdown("""
         <style>
         .stButton > button {
