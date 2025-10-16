@@ -2223,10 +2223,25 @@ else:
                     with col1:
                         date_support = st.date_input("Date of Support *",value=datetime.today().date())
                     with col2:
-                        # Auto-generate time range with 1 hour default duration
+                        # Auto-generate time range with 1 hour default duration (8 AM - 6 PM range)
                         current_time = datetime.now().time()
-                        time_start = st.time_input("Start Time *", value=current_time)
-                        time_end = st.time_input("End Time *", value=(datetime.combine(datetime.today(), time_start) + timedelta(hours=1)).time())
+                        # Default to current time if within 8-18 range, otherwise use 9 AM
+                        if 8 <= current_time.hour < 18:
+                            default_start = current_time
+                        else:
+                            default_start = datetime.strptime("09:00", "%H:%M").time()
+                        
+                        time_start = st.time_input("Start Time *", value=default_start, step=900)  # 15-minute steps
+                        
+                        # Calculate end time based on selected start time
+                        start_datetime = datetime.combine(datetime.today(), time_start)
+                        end_datetime = start_datetime + timedelta(hours=1)
+                        
+                        # Ensure end time doesn't exceed 18:00 (6 PM)
+                        if end_datetime.hour >= 18:
+                            end_datetime = datetime.combine(datetime.today(), datetime.strptime("18:00", "%H:%M").time())
+                        
+                        time_end = st.time_input("End Time *", value=end_datetime.time(), step=900)  # 15-minute steps
                         time_support = f"{time_start.strftime('%H:%M')}-{time_end.strftime('%H:%M')}"
 
 
