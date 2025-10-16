@@ -2276,7 +2276,7 @@ else:
                         else:
                             end_time = "18:00"
 
-                    time_support = f"{start_time}-{end_time}"
+                    time_support = f"{start_time} - {end_time}"
 
                     request_description = st.text_area("Request Description *", placeholder='Enter text', height=150,key='request_description1') 
                     anticipated_delivery = st.selectbox("Anticipated Delivery *", options=["Meeting notes", "Dashboard", "Peer learning facilitation", "TA meeting", "Other"], index=None, placeholder="Select option...") 
