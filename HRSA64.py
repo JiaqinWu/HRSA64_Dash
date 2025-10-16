@@ -2320,7 +2320,7 @@ else:
                                 "Date": date_support.strftime("%Y-%m-%d"),  # Convert to string
                                 "Time request needed": time_support,
                                 "Request description": request_description,
-                                "Anticipated deliverable": anticipated_delivery,
+                                "Anticipated Deliverable": anticipated_delivery,
                                 "TAP Name": staff_name,
                                 "TAP email": user_email
                             }
@@ -2556,6 +2556,7 @@ else:
             elif st.session_state.role in ["Assignee/Staff", "Graduate Assistant"]:
                 # Add staff content here
                 user_info = USERS.get(st.session_state.user_email)
+                user_email = st.session_state.user_email
                 ga_support_name = user_info["Graduate Assistant"]["name"] if user_info and "Graduate Assistant" in user_info else None
                 st.markdown(
                     """
@@ -2635,4 +2636,195 @@ else:
                 col4.metric("📅 Coming in 2 Weeks", due_soon)
 
                 style_metric_cards(border_left_color="#DBF227")
+
+                # --- Section: View and Manage Submitted Support Requests
+                with st.expander("📋 **VIEW & MANAGE SUPPORT REQUESTS**"):
+                    st.markdown("""
+                        <div style='background: #f0f4ff; border-radius: 16px; box-shadow: 0 2px 8px rgba(26,35,126,0.08); padding: 1.5em 1em 1em 1em; margin-bottom: 2em; margin-top: 1em;'>
+                            <div style='color: #1a237e; font-family: "Segoe UI", "Arial", sans-serif; font-weight: 700; font-size: 1.4em; margin-bottom: 0.3em;'>📋 Manage Submitted Support Requests</div>
+                            <div style='color: #333; font-size: 1.08em; margin-bottom: 0.8em;'>
+                                View all submitted support requests and update their status. Assign yourself to requests and track your progress.
+                            </div>
+                        </div>
+                    """, unsafe_allow_html=True)
+
+                    # Get all support requests
+                    all_support_requests = df_support.copy()
+                    
+                    if all_support_requests.empty:
+                        st.info("No support requests have been submitted yet.")
+                    else:
+                        # Convert date column
+                        all_support_requests["Date"] = pd.to_datetime(all_support_requests["Date"], errors="coerce")
+                        
+                        # Format date for display
+                        all_support_requests["Date"] = all_support_requests["Date"].dt.strftime("%Y-%m-%d")
+                        
+                        # Display all requests
+                        st.markdown("#### 📝 All Submitted Support Requests")
+                        st.dataframe(all_support_requests[[
+                            "Date", "Time request needed", "Request description", "Anticipated Deliverable", 
+                            "TAP Name", "TAP email", "Student assigned", "Student email", "Request status"
+                        ]].reset_index(drop=True))
+
+                        # Filter for unassigned requests (where Student assigned is empty or NaN)
+                        unassigned_requests = all_support_requests[
+                            (all_support_requests["Student assigned"].isna()) | 
+                            (all_support_requests["Student assigned"] == "") |
+                            (all_support_requests["Student assigned"] == "nan")
+                        ].copy()
+
+                        if not unassigned_requests.empty:
+                            st.markdown("#### 🆕 Unassigned Requests")
+                            
+                            # Select request to assign
+                            request_indices = unassigned_requests.index.tolist()
+                            selected_request_idx = st.selectbox(
+                                "Select a request to assign to yourself",
+                                options=request_indices,
+                                format_func=lambda idx: f"{unassigned_requests.at[idx, 'Date']} | {unassigned_requests.at[idx, 'TAP Name']} | {unassigned_requests.at[idx, 'Time request needed']}",
+                                key='unassigned_requests'
+                            )
+
+                            if st.button("✅ Assign to Me (Not Started)", key='assign_not_started'):
+                                try:
+                                    updated_df_support = df_support.copy()
+                                    updated_df_support.loc[selected_request_idx, "Student assigned"] = ga_support_name
+                                    updated_df_support.loc[selected_request_idx, "Student email"] = st.session_state.user_email
+                                    updated_df_support.loc[selected_request_idx, "Request status"] = "Not Started"
+
+                                    # Update Google Sheet
+                                    updated_df_support = updated_df_support.fillna("")
+                                    spreadsheet_support = client.open('Example_TA_Request')
+                                    worksheet_support = spreadsheet_support.worksheet('GA_Support')
+                                    worksheet_support.update([updated_df_support.columns.values.tolist()] + updated_df_support.values.tolist())
+
+                                    st.cache_data.clear()
+                                    st.success(f"Request assigned to you with status 'Not Started'!")
+                                    time.sleep(2)
+                                    st.rerun()
+
+                                except Exception as e:
+                                    st.error(f"Error updating Google Sheets: {str(e)}")
+                        else:
+                            st.info("No unassigned requests at the moment.")
+
+                # --- Section: Manage My Assigned Requests
+                st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
+                with st.expander("🚧 **MY ASSIGNED REQUESTS**"):
+                    st.markdown("""
+                        <div style='background: #f0f4ff; border-radius: 16px; box-shadow: 0 2px 8px rgba(26,35,126,0.08); padding: 1.5em 1em 1em 1em; margin-bottom: 2em; margin-top: 1em;'>
+                            <div style='color: #1a237e; font-family: "Segoe UI", "Arial", sans-serif; font-weight: 700; font-size: 1.4em; margin-bottom: 0.3em;'>🚧 My Assigned Requests</div>
+                            <div style='color: #333; font-size: 1.08em; margin-bottom: 0.8em;'>
+                                Manage your assigned support requests. Update status and track your progress.
+                            </div>
+                        </div>
+                    """, unsafe_allow_html=True)
+
+                    # Get my assigned requests
+                    my_requests = df_support[
+                        (df_support["Student assigned"] == ga_support_name) & 
+                        (df_support["Request status"].isin(["Not Started", "In Progress"]))
+                    ].copy()
+
+                    if my_requests.empty:
+                        st.info("You have no assigned requests at the moment.")
+                    else:
+                        # Convert date column
+                        my_requests["Date"] = pd.to_datetime(my_requests["Date"], errors="coerce")
+                        my_requests["Date"] = my_requests["Date"].dt.strftime("%Y-%m-%d")
+
+                        st.markdown("#### 📋 My Active Requests")
+                        st.dataframe(my_requests[[
+                            "Date", "Time request needed", "Request description", "Anticipated Deliverable", 
+                            "TAP Name", "TAP email", "Request status"
+                        ]].reset_index(drop=True))
+
+                        # Select request to update status
+                        my_request_indices = my_requests.index.tolist()
+                        selected_my_request_idx = st.selectbox(
+                            "Select a request to update status",
+                            options=my_request_indices,
+                            format_func=lambda idx: f"{my_requests.at[idx, 'Date']} | {my_requests.at[idx, 'TAP Name']} | Status: {my_requests.at[idx, 'Request status']}",
+                            key='my_requests'
+                        )
+
+                        # Status update options
+                        current_status = my_requests.at[selected_my_request_idx, 'Request status']
+                        
+                        col1, col2 = st.columns(2)
+                        
+                        with col1:
+                            if current_status == "Not Started":
+                                if st.button("🚀 Mark as In Progress", key='mark_in_progress'):
+                                    try:
+                                        updated_df_support = df_support.copy()
+                                        updated_df_support.loc[selected_my_request_idx, "Request status"] = "In Progress"
+                                        updated_df_support.loc[selected_my_request_idx, "Student email"] = st.session_state.user_email
+
+                                        # Update Google Sheet
+                                        updated_df_support = updated_df_support.fillna("")
+                                        spreadsheet_support = client.open('Example_TA_Request')
+                                        worksheet_support = spreadsheet_support.worksheet('GA_Support')
+                                        worksheet_support.update([updated_df_support.columns.values.tolist()] + updated_df_support.values.tolist())
+
+                                        st.cache_data.clear()
+                                        st.success("Request marked as 'In Progress'!")
+                                        time.sleep(2)
+                                        st.rerun()
+
+                                    except Exception as e:
+                                        st.error(f"Error updating Google Sheets: {str(e)}")
+
+                        with col2:
+                            if st.button("✅ Mark as Completed", key='mark_completed'):
+                                try:
+                                    updated_df_support = df_support.copy()
+                                    updated_df_support.loc[selected_my_request_idx, "Request status"] = "Completed"
+                                    updated_df_support.loc[selected_my_request_idx, "Student email"] = st.session_state.user_email
+
+                                    # Update Google Sheet
+                                    updated_df_support = updated_df_support.fillna("")
+                                    spreadsheet_support = client.open('Example_TA_Request')
+                                    worksheet_support = spreadsheet_support.worksheet('GA_Support')
+                                    worksheet_support.update([updated_df_support.columns.values.tolist()] + updated_df_support.values.tolist())
+
+                                    st.cache_data.clear()
+                                    st.success("Request marked as 'Completed'!")
+                                    time.sleep(2)
+                                    st.rerun()
+
+                                except Exception as e:
+                                    st.error(f"Error updating Google Sheets: {str(e)}")
+
+                # --- Section: View Completed Requests
+                st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
+                with st.expander("✅ **COMPLETED REQUESTS**"):
+                    st.markdown("""
+                        <div style='background: #f0f4ff; border-radius: 16px; box-shadow: 0 2px 8px rgba(26,35,126,0.08); padding: 1.5em 1em 1em 1em; margin-bottom: 2em; margin-top: 1em;'>
+                            <div style='color: #1a237e; font-family: "Segoe UI", "Arial", sans-serif; font-weight: 700; font-size: 1.4em; margin-bottom: 0.3em;'>✅ Completed Requests</div>
+                            <div style='color: #333; font-size: 1.08em; margin-bottom: 0.8em;'>
+                                View all your completed support requests.
+                            </div>
+                        </div>
+                    """, unsafe_allow_html=True)
+
+                    # Get my completed requests
+                    completed_requests = df_support[
+                        (df_support["Student assigned"] == ga_support_name) & 
+                        (df_support["Request status"] == "Completed")
+                    ].copy()
+
+                    if completed_requests.empty:
+                        st.info("You have no completed requests yet.")
+                    else:
+                        # Convert date column
+                        completed_requests["Date"] = pd.to_datetime(completed_requests["Date"], errors="coerce")
+                        completed_requests["Date"] = completed_requests["Date"].dt.strftime("%Y-%m-%d")
+
+                        st.markdown("#### ✅ My Completed Requests")
+                        st.dataframe(completed_requests[[
+                            "Date", "Time request needed", "Request description", "Anticipated Deliverable", 
+                            "TAP Name", "TAP email", "Request status"
+                        ]].reset_index(drop=True))
 
