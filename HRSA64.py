@@ -2247,29 +2247,29 @@ else:
                     
                     with col2:
                     # Handle hour overflow and cap at 18:00
-                    if end_hour >= 18:
-                        end_time = "18:00"
-                    else:
-                        end_time = f"{end_hour:02d}:{end_min:02d}"
-                    
-                    # End time options (from start time to 18:00)
-                    end_time_options = []
-                    for i, time_str in enumerate(time_options):
-                        if i > start_time_idx and time_str <= "18:00":
-                            end_time_options.append((i, time_str))
-                    
-                    if end_time_options:
-                        default_end_idx = 0
-                        if end_time in [t[1] for t in end_time_options]:
-                            default_end_idx = next(i for i, t in enumerate(end_time_options) if t[1] == end_time)
+                        if end_hour >= 18:
+                            end_time = "18:00"
+                        else:
+                            end_time = f"{end_hour:02d}:{end_min:02d}"
                         
-                        end_time_idx = st.selectbox("End Time *",
-                                                    options=range(len(end_time_options)),
-                                                        index=default_end_idx,
-                                                        format_func=lambda x: end_time_options[x][1])
-                        end_time = end_time_options[end_time_idx][1]
+                        # End time options (from start time to 18:00)
+                        end_time_options = []
+                        for i, time_str in enumerate(time_options):
+                            if i > start_time_idx and time_str <= "18:00":
+                                end_time_options.append((i, time_str))
+                        
+                        if end_time_options:
+                            default_end_idx = 0
+                            if end_time in [t[1] for t in end_time_options]:
+                                default_end_idx = next(i for i, t in enumerate(end_time_options) if t[1] == end_time)
+                            
+                            end_time_idx = st.selectbox("End Time *",
+                                                        options=range(len(end_time_options)),
+                                                            index=default_end_idx,
+                                                            format_func=lambda x: end_time_options[x][1])
+                            end_time = end_time_options[end_time_idx][1]
 
-                    time_support = f"{start_time}-{end_time}"
+                        time_support = f"{start_time}-{end_time}"
 
                     request_description = st.text_area("Request Description *", placeholder='Enter text', height=150,key='request_description1') 
                     anticipated_delivery = st.selectbox("Anticipated Delivery *", options=["Meeting notes", "Dashboard", "Peer learning facilitation", "TA meeting", "Other"], index=None, placeholder="Select option...") 
