@@ -84,16 +84,67 @@ def send_email_mailjet(to_email, subject, body):
 
 # Student schedule data
 STUDENT_SCHEDULE = {
-    "Jiaqin Wu": {
-        "email": "jw2104@georgetown.edu",
+    "Asha Patel": {
+        "email": "ap2349@georgetown.edu",
         "schedule": {
             "Monday": "9am - 5pm",
             "Tuesday": "9am - 5pm", 
             "Wednesday": "9am - 5pm",
+            "Thursday": "9am - 5pm",
+            "Friday": "9am - 5pm"
+        }
+    },
+    "Hang Nguyen": {
+        "email": "htn16@georgetown.edu",
+        "schedule": {
+            "Monday": "10am - 1pm",
+            "Tuesday": "10am - 4pm",
+            "Wednesday": "10am - 4pm", 
+            "Thursday": "9am - 5pm",
+            "Friday": "9am - 5pm"
+        }
+    },
+    "Olayinka Adedeji": {
+        "email": "ooa36@georgetown.edu",
+        "schedule": {
+            "Monday": "9am - 12pm, 2pm - 5pm",
+            "Tuesday": "11am - 4pm",
+            "Wednesday": "9am - 5pm",
             "Thursday": "",
+            "Friday": "9am - 4pm"
+        }
+    },
+    "Saara Bidiwala": {
+        "email": "ssb120@georgetown.edu", 
+        "schedule": {
+            "Monday": "",
+            "Tuesday": "1:15pm - 5pm",
+            "Wednesday": "",
+            "Thursday": "1:15pm - 5pm", 
             "Friday": ""
         }
-}}
+    },
+    "Ziqiao Shan": {
+        "email": "zs352@georgetown.edu",
+        "schedule": {
+            "Monday": "",
+            "Tuesday": "10am - 4pm",
+            "Wednesday": "1pm - 5pm",
+            "Thursday": "10am - 12pm",
+            "Friday": ""
+        }
+    },
+    "Yannis Ying": {
+        "email": "sy803@georgetown.edu",
+        "schedule": {
+            "Monday": "",
+            "Tuesday": "",
+            "Wednesday": "9am - 4pm",
+            "Thursday": "9am - 5pm",
+            "Friday": "9am - 5pm"
+        }
+    }
+}
 
 def parse_time_range(time_str):
     """Parse time range string like '9am - 5pm' or '10am - 12pm, 2pm - 5pm'"""
@@ -350,8 +401,7 @@ df["Phone Number"] = df["Phone Number"].astype(str).apply(format_phone)
 USERS = {
     "jw2104@georgetown.edu": {
         "Coordinator": {"password": "Qin88251216", "name": "Jiaqin Wu"},
-        "Assignee/Staff": {"password": "Qin88251216", "name": "Jiaqin Wu"},
-        "Graduate Assistant": {"password": "Qin88251216", "name": "Jiaqin Wu"}
+        "Assignee/Staff": {"password": "Qin88251216", "name": "Jiaqin Wu"}
     },
     "Jenevieve.Opoku@georgetown.edu": {
         "Coordinator": {"password": "Tootles82!", "name": "Jenevieve Opoku"},
@@ -431,6 +481,24 @@ USERS = {
     },
     'gh674@georgetown.edu':{
         "Assignee/Staff": {"password": "Grace123!", "name": "Grace Hazlett"}
+    },
+    'htn16@georgetown.edu':{
+        "Graduate Assistant": {"password": "Hang123!", "name": "Hang Nyguen"}
+    },
+    'ooa36@georgetown.edu':{
+        "Graduate Assistant": {"password": "Olayinka123!", "name": "Olayinka Adedeji"}
+    },
+    'zs352@georgetown.edu':{
+        "Graduate Assistant": {"password": "Ziqiao123!", "name": "Ziqiao Shan"}
+    },
+    'ap2349@georgetown.edu':{
+        "Graduate Assistant": {"password": "Asha123!", "name": "Asha Patel"}
+    },
+    'sy803@georgetown.edu':{
+        "Graduate Assistant": {"password": "Yannis123!", "name": "Yannis Ying"}
+    },
+    'ssb120@georgetown.edu':{
+        "Graduate Assistant": {"password": "Saara123!", "name": "Saara Bidiwala"}
     },
 }
 
