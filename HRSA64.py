@@ -2577,7 +2577,7 @@ else:
 
                 # 3. Due within 2 weeks
                 due_soon_cutoff = datetime.today() + timedelta(days=14)
-                due_soon = ga_in_progress_df[ga_in_progress_df["Targeted Due Date"] <= due_soon_cutoff][.shape[0]
+                due_soon = ga_in_progress_df[ga_in_progress_df["Targeted Due Date"] <= due_soon_cutoff].shape[0]
 
                 col1.metric("🟡 In Progress", total_in_progress)
                 col2.metric("✅ Completed", total_complete)
