@@ -2219,7 +2219,7 @@ else:
                     lis_ticket1 = df["Ticket ID"].unique().tolist()
 
                     # Interaction Log form
-                        date_support = st.date_input("Date of Support *",value=datetime.today().date())
+                    date_support = st.date_input("Date of Support *",value=datetime.today().date())
                     col1, col2= st.columns(2)
                     # Time range selector (8 AM to 6 PM)
                     st.markdown("**Time Range (8 AM - 6 PM)**")
@@ -2267,7 +2267,7 @@ else:
                                                     options=range(len(end_time_options)),
                                                         index=default_end_idx,
                                                         format_func=lambda x: end_time_options[x][1])
-                            end_time = end_time_options[end_time_idx][1]
+                        end_time = end_time_options[end_time_idx][1]
 
                     time_support = f"{start_time}-{end_time}"
 
