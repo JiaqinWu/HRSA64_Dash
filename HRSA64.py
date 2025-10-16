@@ -181,6 +181,12 @@ def load_delivery_sheet():
 
 df_del = load_delivery_sheet()
 
+@st.cache_data(ttl=600)
+def load_support_sheet():
+    return pd.DataFrame(_get_records_with_retry('Example_TA_Request', 'GA_Support'))
+
+df_support = load_support_sheet()
+
 # Extract last Ticket ID from the existing sheet
 last_ticket = df["Ticket ID"].dropna().astype(str).str.extract(r"GU(\d+)", expand=False).astype(int).max()
 next_ticket_number = 1 if pd.isna(last_ticket) else last_ticket + 1
@@ -286,6 +292,24 @@ USERS = {
     },
     'gh674@georgetown.edu':{
         "Assignee/Staff": {"password": "Grace123!", "name": "Grace Hazlett"}
+    },
+    'htn16@georgetown.edu':{
+        "Graduate Assistant": {"password": "Hang123!", "name": "Hang Nyguen"}
+    },
+    'ooa36@georgetown.edu':{
+        "Graduate Assistant": {"password": "Olayinka123!", "name": "Olayinka Adedeji"}
+    },
+
+    'zs352@georgetown.edu':{
+        "Graduate Assistant": {"password": "Ziqiao123!", "name": "Ziqiao Shan"}
+    },
+
+    'ap2349@georgetown.edu':{
+        "Graduate Assistant": {"password": "Asha123!", "name": "Asha Patel"}
+    },
+
+    'sy803@georgetown.edu':{
+        "Graduate Assistant": {"password": "Yannis123!", "name": "Yannis Ying"}
     }
 }
 
@@ -717,7 +741,7 @@ else:
 
 
     # --- Coordinator or Staff: Require login
-    elif st.session_state.role in ["Coordinator", "Assignee/Staff"]:
+    elif st.session_state.role in ["Coordinator", "Assignee/Staff", "Graduate Assistant"]:
         if not st.session_state.authenticated:
             st.subheader("🔐 Login Required")
 
@@ -1828,6 +1852,7 @@ else:
             elif st.session_state.role == "Assignee/Staff":
                 # Add staff content here
                 user_info = USERS.get(st.session_state.user_email)
+                user_email = st.session_state.user_email
                 staff_name = user_info["Assignee/Staff"]["name"] if user_info and "Assignee/Staff" in user_info else None
                 st.markdown(
                     """
@@ -2182,6 +2207,99 @@ else:
 
                 st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
 
+                with st.expander("📦 **SUBMIT STUDENT SUPPORT REQUEST FORM**"):
+                    st.markdown("""
+                        <div style='background: #f0f4ff; border-radius: 16px; box-shadow: 0 2px 8px rgba(26,35,126,0.08); padding: 1.5em 1em 1em 1em; margin-bottom: 2em; margin-top: 1em;'>
+                            <div style='color: #1a237e; font-family: "Segoe UI", "Arial", sans-serif; font-weight: 700; font-size: 1.4em; margin-bottom: 0.3em;'>📦 Submit a New Student Support Request Form</div>
+                            <div style='color: #333; font-size: 1.08em; margin-bottom: 0.8em;'>
+                                Use the form below to submit a new student support request.
+                            </div>
+                        </div>
+                    """, unsafe_allow_html=True)
+                    lis_ticket1 = df["Ticket ID"].unique().tolist()
+
+                    # Interaction Log form
+                    col1, col2= st.columns(2)
+                    with col1:
+                        date_support = st.date_input("Date of Support *",value=datetime.today().date())
+                    with col2:
+                        time_start = st.time_input("Start Time *", value=datetime.now().time())
+                        time_end = st.time_input("End Time *", value=(datetime.now() + timedelta(hours=1)).time())
+                        time_support = f"{time_start.strftime('%H:%M')}-{time_end.strftime('%H:%M')}"
+
+
+                    request_description = st.text_area("Request Description *", placeholder='Enter text', height=150,key='request_description1') 
+                    anticipated_delivery = st.selectbox("Anticipated Delivery *", options=["Meeting notes", "Dashboard", "Peer learning facilitation", "TA meeting", "Other"], index=None, placeholder="Select option...") 
+                    if anticipated_delivery == "Other":
+                        anticipated_delivery_other = st.text_input("Please specify the Anticipated Delivery *")
+                        if anticipated_delivery_other:
+                            anticipated_delivery = anticipated_delivery_other 
+
+                    # Submit button
+                    st.markdown("""
+                        <style>
+                        .stButton > button {
+                            width: 100%;
+                            background-color: #cdb4db;
+                            color: black;
+                            font-family: Arial, "Segoe UI", sans-serif;
+                            font-weight: 600;
+                            border-radius: 8px;
+                            padding: 0.6em;
+                            margin-top: 1em;
+                        }
+                        </style>
+                    """, unsafe_allow_html=True)
+
+                    # Submit logic
+                    if st.button("Submit",key='support_submit1'):
+                        errors = []
+                        drive_links_del = ""  # Ensure always defined
+                        # Required field checks
+                        if not date_support: errors.append("Date of support is required.")
+                        if not time_support: errors.append("Time of support is required.")
+                        if not request_description: errors.append("Request description is required.")
+                        if not anticipated_delivery: errors.append("Anticipated delivery is required.")
+
+                        # Show warnings or success
+                        if errors:
+                            for error in errors:
+                                st.warning(error)
+                        else:
+                            new_row_support = {
+                                "Date": date_support.strftime("%Y-%m-%d"),  # Convert to string
+                                "Time request needed": time_support,
+                                "Request description": request_description,
+                                "Anticipated deliverable": anticipated_delivery,
+                                "TAP Name": staff_name,
+                                "TAP email": user_email
+                            }
+                            new_data_support = pd.DataFrame([new_row_support])
+
+                            try:
+                                # Append new data to Google Sheet
+                                updated_sheet3 = pd.concat([df_support, new_data_support], ignore_index=True)
+                                updated_sheet3= updated_sheet3.applymap(
+                                    lambda x: x.strftime("%Y-%m-%d") if isinstance(x, (datetime, pd.Timestamp)) else x
+                                )
+                                # Replace NaN with empty strings to ensure JSON compatibility
+                                updated_sheet3 = updated_sheet3.fillna("")
+                                spreadsheet4 = client.open('Example_TA_Request')
+                                worksheet4 = spreadsheet4.worksheet('GA_Support')
+                                worksheet4.update([updated_sheet3.columns.values.tolist()] + updated_sheet3.values.tolist())
+
+                                # Clear cache to refresh data
+                                st.cache_data.clear()
+                                
+                                st.success("✅ Submission successful!")
+                                time.sleep(2)
+                                st.rerun()
+
+                            except Exception as e:
+                                st.error(f"Error updating Google Sheets: {str(e)}")
+
+                st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
+
                 with st.expander("📦 **SUBMIT DELIVERY FORM**"):
                     st.markdown("""
                         <div style='background: #f0f4ff; border-radius: 16px; box-shadow: 0 2px 8px rgba(26,35,126,0.08); padding: 1.5em 1em 1em 1em; margin-bottom: 2em; margin-top: 1em;'>
@@ -2384,4 +2502,87 @@ else:
                     """, unsafe_allow_html=True)
 
                 st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
+
+            elif st.session_state.role in ["Assignee/Staff", "Graduate Assistant"]:
+                # Add staff content here
+                user_info = USERS.get(st.session_state.user_email)
+                ga_support_name = user_info["Graduate Assistant"]["name"] if user_info and "Graduate Assistant" in user_info else None
+                st.markdown(
+                    """
+                    <div style='
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                        justify-content: center;
+                        background: #f8f9fa;
+                        padding: 2em 0 1em 0;
+                        border-radius: 18px;
+                        box-shadow: 0 4px 24px rgba(0,0,0,0.07);
+                        margin-bottom: 2em;
+                    '>
+                        <img src='https://raw.githubusercontent.com/JiaqinWu/HRSA64_Dash/main/Georgetown_logo_blueRGB.png' width='200' style='margin-bottom: 1em;'/>
+                        <h1 style='
+                            color: #1a237e;
+                            font-family: "Segoe UI", "Arial", sans-serif;
+                            font-weight: 700;
+                            margin: 0;
+                            font-size: 2.2em;
+                            text-align: center;
+                        '>🧑‍🎓 Graduate Assistant Dashboard</h1>
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
+                # Personalized greeting
+                if ga_support_name:
+                    st.markdown(f"""
+                    <div style='                      
+                    background: #f8f9fa;                        
+                    border-radius: 12px;                        
+                    box-shadow: 0 2px 8px rgba(0,0,0,0.04);                        
+                    padding: 1.2em 1em 1em 1em;                        
+                    margin-bottom: 1.5em;                        
+                    text-align: center;                        
+                    font-family: Arial, "Segoe UI", sans-serif;                    
+                    '>
+                        <span style='                           
+                        font-size: 1.15em;
+                        font-weight: 700;
+                        color: #1a237e;
+                        letter-spacing: 0.5px;'>
+                            👋 Welcome, {ga_support_name}!
+                        </span>
+                    </div>
+                    """, unsafe_allow_html=True)
+
+
+                # Filter requests assigned to current staff and In Progress
+                ga_in_progress_df = df_support[(df_support["Student assigned"] == ga_support_name) & (df_support["Request status"].isin(["Not Started","In Progress"]))].copy()
+                ga_completed_df = df_support[(df_support["Student assigned"] == ga_support_name) & (df_support["Request status"] == "Completed")].copy()
+
+
+                # Ensure date columns are datetime
+                ga_in_progress_df["Date"] = pd.to_datetime(ga_in_progress_df["Date"], errors="coerce")
+
+                # --- Top Summary Cards
+                col1, col2 = st.columns(2)
+                col3, col4 = st.columns(2)
+                # 1. Total In Progress
+                total_in_progress = ga_in_progress_df.shape[0]
+                total_complete = ga_completed_df.shape[0]
+
+                # 2. Newly Assigned: within last 3 days
+                recent_cutoff = datetime.today() + timedelta(days=3)
+                newly_assigned = ga_in_progress_df[ga_in_progress_df["Date"] <= recent_cutoff].shape[0]
+
+                # 3. Due within 2 weeks
+                due_soon_cutoff = datetime.today() + timedelta(days=14)
+                due_soon = ga_in_progress_df[ga_in_progress_df["Targeted Due Date"] <= due_soon_cutoff][.shape[0]
+
+                col1.metric("🟡 In Progress", total_in_progress)
+                col2.metric("✅ Completed", total_complete)
+                col3.metric("🆕 Coming in 3 Days", newly_assigned)
+                col4.metric("📅 Coming in 2 Weeks", due_soon)
+
+                style_metric_cards(border_left_color="#DBF227")
 
