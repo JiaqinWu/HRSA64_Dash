@@ -366,7 +366,7 @@ if st.session_state.role is None:
 
     role = st.selectbox(
         "Select your role",
-        ["Requester", "Coordinator", "Assignee/Staff"],
+        ["Requester", "Coordinator", "Assignee/Staff","Graduate Assistant"],
         index=None,
         placeholder="Select option..."
     )
