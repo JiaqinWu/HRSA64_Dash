@@ -2665,7 +2665,7 @@ else:
                         st.dataframe(all_support_requests[[
                             "Date", "Time request needed", "Request description", "Anticipated Deliverable", 
                             "TAP Name", "TAP email", "Student assigned", "Student email", "Request status"
-                        ]].reset_index(drop=True))
+                        ]].sort_values(by="Date", ascending=True).reset_index(drop=True))
 
                         # Filter for unassigned requests (where Student assigned is empty or NaN)
                         unassigned_requests = all_support_requests[
@@ -2738,7 +2738,7 @@ else:
                         st.dataframe(my_requests[[
                             "Date", "Time request needed", "Request description", "Anticipated Deliverable", 
                             "TAP Name", "TAP email", "Request status"
-                        ]].reset_index(drop=True))
+                        ]].sort_values(by="Date", ascending=True).reset_index(drop=True))
 
                         # Select request to update status
                         my_request_indices = my_requests.index.tolist()
@@ -2826,5 +2826,5 @@ else:
                         st.dataframe(completed_requests[[
                             "Date", "Time request needed", "Request description", "Anticipated Deliverable", 
                             "TAP Name", "TAP email", "Request status"
-                        ]].reset_index(drop=True))
+                        ]].sort_values(by="Date", ascending=True).reset_index(drop=True))
 
