@@ -2246,7 +2246,12 @@ else:
                         start_time = time_options[start_time_idx]
                     
                     with col2:
-                    # Handle hour overflow and cap at 18:00
+                        # Calculate default end time (1 hour later)
+                        start_hour, start_min = map(int, start_time.split(":"))
+                        end_hour = start_hour + 1
+                        end_min = start_min
+                        
+                        # Handle hour overflow and cap at 18:00
                         if end_hour >= 18:
                             end_time = "18:00"
                         else:
@@ -2265,11 +2270,13 @@ else:
                             
                             end_time_idx = st.selectbox("End Time *",
                                                         options=range(len(end_time_options)),
-                                                            index=default_end_idx,
-                                                            format_func=lambda x: end_time_options[x][1])
+                                                        index=default_end_idx,
+                                                        format_func=lambda x: end_time_options[x][1])
                             end_time = end_time_options[end_time_idx][1]
+                        else:
+                            end_time = "18:00"
 
-                        time_support = f"{start_time}-{end_time}"
+                    time_support = f"{start_time}-{end_time}"
 
                     request_description = st.text_area("Request Description *", placeholder='Enter text', height=150,key='request_description1') 
                     anticipated_delivery = st.selectbox("Anticipated Delivery *", options=["Meeting notes", "Dashboard", "Peer learning facilitation", "TA meeting", "Other"], index=None, placeholder="Select option...") 
