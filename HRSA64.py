@@ -93,7 +93,7 @@ STUDENT_SCHEDULE = {
             "Thursday": "",
             "Friday": ""
         }
-}
+}}
 
 def parse_time_range(time_str):
     """Parse time range string like '9am - 5pm' or '10am - 12pm, 2pm - 5pm'"""
