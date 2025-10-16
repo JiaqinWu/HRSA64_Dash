@@ -2903,7 +2903,52 @@ else:
 
                                     st.cache_data.clear()
                                     st.success(f"Request assigned to you with status 'Not Started'!")
-                                    time.sleep(2)
+                                    
+                                    # Send notification email to TAP
+                                    tap_email = updated_df_support.loc[selected_request_idx, "TAP email"]
+                                    tap_name = updated_df_support.loc[selected_request_idx, "TAP Name"]
+                                    request_date = updated_df_support.loc[selected_request_idx, "Date"]
+                                    request_time = updated_df_support.loc[selected_request_idx, "Time request needed"]
+                                    request_description = updated_df_support.loc[selected_request_idx, "Request description"]
+                                    anticipated_deliverable = updated_df_support.loc[selected_request_idx, "Anticipated Deliverable"]
+                                    
+                                    if tap_email and tap_email.strip():
+                                        tap_subject = f"Support Request Assigned - {request_date} at {request_time}"
+                                        tap_body = f"""
+Dear {tap_name},
+
+Your support request has been assigned to a graduate assistant.
+
+Request Details:
+- Date: {request_date}
+- Time: {request_time}
+- Request Description: {request_description}
+- Anticipated Deliverable: {anticipated_deliverable}
+
+Assigned Graduate Assistant:
+- Name: {ga_support_name}
+- Email: {st.session_state.user_email}
+- Status: Not Started
+
+The graduate assistant will begin working on your request and update the status as they progress. You can track the progress through the GU-TAP System.
+
+GU-TAP System: https://hrsagutap.streamlit.app/
+
+Best regards,
+GU-TAP System
+                                        """
+                                        
+                                        try:
+                                            send_email_mailjet(
+                                                to_email=tap_email,
+                                                subject=tap_subject,
+                                                body=tap_body.strip()
+                                            )
+                                            st.success(f"📧 Notification sent to TAP: {tap_name} ({tap_email})")
+                                        except Exception as e:
+                                            st.warning(f"⚠️ Failed to send notification to TAP {tap_name}: {e}")
+                                    
+                                    time.sleep(3)
                                     st.rerun()
 
                                 except Exception as e:
@@ -2972,7 +3017,47 @@ else:
 
                                         st.cache_data.clear()
                                         st.success("Request marked as 'In Progress'!")
-                                        time.sleep(2)
+                                        
+                                        # Send status update email to TAP
+                                        tap_email = updated_df_support.loc[selected_my_request_idx, "TAP email"]
+                                        tap_name = updated_df_support.loc[selected_my_request_idx, "TAP Name"]
+                                        request_date = updated_df_support.loc[selected_my_request_idx, "Date"]
+                                        request_time = updated_df_support.loc[selected_my_request_idx, "Time request needed"]
+                                        
+                                        if tap_email and tap_email.strip():
+                                            tap_subject = f"Support Request Status Update - In Progress"
+                                            tap_body = f"""
+Dear {tap_name},
+
+Your support request status has been updated.
+
+Request Details:
+- Date: {request_date}
+- Time: {request_time}
+- Status: In Progress
+
+Graduate Assistant: {ga_support_name}
+Email: {st.session_state.user_email}
+
+The graduate assistant has started working on your request and will continue to update the status as they make progress.
+
+GU-TAP System: https://hrsagutap.streamlit.app/
+
+Best regards,
+GU-TAP System
+                                            """
+                                            
+                                            try:
+                                                send_email_mailjet(
+                                                    to_email=tap_email,
+                                                    subject=tap_subject,
+                                                    body=tap_body.strip()
+                                                )
+                                                st.success(f"📧 Status update sent to TAP: {tap_name}")
+                                            except Exception as e:
+                                                st.warning(f"⚠️ Failed to send status update to TAP {tap_name}: {e}")
+                                        
+                                        time.sleep(3)
                                         st.rerun()
 
                                     except Exception as e:
@@ -2993,7 +3078,50 @@ else:
 
                                     st.cache_data.clear()
                                     st.success("Request marked as 'Completed'!")
-                                    time.sleep(2)
+                                    
+                                    # Send completion email to TAP
+                                    tap_email = updated_df_support.loc[selected_my_request_idx, "TAP email"]
+                                    tap_name = updated_df_support.loc[selected_my_request_idx, "TAP Name"]
+                                    request_date = updated_df_support.loc[selected_my_request_idx, "Date"]
+                                    request_time = updated_df_support.loc[selected_my_request_idx, "Time request needed"]
+                                    anticipated_deliverable = updated_df_support.loc[selected_my_request_idx, "Anticipated Deliverable"]
+                                    
+                                    if tap_email and tap_email.strip():
+                                        tap_subject = f"Support Request Completed - {request_date} at {request_time}"
+                                        tap_body = f"""
+Dear {tap_name},
+
+Your support request has been completed!
+
+Request Details:
+- Date: {request_date}
+- Time: {request_time}
+- Status: Completed
+- Anticipated Deliverable: {anticipated_deliverable}
+
+Completed by:
+- Graduate Assistant: {ga_support_name}
+- Email: {st.session_state.user_email}
+
+Thank you for using the GU-TAP System. Please contact the graduate assistant directly if you have any questions about the completed work.
+
+GU-TAP System: https://hrsagutap.streamlit.app/
+
+Best regards,
+GU-TAP System
+                                        """
+                                        
+                                        try:
+                                            send_email_mailjet(
+                                                to_email=tap_email,
+                                                subject=tap_subject,
+                                                body=tap_body.strip()
+                                            )
+                                            st.success(f"📧 Completion notification sent to TAP: {tap_name}")
+                                        except Exception as e:
+                                            st.warning(f"⚠️ Failed to send completion notification to TAP {tap_name}: {e}")
+                                    
+                                    time.sleep(3)
                                     st.rerun()
 
                                 except Exception as e:
