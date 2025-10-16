@@ -2223,26 +2223,59 @@ else:
                     with col1:
                         date_support = st.date_input("Date of Support *",value=datetime.today().date())
                     with col2:
-                        # Auto-generate time range with 1 hour default duration (8 AM - 6 PM range)
-                        current_time = datetime.now().time()
-                        # Default to current time if within 8-18 range, otherwise use 9 AM
-                        if 8 <= current_time.hour < 18:
-                            default_start = current_time
+                        # Time range selector (8 AM to 6 PM)
+                        st.markdown("**Time Range (8 AM - 6 PM)**")
+                        
+                        # Create time options every 15 minutes from 8 AM to 6 PM
+                        time_options = []
+                        for hour in range(8, 18):  # 8 AM to 5 PM
+                            for minute in [0, 15, 30, 45]:
+                                time_str = f"{hour:02d}:{minute:02d}"
+                                time_options.append(time_str)
+                        
+                        # Default to current time if within range, otherwise 9 AM
+                        current_time_str = datetime.now().strftime("%H:%M")
+                        if current_time_str in time_options:
+                            default_start_idx = time_options.index(current_time_str)
                         else:
-                            default_start = datetime.strptime("09:00", "%H:%M").time()
+                            default_start_idx = time_options.index("09:00")
                         
-                        time_start = st.time_input("Start Time *", value=default_start, step=900)  # 15-minute steps
+                        start_time_idx = st.selectbox("Start Time *", 
+                                                   options=range(len(time_options)), 
+                                                   index=default_start_idx,
+                                                   format_func=lambda x: time_options[x])
                         
-                        # Calculate end time based on selected start time
-                        start_datetime = datetime.combine(datetime.today(), time_start)
-                        end_datetime = start_datetime + timedelta(hours=1)
+                        start_time = time_options[start_time_idx]
                         
-                        # Ensure end time doesn't exceed 18:00 (6 PM)
-                        if end_datetime.hour >= 18:
-                            end_datetime = datetime.combine(datetime.today(), datetime.strptime("18:00", "%H:%M").time())
+                        # Calculate default end time (1 hour later)
+                        start_hour, start_min = map(int, start_time.split(":"))
+                        end_hour = start_hour + 1
+                        end_min = start_min
                         
-                        time_end = st.time_input("End Time *", value=end_datetime.time(), step=900)  # 15-minute steps
-                        time_support = f"{time_start.strftime('%H:%M')}-{time_end.strftime('%H:%M')}"
+                        # Handle hour overflow and cap at 18:00
+                        if end_hour >= 18:
+                            end_time = "18:00"
+                        else:
+                            end_time = f"{end_hour:02d}:{end_min:02d}"
+                        
+                        # End time options (from start time to 18:00)
+                        end_time_options = []
+                        for i, time_str in enumerate(time_options):
+                            if i > start_time_idx and time_str <= "18:00":
+                                end_time_options.append((i, time_str))
+                        
+                        if end_time_options:
+                            default_end_idx = 0
+                            if end_time in [t[1] for t in end_time_options]:
+                                default_end_idx = next(i for i, t in enumerate(end_time_options) if t[1] == end_time)
+                            
+                            end_time_idx = st.selectbox("End Time *",
+                                                      options=range(len(end_time_options)),
+                                                      index=default_end_idx,
+                                                      format_func=lambda x: end_time_options[x][1])
+                            end_time = end_time_options[end_time_idx][1]
+                        
+                        time_support = f"{start_time}-{end_time}"
 
 
                     request_description = st.text_area("Request Description *", placeholder='Enter text', height=150,key='request_description1') 
