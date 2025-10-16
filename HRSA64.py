@@ -483,22 +483,22 @@ USERS = {
         "Assignee/Staff": {"password": "Grace123!", "name": "Grace Hazlett"}
     },
     'htn16@georgetown.edu':{
-        "Graduate Assistant": {"password": "Hang123!", "name": "Hang Nyguen"}
+        "Research Assistant": {"password": "Hang123!", "name": "Hang Nyguen"}
     },
     'ooa36@georgetown.edu':{
-        "Graduate Assistant": {"password": "Olayinka123!", "name": "Olayinka Adedeji"}
+        "Research Assistant": {"password": "Olayinka123!", "name": "Olayinka Adedeji"}
     },
     'zs352@georgetown.edu':{
-        "Graduate Assistant": {"password": "Ziqiao123!", "name": "Ziqiao Shan"}
+        "Research Assistant": {"password": "Ziqiao123!", "name": "Ziqiao Shan"}
     },
     'ap2349@georgetown.edu':{
-        "Graduate Assistant": {"password": "Asha123!", "name": "Asha Patel"}
+        "Research Assistant": {"password": "Asha123!", "name": "Asha Patel"}
     },
     'sy803@georgetown.edu':{
-        "Graduate Assistant": {"password": "Yannis123!", "name": "Yannis Ying"}
+        "Research Assistant": {"password": "Yannis123!", "name": "Yannis Ying"}
     },
     'ssb120@georgetown.edu':{
-        "Graduate Assistant": {"password": "Saara123!", "name": "Saara Bidiwala"}
+        "Research Assistant": {"password": "Saara123!", "name": "Saara Bidiwala"}
     },
 }
 
@@ -555,7 +555,7 @@ if st.session_state.role is None:
 
     role = st.selectbox(
         "Select your role",
-        ["Requester", "Coordinator", "Assignee/Staff","Graduate Assistant"],
+        ["Requester", "Coordinator", "Assignee/Staff","Research Assistant"],
         index=None,
         placeholder="Select option..."
     )
@@ -930,7 +930,7 @@ else:
 
 
     # --- Coordinator or Staff: Require login
-    elif st.session_state.role in ["Coordinator", "Assignee/Staff", "Graduate Assistant"]:
+    elif st.session_state.role in ["Coordinator", "Assignee/Staff", "Research Assistant"]:
         if not st.session_state.authenticated:
             st.subheader("🔐 Login Required")
 
@@ -2755,11 +2755,11 @@ else:
 
                 st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
 
-            elif st.session_state.role in ["Assignee/Staff", "Graduate Assistant"]:
+            elif st.session_state.role == "Research Assistant":
                 # Add staff content here
                 user_info = USERS.get(st.session_state.user_email)
                 user_email = st.session_state.user_email
-                ga_support_name = user_info["Graduate Assistant"]["name"] if user_info and "Graduate Assistant" in user_info else None
+                ga_support_name = user_info["Research Assistant"]["name"] if user_info and "Research Assistant" in user_info else None
                 st.markdown(
                     """
                     <div style='
@@ -2781,7 +2781,7 @@ else:
                             margin: 0;
                             font-size: 2.2em;
                             text-align: center;
-                        '>🧑‍🎓 Graduate Assistant Dashboard</h1>
+                        '>🧑‍🎓 Research Assistant Dashboard</h1>
                     </div>
                     """,
                     unsafe_allow_html=True
@@ -2917,7 +2917,7 @@ else:
                                         tap_body = f"""
 Dear {tap_name},
 
-Your support request has been assigned to a graduate assistant.
+Your support request has been assigned to a research assistant.
 
 Request Details:
 - Date: {request_date}
@@ -2925,12 +2925,12 @@ Request Details:
 - Request Description: {request_description}
 - Anticipated Deliverable: {anticipated_deliverable}
 
-Assigned Graduate Assistant:
+Assigned Research Assistant:
 - Name: {ga_support_name}
 - Email: {st.session_state.user_email}
 - Status: Not Started
 
-The graduate assistant will begin working on your request and update the status as they progress. You can track the progress through the GU-TAP System.
+The research assistant will begin working on your request and update the status as they progress. You can track the progress through the GU-TAP System.
 
 GU-TAP System: https://hrsagutap.streamlit.app/
 
@@ -3036,10 +3036,10 @@ Request Details:
 - Time: {request_time}
 - Status: In Progress
 
-Graduate Assistant: {ga_support_name}
+Research Assistant: {ga_support_name}
 Email: {st.session_state.user_email}
 
-The graduate assistant has started working on your request and will continue to update the status as they make progress.
+The research assistant has started working on your request and will continue to update the status as they make progress.
 
 GU-TAP System: https://hrsagutap.streamlit.app/
 
@@ -3100,10 +3100,10 @@ Request Details:
 - Anticipated Deliverable: {anticipated_deliverable}
 
 Completed by:
-- Graduate Assistant: {ga_support_name}
+- Research Assistant: {ga_support_name}
 - Email: {st.session_state.user_email}
 
-Thank you for using the GU-TAP System. Please contact the graduate assistant directly if you have any questions about the completed work.
+Thank you for using the GU-TAP System. Please contact the research assistant directly if you have any questions about the completed work.
 
 GU-TAP System: https://hrsagutap.streamlit.app/
 
