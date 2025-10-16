@@ -2265,12 +2265,11 @@ else:
                         
                         end_time_idx = st.selectbox("End Time *",
                                                     options=range(len(end_time_options)),
-                                                    index=default_end_idx,
-                                                    format_func=lambda x: end_time_options[x][1])
-                        end_time = end_time_options[end_time_idx][1]
-                    
-                    time_support = f"{start_time}-{end_time}"
+                                                        index=default_end_idx,
+                                                        format_func=lambda x: end_time_options[x][1])
+                            end_time = end_time_options[end_time_idx][1]
 
+                    time_support = f"{start_time}-{end_time}"
 
                     request_description = st.text_area("Request Description *", placeholder='Enter text', height=150,key='request_description1') 
                     anticipated_delivery = st.selectbox("Anticipated Delivery *", options=["Meeting notes", "Dashboard", "Peer learning facilitation", "TA meeting", "Other"], index=None, placeholder="Select option...") 
