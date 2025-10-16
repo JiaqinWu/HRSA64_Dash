@@ -82,6 +82,144 @@ def send_email_mailjet(to_email, subject, body):
     except Exception as e:
         st.error(f"❗ Mailjet error: {e}")
 
+# Student schedule data
+STUDENT_SCHEDULE = {
+    "Jiaqin Wu": {
+        "email": "jw2104@georgetown.edu",
+        "schedule": {
+            "Monday": "9am - 5pm",
+            "Tuesday": "9am - 5pm", 
+            "Wednesday": "9am - 5pm",
+            "Thursday": "",
+            "Friday": ""
+        }
+}
+
+def parse_time_range(time_str):
+    """Parse time range string like '9am - 5pm' or '10am - 12pm, 2pm - 5pm'"""
+    if not time_str or time_str.strip() == "":
+        return []
+    
+    time_ranges = []
+    # Handle multiple ranges separated by comma
+    ranges = time_str.split(',')
+    
+    for range_str in ranges:
+        range_str = range_str.strip()
+        if ' - ' in range_str:
+            start_time, end_time = range_str.split(' - ')
+            time_ranges.append((start_time.strip(), end_time.strip()))
+    
+    return time_ranges
+
+def time_to_24h(time_str):
+    """Convert time string like '9am' or '2pm' to 24-hour format"""
+    time_str = time_str.strip().lower()
+    
+    # Remove 'am'/'pm' and convert
+    if 'am' in time_str:
+        hour = int(time_str.replace('am', '').strip())
+        if hour == 12:
+            hour = 0
+    elif 'pm' in time_str:
+        hour = int(time_str.replace('pm', '').strip())
+        if hour != 12:
+            hour += 12
+    else:
+        hour = int(time_str)
+    
+    return hour
+
+def is_time_overlap(request_time, student_availability):
+    """Check if request time overlaps with student availability"""
+    if not student_availability:
+        return False
+    
+    # Parse request time (format: "09:00 - 17:00")
+    try:
+        request_start, request_end = request_time.split(' - ')
+        req_start_hour = int(request_start.split(':')[0])
+        req_end_hour = int(request_end.split(':')[0])
+    except:
+        return False
+    
+    for avail_start, avail_end in student_availability:
+        avail_start_hour = time_to_24h(avail_start)
+        avail_end_hour = time_to_24h(avail_end)
+        
+        # Check for overlap
+        if req_start_hour < avail_end_hour and req_end_hour > avail_start_hour:
+            return True
+    
+    return False
+
+def get_available_students(date_str, time_str):
+    """Get list of students available for the given date and time"""
+    try:
+        # Get day of week from date
+        date_obj = datetime.strptime(date_str, "%Y-%m-%d")
+        day_name = date_obj.strftime("%A")  # Monday, Tuesday, etc.
+        
+        available_students = []
+        
+        for student_name, student_info in STUDENT_SCHEDULE.items():
+            schedule = student_info["schedule"]
+            if day_name in schedule:
+                availability = parse_time_range(schedule[day_name])
+                if is_time_overlap(time_str, availability):
+                    available_students.append({
+                        "name": student_name,
+                        "email": student_info["email"],
+                        "availability": schedule[day_name]
+                    })
+        
+        return available_students
+    except Exception as e:
+        st.error(f"Error getting available students: {e}")
+        return []
+
+def send_support_request_notifications(date_str, time_str, request_description, anticipated_delivery, tap_name, tap_email):
+    """Send email notifications to available students"""
+    available_students = get_available_students(date_str, time_str)
+    
+    if not available_students:
+        st.info("No students are available during the requested time slot.")
+        return
+    
+    subject = f"New Support Request Available - {date_str} at {time_str}"
+    
+    for student in available_students:
+        body = f"""
+Dear {student['name']},
+
+A new support request has been submitted and you are available during the requested time slot.
+
+Request Details:
+- Date: {date_str}
+- Time: {time_str}
+- TAP Name: {tap_name}
+- TAP Email: {tap_email}
+- Request Description: {request_description}
+- Anticipated Deliverable: {anticipated_delivery}
+
+If you are interested in taking this request, please log into the GU-TAP System and assign it to yourself.
+
+GU-TAP System: https://hrsagutap.streamlit.app/
+
+Best regards,
+GU-TAP System
+        """
+        
+        try:
+            send_email_mailjet(
+                to_email=student['email'],
+                subject=subject,
+                body=body.strip()
+            )
+            st.success(f"📧 Notification sent to {student['name']} ({student['email']})")
+        except Exception as e:
+            st.warning(f"⚠️ Failed to send notification to {student['name']}: {e}")
+
 
 def upload_file_to_drive(file, filename, folder_id, creds_dict):
     # Convert Streamlit secret dict into Google Credentials object
@@ -212,7 +350,8 @@ df["Phone Number"] = df["Phone Number"].astype(str).apply(format_phone)
 USERS = {
     "jw2104@georgetown.edu": {
         "Coordinator": {"password": "Qin88251216", "name": "Jiaqin Wu"},
-        "Assignee/Staff": {"password": "Qin88251216", "name": "Jiaqin Wu"}
+        "Assignee/Staff": {"password": "Qin88251216", "name": "Jiaqin Wu"},
+        "Graduate Assistant": {"password": "Qin88251216", "name": "Jiaqin Wu"}
     },
     "Jenevieve.Opoku@georgetown.edu": {
         "Coordinator": {"password": "Tootles82!", "name": "Jenevieve Opoku"},
@@ -293,24 +432,6 @@ USERS = {
     'gh674@georgetown.edu':{
         "Assignee/Staff": {"password": "Grace123!", "name": "Grace Hazlett"}
     },
-    'htn16@georgetown.edu':{
-        "Graduate Assistant": {"password": "Hang123!", "name": "Hang Nyguen"}
-    },
-    'ooa36@georgetown.edu':{
-        "Graduate Assistant": {"password": "Olayinka123!", "name": "Olayinka Adedeji"}
-    },
-
-    'zs352@georgetown.edu':{
-        "Graduate Assistant": {"password": "Ziqiao123!", "name": "Ziqiao Shan"}
-    },
-
-    'ap2349@georgetown.edu':{
-        "Graduate Assistant": {"password": "Asha123!", "name": "Asha Patel"}
-    },
-
-    'sy803@georgetown.edu':{
-        "Graduate Assistant": {"password": "Yannis123!", "name": "Yannis Ying"}
-    }
 }
 
 lis_location = ["Maricopa Co. - Arizona", "Alameda Co. - California", "Los Angeles Co. - California", "Orange Co. - California", "Riverside Co. - California",\
@@ -2342,7 +2463,20 @@ else:
                                 st.cache_data.clear()
                                 
                                 st.success("✅ Submission successful!")
-                                time.sleep(2)
+                                
+                                # Send notifications to available students
+                                st.markdown("---")
+                                st.markdown("**📧 Sending notifications to available students...**")
+                                send_support_request_notifications(
+                                    date_str=date_support.strftime("%Y-%m-%d"),
+                                    time_str=time_support,
+                                    request_description=request_description,
+                                    anticipated_delivery=anticipated_delivery,
+                                    tap_name=staff_name,
+                                    tap_email=user_email
+                                )
+                                
+                                time.sleep(3)
                                 st.rerun()
 
                             except Exception as e:
