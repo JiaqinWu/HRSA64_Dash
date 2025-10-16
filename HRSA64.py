@@ -2207,7 +2207,7 @@ else:
 
                 st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
 
-                with st.expander("📦 **SUBMIT STUDENT SUPPORT REQUEST FORM**"):
+                with st.expander("👨‍💻 **SUBMIT STUDENT SUPPORT REQUEST FORM**"):
                     st.markdown("""
                         <div style='background: #f0f4ff; border-radius: 16px; box-shadow: 0 2px 8px rgba(26,35,126,0.08); padding: 1.5em 1em 1em 1em; margin-bottom: 2em; margin-top: 1em;'>
                             <div style='color: #1a237e; font-family: "Segoe UI", "Arial", sans-serif; font-weight: 700; font-size: 1.4em; margin-bottom: 0.3em;'>📦 Submit a New Student Support Request Form</div>
@@ -2223,8 +2223,10 @@ else:
                     with col1:
                         date_support = st.date_input("Date of Support *",value=datetime.today().date())
                     with col2:
-                        time_start = st.time_input("Start Time *", value=datetime.now().time())
-                        time_end = st.time_input("End Time *", value=(datetime.now() + timedelta(hours=1)).time())
+                        # Auto-generate time range with 1 hour default duration
+                        current_time = datetime.now().time()
+                        time_start = st.time_input("Start Time *", value=current_time)
+                        time_end = st.time_input("End Time *", value=(datetime.combine(datetime.today(), time_start) + timedelta(hours=1)).time())
                         time_support = f"{time_start.strftime('%H:%M')}-{time_end.strftime('%H:%M')}"
 
 
