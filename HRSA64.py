@@ -514,6 +514,21 @@ lis_location = ["Maricopa Co. - Arizona", "Alameda Co. - California", "Los Angel
                 "Bexar Co. - Texas", "Dallas Co. - Texas","Harris Co. - Texas", "Tarrant Co. - Texas","Travis Co. - Texas","King Co. - Washington",\
                 "Washington, DC", "San Juan Municipio - Puerto Rico", "Alabama", "Arkansas","Kentucky","Mississippi","Missouri","Oklahoma","South Carolina"]
 
+lis_organization = ["Maricopa County Public Health Department","Alameda County Public Health Department","Los Angeles County Department of Public Health",\
+    "Orange County Health Care Agency","Riverside County Department of Public Health","Sacramento County Public Health","San Bernadino County Public Health",\
+    "County of San Diego Health and Human Services Agency","San Francisco Department of Public Health","Florida Department of Health in Broward County",\
+    "Florida Department of Health in Duval County","Florida Department of Health in Hillsborough County","Florida Department of Health in Miami-Dade County",\
+    "Florida Department of Health in Orange County","Florida Department of Health in Palm Beach County","Florida Department of Health in Pinellas County",\
+    "Cobb and Douglas Public Health","Dekalb Public Health","Fulton County Board of Health","Gwinnett County Board of Health","Cook County Health",\
+    "Marion County Public Health Department","East Baton Rouge Parish Health Unit","New Orleans Health Department","Baltimore City Health Department",\
+    "Montgomery County Health Department","Prince George's County Health Department","Boston Public Health Commission","Wayne County Health, Human and Veterans Services",\
+    "Southern Nevada Health District","Essex County Department of Health","Hudson Regional Health Commission","New York City Department of Health and Mental Hygiene",\
+    "Mecklenburg County Public Health","Cuyahoga County Board of Health","Franklin County Public Health","Hamilton County Public Health","Philadelphia Department of Public Health",\
+    "Shelby County Health Department","Bexar County Health and Human Services","Dallas County Health and Human Services","Harris County Public Health","Tarrant County Public Health",\
+    "Travis County Health and Human Services","King Couty Public Health","San Juan Municipality Department of Health","Alabama Department of Public Health","Arkansas Department of Public Health",\
+    "Kentucky Department for Public Health","Mississippi State Department of Health","Missouri Department of Health and Senior Services","Oklahoma State Department of Health","South Carolina Department of Public Health"]
+
+
 # --- Initialize session state
 if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
@@ -661,7 +676,7 @@ else:
         with col3:
             organization = st.selectbox(
                 "Organization *",
-                ["GU", "HRSA", "NASTAD"],
+                lis_organization,
                 index=None,
                 placeholder="Select option..."
             )
