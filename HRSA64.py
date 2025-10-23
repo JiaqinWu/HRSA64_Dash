@@ -1688,16 +1688,22 @@ else:
                         ]].reset_index(drop=True))
 
                 st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
-                with st.expander("🗒️ **SUBMIT INTERACTION LOG**"):
+                with st.expander("🗒️ **CHECK & SUBMIT INTERACTION LOG**"):
                     st.markdown("""
                         <div style='background: #f0f4ff; border-radius: 16px; box-shadow: 0 2px 8px rgba(26,35,126,0.08); padding: 1.5em 1em 1em 1em; margin-bottom: 2em; margin-top: 1em;'>
                             <div style='color: #1a237e; font-family: "Segoe UI", "Arial", sans-serif; font-weight: 700; font-size: 1.4em; margin-bottom: 0.3em;'>🗒️ Submit a New Interaction Log Form</div>
                             <div style='color: #333; font-size: 1.08em; margin-bottom: 0.8em;'>
-                                Log a new interaction with a jurisdiction. Fill out the form below to record emails, meetings, or other communications related to a TA request.
+                                Check the interactions you made before submitting a new interaction. Log a new interaction with a jurisdiction. Fill out the form below to record emails, meetings, or other communications related to a TA request.
                             </div>
                         </div>
                     """, unsafe_allow_html=True)
                     lis_ticket = ["No Ticket ID"] + sorted([tid for tid in df["Ticket ID"].dropna().astype(str).unique().tolist()])
+
+                    df_int = client.open('Example_TA_Request').worksheet('Interaction').get_all_values()
+                    df_int_staff = df_int[df_int["Submitted By"] == coordinator_name].drop_columns(['Submitted By', 'Submission Date']).\
+                        order_by("Date of Interaction", ascending=False).reset_index(drop=True)
+                    st.dataframe(df_int_staff)
+
 
                     # Interaction Log form
                     col1, col2 = st.columns(2)
