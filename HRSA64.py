@@ -1043,26 +1043,12 @@ else:
                 style_metric_cards(border_left_color="#DBF227")
                 with st.expander("🔎 **MONITOR IN-PROGRESS REQUESTS**"):
                     st.markdown("""
-                        <div style='
-                            background: #f0f4ff;
-                            border-radius: 16px;
-                            box-shadow: 0 2px 8px rgba(26,35,126,0.08);
-                            padding: 1.5em 1em 1em 1em;
-                            margin-bottom: 2em;
-                            margin-top: 1em;
-                        '>
-                            <div style='
-                                color: #1a237e;
-                                font-family: "Segoe UI", "Arial", sans-serif;
-                                font-weight: 700;
-                                font-size: 1.4em;
-                                margin-bottom: 0.3em;
-                            '>📊 Monitor In-Progress TA Requests</div>
-                            <div style='
-                                color: #333;
-                                font-size: 1.08em;
-                                margin-bottom: 0.8em;
-                                Track all active Technical Assistance requests, view staff assignments, and monitor upcoming deadlines. Use the interactive charts and filters below to stay on top of your team's workload.
+                        <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 20px; box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3); padding: 2em 1.5em 1.5em 1.5em; margin-bottom: 2em; margin-top: 1em;'>
+                            <div style='color: white; font-family: "Segoe UI", "Arial", sans-serif; font-weight: 800; font-size: 1.6em; margin-bottom: 0.5em; text-align: center;'>
+                                🔎 In-Progress Requests Monitor
+                            </div>
+                            <div style='color: rgba(255,255,255,0.9); font-size: 1.1em; margin-bottom: 0.8em; text-align: center; line-height: 1.4;'>
+                                Track all active Technical Assistance requests, view staff assignments, and monitor upcoming deadlines. Use interactive charts and filters to stay on top of your team's workload.
                             </div>
                         </div>
                     """, unsafe_allow_html=True)
@@ -1170,9 +1156,11 @@ else:
                 st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
                 with st.expander("📝 **ASSIGN TA REQUESTS**"):
                     st.markdown("""
-                        <div style='background: #f0f4ff; border-radius: 16px; box-shadow: 0 2px 8px rgba(26,35,126,0.08); padding: 1.5em 1em 1em 1em; margin-bottom: 2em; margin-top: 1em;'>
-                            <div style='color: #1a237e; font-family: "Segoe UI", "Arial", sans-serif; font-weight: 700; font-size: 1.4em; margin-bottom: 0.3em;'>📋 Assign TA Requests</div>
-                            <div style='color: #333; font-size: 1.08em; margin-bottom: 0.8em;'>
+                        <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 20px; box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3); padding: 2em 1.5em 1.5em 1.5em; margin-bottom: 2em; margin-top: 1em;'>
+                            <div style='color: white; font-family: "Segoe UI", "Arial", sans-serif; font-weight: 800; font-size: 1.6em; margin-bottom: 0.5em; text-align: center;'>
+                                📝 TA Request Assignment Center
+                            </div>
+                            <div style='color: rgba(255,255,255,0.9); font-size: 1.1em; margin-bottom: 0.8em; text-align: center; line-height: 1.4;'>
                                 Review all unassigned Technical Assistance requests and assign them to the appropriate staff member. Use the table and filters below to prioritize and manage new requests efficiently.
                             </div>
                         </div>
@@ -1313,10 +1301,12 @@ else:
                 st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
                 with st.expander("🔄 **TRANSFER TA REQUESTS**"):
                     st.markdown("""
-                        <div style='background: #f0f4ff; border-radius: 16px; box-shadow: 0 2px 8px rgba(26,35,126,0.08); padding: 1.5em 1em 1em 1em; margin-bottom: 2em; margin-top: 1em;'>
-                            <div style='color: #1a237e; font-family: "Segoe UI", "Arial", sans-serif; font-weight: 700; font-size: 1.4em; margin-bottom: 0.3em;'>🔄 Transfer In-Progress TA Requests</div>
-                            <div style='color: #333; font-size: 1.08em; margin-bottom: 0.8em;'>
-                                Reassign an in-progress request to another coach if needed.
+                        <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 20px; box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3); padding: 2em 1.5em 1.5em 1.5em; margin-bottom: 2em; margin-top: 1em;'>
+                            <div style='color: white; font-family: "Segoe UI", "Arial", sans-serif; font-weight: 800; font-size: 1.6em; margin-bottom: 0.5em; text-align: center;'>
+                                🔄 TA Request Transfer Center
+                            </div>
+                            <div style='color: rgba(255,255,255,0.9); font-size: 1.1em; margin-bottom: 0.8em; text-align: center; line-height: 1.4;'>
+                                Reassign in-progress requests to different coaches when needed. Track transfer history and maintain clear communication throughout the process.
                             </div>
                         </div>
                     """, unsafe_allow_html=True)
@@ -1489,28 +1479,13 @@ else:
                 st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
                 with st.expander("👍 **DETAILS OF IN-PROGRESS & COMPLETED REQUESTS**"):
                     st.markdown("""
-                        <div style='
-                            background: #e9ecef;
-                            border-radius: 14px;
-                            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-                            padding: 1.5em 1em 1em 1em;
-                            margin-bottom: 2em;
-                            margin-top: 1em;
-                        '>
-                            <h2 style='
-                                color: #1a237e;
-                                font-family: "Segoe UI", "Arial", sans-serif;
-                                font-weight: 700;
-                                margin-bottom: 0.2em;
-                                font-size: 1.3em;
-                            '>📊 TA Request Management: Comments & Completion Review</h2>
-                            <p style='
-                                color: #333;
-                                font-size: 1em;
-                                margin-bottom: 0.8em;
-                            '>
-                                Use this section to leave comments or updates for in-progress TA requests, and to review the status and details of completed requests.
-                            </p>
+                        <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 20px; box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3); padding: 2em 1.5em 1.5em 1.5em; margin-bottom: 2em; margin-top: 1em;'>
+                            <div style='color: white; font-family: "Segoe UI", "Arial", sans-serif; font-weight: 800; font-size: 1.6em; margin-bottom: 0.5em; text-align: center;'>
+                                👍 Request Management Center
+                            </div>
+                            <div style='color: rgba(255,255,255,0.9); font-size: 1.1em; margin-bottom: 0.8em; text-align: center; line-height: 1.4;'>
+                                Leave comments and updates for in-progress TA requests, and review the status and details of completed requests. Track progress and maintain clear communication.
+                            </div>
                         </div>
                     """, unsafe_allow_html=True)
 
@@ -1688,13 +1663,75 @@ else:
                         ]].reset_index(drop=True))
 
                 st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
-                with st.expander("🗒️ **SUBMIT INTERACTION LOG**"):
+                with st.expander("🗒️ **CHECK & SUBMIT INTERACTION LOG**"):
                     st.markdown("""
-                        <div style='background: #f0f4ff; border-radius: 16px; box-shadow: 0 2px 8px rgba(26,35,126,0.08); padding: 1.5em 1em 1em 1em; margin-bottom: 2em; margin-top: 1em;'>
-                            <div style='color: #1a237e; font-family: "Segoe UI", "Arial", sans-serif; font-weight: 700; font-size: 1.4em; margin-bottom: 0.3em;'>🗒️ Submit a New Interaction Log Form</div>
-                            <div style='color: #333; font-size: 1.08em; margin-bottom: 0.8em;'>
-                                Log a new interaction with a jurisdiction. Fill out the form below to record emails, meetings, or other communications related to a TA request.
+                        <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 20px; box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3); padding: 2em 1.5em 1.5em 1.5em; margin-bottom: 2em; margin-top: 1em;'>
+                            <div style='color: white; font-family: "Segoe UI", "Arial", sans-serif; font-weight: 800; font-size: 1.6em; margin-bottom: 0.5em; text-align: center;'>
+                                🗒️ Interaction Management Center
                             </div>
+                            <div style='color: rgba(255,255,255,0.9); font-size: 1.1em; margin-bottom: 0.8em; text-align: center; line-height: 1.4;'>
+                                Review your previous interactions and submit new ones. Track all your communications with jurisdictions and TA requests.
+                            </div>
+                        </div>
+                    """, unsafe_allow_html=True)
+
+                    # Upper section: Previous Interactions
+                    st.markdown("""
+                        <div style='background: #f8f9fa; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); padding: 1.5em; margin-bottom: 2em;'>
+                            <h3 style='color: #1a237e; font-family: "Segoe UI", sans-serif; font-weight: 700; margin-bottom: 1em; text-align: center;'>
+                                📊 Your Previous Interactions
+                            </h3>
+                        </div>
+                    """, unsafe_allow_html=True)
+                    
+                    # Get interaction data properly
+                    df_int_coord = df_int[df_int["Submitted By"] == coordinator_name].copy()
+                    if not df_int_coord.empty:
+                        # Remove columns we don't want to display
+                        display_cols = [col for col in df_int_coord.columns if col not in ['Submitted By', 'Submission Date']]
+                        df_int_coord_display = df_int_coord[display_cols].copy()
+                        
+                        # Sort by Date of Interaction (most recent first)
+                        df_int_coord_display["Date of Interaction"] = pd.to_datetime(df_int_coord_display["Date of Interaction"], errors="coerce")
+                        df_int_coord_display = df_int_coord_display.sort_values("Date of Interaction", ascending=True)
+                        df_int_coord_display["Date of Interaction"] = df_int_coord_display["Date of Interaction"].dt.strftime("%Y-%m-%d")
+                        
+                        # Add summary stats
+                        total_interactions = len(df_int_coord_display)
+                        recent_interactions = len(df_int_coord_display[df_int_coord_display["Date of Interaction"] >= (datetime.now() - timedelta(days=30)).strftime("%Y-%m-%d")])
+                        
+                        st.markdown(f"""
+                            <div style='background: #e3f2fd; border-radius: 10px; padding: 1em; margin-bottom: 1em; text-align: center;'>
+                                <div style='display: flex; justify-content: space-around;'>
+                                    <div>
+                                        <div style='font-size: 1.5em; font-weight: bold; color: #1976d2;'>{total_interactions}</div>
+                                        <div style='font-size: 0.9em; color: #666;'>Total Interactions</div>
+                                    </div>
+                                    <div>
+                                        <div style='font-size: 1.5em; font-weight: bold; color: #388e3c;'>{recent_interactions}</div>
+                                        <div style='font-size: 0.9em; color: #666;'>Last 30 Days</div>
+                                    </div>
+                                </div>
+                            </div>
+                        """, unsafe_allow_html=True)
+
+                        st.dataframe(df_int_coord_display.reset_index(drop=True), use_container_width=True)
+                        
+                    else:
+                        st.markdown("""
+                            <div style='background: #fff3e0; border-radius: 15px; padding: 2em; text-align: center; border: 2px dashed #ff9800;'>
+                                <div style='font-size: 3em; margin-bottom: 0.5em;'>📝</div>
+                                <h4 style='color: #e65100; margin-bottom: 0.5em;'>No Previous Interactions</h4>
+                                <p style='color: #666; margin: 0;'>You haven't logged any interactions yet. Start by submitting your first interaction below!</p>
+                            </div>
+                        """, unsafe_allow_html=True)
+
+                    # Lower section: Submit New Interaction
+                    st.markdown("""
+                        <div style='background: #f8f9fa; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); padding: 1.5em; margin-bottom: 1em;'>
+                            <h3 style='color: #1a237e; font-family: "Segoe UI", sans-serif; font-weight: 700; margin-bottom: 1em; text-align: center;'>
+                                ✍️ Submit New Interaction
+                            </h3>
                         </div>
                     """, unsafe_allow_html=True)
                     lis_ticket = ["No Ticket ID"] + sorted([tid for tid in df["Ticket ID"].dropna().astype(str).unique().tolist()])
@@ -1703,11 +1740,11 @@ else:
                     col1, col2 = st.columns(2)
                     with col1:
                         ticket_id_int = st.selectbox("Ticket ID *", lis_ticket, index=None,
-                            placeholder="Select option...", key='interaction')
+                            placeholder="Select option...", key='interaction_coord')
                     with col2:
-                        date_int = st.date_input("Date of Interaction *",value=datetime.today().date())
+                        date_int = st.date_input("Date of Interaction *", value=datetime.today().date())
 
-                     # If No Ticket ID, ask for Jurisdiction
+                    # If No Ticket ID, ask for Jurisdiction
                     jurisdiction_for_no_ticket = None
                     if ticket_id_int == "No Ticket ID":
                         jurisdiction_for_no_ticket = st.selectbox(
@@ -1715,7 +1752,7 @@ else:
                             lis_location,
                             index=None,
                             placeholder="Select option...",
-                            key='juris_interaction'
+                            key='juris_interaction_coord'
                         )
 
                     list_interaction = [
@@ -1734,11 +1771,12 @@ else:
                         type_interaction_other = st.text_input("Please specify the Type of Interaction *")
                         if type_interaction_other:
                             type_interaction = type_interaction_other 
-                    interaction_description = st.text_area("Short Summary *", placeholder='Enter text', height=150,key='interaction_description') 
+                    
+                    interaction_description = st.text_area("Short Summary *", placeholder='Enter text', height=150, key='interaction_description_coord') 
 
-                   
                     document_int = st.file_uploader(
-                        "Upload any files or attachments that are relevant to this interaction.",accept_multiple_files=True
+                        "Upload any files or attachments that are relevant to this interaction.", 
+                        accept_multiple_files=True
                     )
 
                     # Submit button
@@ -1758,7 +1796,7 @@ else:
                     """, unsafe_allow_html=True)
 
                     # Submit logic
-                    if st.button("Submit",key='interaction_submit'):
+                    if st.button("Submit",key='interaction_submit_coord'):
                         errors = []
                         drive_links_int = ""  # Initialize here
                         # Required field checks
@@ -1965,10 +2003,12 @@ else:
 
                 with st.expander("📦 **CHECK INTERACTION & DELIVERY PATTERNS**"):
                     st.markdown("""
-                        <div style='background: #e3e8fa; border-radius: 18px; box-shadow: 0 4px 18px rgba(26,35,126,0.10); padding: 2em 1.5em 1.5em 1.5em; margin-bottom: 2em; margin-top: 1em;'>
-                            <div style='color: #1a237e; font-family: "Segoe UI", "Arial", sans-serif; font-weight: 800; font-size: 1.5em; margin-bottom: 0.4em;'>📦 Explore TA Request Activity</div>
-                            <div style='color: #333; font-size: 1.13em; margin-bottom: 0.7em;'>
-                                Visualize and analyze the communication and delivery patterns for all Technical Assistance requests. Use the charts and filters below to spot trends, monitor engagement, and drill down into specific Ticket IDs for detailed activity logs.
+                        <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 20px; box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3); padding: 2em 1.5em 1.5em 1.5em; margin-bottom: 2em; margin-top: 1em;'>
+                            <div style='color: white; font-family: "Segoe UI", "Arial", sans-serif; font-weight: 800; font-size: 1.6em; margin-bottom: 0.5em; text-align: center;'>
+                                📦 Activity Analytics Center
+                            </div>
+                            <div style='color: rgba(255,255,255,0.9); font-size: 1.1em; margin-bottom: 0.8em; text-align: center; line-height: 1.4;'>
+                                Visualize and analyze communication and delivery patterns for all Technical Assistance requests. Use charts and filters to spot trends and monitor engagement.
                             </div>
                         </div>
                     """, unsafe_allow_html=True)
