@@ -2576,7 +2576,7 @@ else:
                     """, unsafe_allow_html=True)
 
                     # Start with Anticipated Delivery
-                    anticipated_delivery = st.selectbox("Anticipated Delivery *", options=["Meeting notes", "Dashboard", "Peer learning facilitation", "TA meeting", "Other"], index=None, placeholder="Select option...") 
+                    anticipated_delivery = st.selectbox("Anticipated Delivery *", options=["Meeting notes", "Dashboard", "Peer learning facilitation", "TA meeting", "Other"], index=0) 
                     if anticipated_delivery == "Other":
                         anticipated_delivery_other = st.text_input("Please specify the Anticipated Delivery *")
                         if anticipated_delivery_other:
