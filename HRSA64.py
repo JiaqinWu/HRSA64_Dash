@@ -437,7 +437,8 @@ df["Phone Number"] = df["Phone Number"].astype(str).apply(format_phone)
 USERS = {
     "jw2104@georgetown.edu": {
         "Coordinator": {"password": "Qin88251216", "name": "Jiaqin Wu"},
-        "Assignee/Staff": {"password": "Qin88251216", "name": "Jiaqin Wu"}
+        "Assignee/Staff": {"password": "Qin88251216", "name": "Jiaqin Wu"},
+        "Research Assistant": {"password": "Qin88251216", "name": "Jiaqin Wu"}
     },
     "Jenevieve.Opoku@georgetown.edu": {
         "Coordinator": {"password": "Tootles82!", "name": "Jenevieve Opoku"},
@@ -518,24 +519,7 @@ USERS = {
     'gh674@georgetown.edu':{
         "Assignee/Staff": {"password": "Grace123!", "name": "Grace Hazlett"}
     },
-    'htn16@georgetown.edu':{
-        "Research Assistant": {"password": "Hang123!", "name": "Hang Nyguen"}
-    },
-    'ooa36@georgetown.edu':{
-        "Research Assistant": {"password": "Olayinka123!", "name": "Olayinka Adedeji"}
-    },
-    'zs352@georgetown.edu':{
-        "Research Assistant": {"password": "Ziqiao123!", "name": "Ziqiao Shan"}
-    },
-    'ap2349@georgetown.edu':{
-        "Research Assistant": {"password": "Asha123!", "name": "Asha Patel"}
-    },
-    'sy803@georgetown.edu':{
-        "Research Assistant": {"password": "Yannis123!", "name": "Yannis Ying"}
-    },
-    'ssb120@georgetown.edu':{
-        "Research Assistant": {"password": "Saara123!", "name": "Saara Bidiwala"}
-    },
+
 }
 
 lis_location = ["Maricopa Co. - Arizona", "Alameda Co. - California", "Los Angeles Co. - California", "Orange Co. - California", "Riverside Co. - California",\
