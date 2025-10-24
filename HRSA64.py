@@ -705,29 +705,31 @@ else:
         # Requester form
         col1, col2 = st.columns(2)
         with col1:
-            name = st.text_input("Name *",placeholder="Enter text")
+            name = st.text_input("Name *",placeholder="Enter text", key="requester_name")
         with col2:
-            title = st.text_input("Title/Position *",placeholder='Enter text')
+            title = st.text_input("Title/Position *",placeholder='Enter text', key="requester_title")
         col3, col4 = st.columns(2)
         with col3:
             organization = st.selectbox(
                 "Organization *",
                 lis_organization,
                 index=None,
-                placeholder="Select option..."
+                placeholder="Select option...",
+                key="requester_organization"
             )
         with col4:
             location = st.selectbox(
                 "Location *",
                 lis_location,
                 index=None,
-                placeholder="Select option..."
+                placeholder="Select option...",
+                key="requester_location"
             )
         col5, col6 = st.columns(2)
         with col5:
-            email = st.text_input("Email Address *",placeholder="Enter email")
+            email = st.text_input("Email Address *",placeholder="Enter email", key="requester_email")
         with col6:
-            phone = st.text_input("Phone Number *",placeholder="(201) 555-0123")    
+            phone = st.text_input("Phone Number *",placeholder="(201) 555-0123", key="requester_phone")    
         col7, col8 = st.columns(2)
         with col7:
             focus_area_options = [
@@ -739,12 +741,13 @@ else:
                 "TA Focus Area *",
                 focus_area_options,
                 index=None,
-                placeholder="Select option..."
+                placeholder="Select option...",
+                key="requester_focus_area"
             )
 
             # If "Other" is selected, show a text input for custom value
             if focus_area == "Other":
-                focus_area_other = st.text_input("Please specify the TA Focus Area *")
+                focus_area_other = st.text_input("Please specify the TA Focus Area *", key="requester_focus_area_other")
                 if focus_area_other:
                     focus_area = focus_area_other 
         with col8:
@@ -752,13 +755,15 @@ else:
                 "What Style of TA is needed *",
                 ["In-Person","Virtual","Hybrid (Combination of in-person and virtual)","Unsure"],
                 index=None,
-                placeholder="Select option..."
+                placeholder="Select option...",
+                key="requester_type_ta"
             )
         col9, col10 = st.columns(2)
         with col9:
             due_date = st.date_input(
                 "Target Due Date *",
-                value=None
+                value=None,
+                key="requester_due_date"
             )
             #if not due_date: 
                 #st.error("Target Due Date is required.")
@@ -767,15 +772,16 @@ else:
             #if due_date and due_date <= datetime.today().date():
                 #st.error("Target Due Date must be after today.")
 
-        ta_description = st.text_area("TA Description *", placeholder='Enter text', height=150) 
+        ta_description = st.text_area("TA Description *", placeholder='Enter text', height=150, key="requester_ta_description") 
         document = st.file_uploader(
-            "Upload any files or attachments that are relevant to this request.",accept_multiple_files=True
+            "Upload any files or attachments that are relevant to this request.",accept_multiple_files=True, key="requester_document"
         )
         priority_status = st.selectbox(
                 "Priority Status *",
                 ["Critical","High","Normal","Low"],
                 index=None,
-                placeholder="Select option..."
+                placeholder="Select option...",
+                key="requester_priority"
             )
 
         # Submit button
@@ -795,7 +801,7 @@ else:
         """, unsafe_allow_html=True)
 
         # Submit logic
-        if st.button("Submit"):
+        if st.button("Submit", key="requester_submit"):
             email_pattern = r'^[\w\.-]+@[\w\.-]+\.\w+$'
             def clean_and_format_us_phone(phone_input):
                 digits = re.sub(r'\D', '', phone_input)
@@ -969,6 +975,9 @@ else:
                     
                     # Clear cache to refresh data
                     st.cache_data.clear()
+                    
+                    # Clear form fields by using st.rerun() which will reset all form widgets
+                    st.session_state.clear()
                     
                     # Wait a moment then redirect to main page
                     time.sleep(3)
