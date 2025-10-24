@@ -2984,10 +2984,12 @@ else:
                 # --- Section: View and Manage Submitted Support Requests
                 with st.expander("📋 **VIEW & MANAGE SUPPORT REQUESTS**"):
                     st.markdown("""
-                        <div style='background: #f0f4ff; border-radius: 16px; box-shadow: 0 2px 8px rgba(26,35,126,0.08); padding: 1.5em 1em 1em 1em; margin-bottom: 2em; margin-top: 1em;'>
-                            <div style='color: #1a237e; font-family: "Segoe UI", "Arial", sans-serif; font-weight: 700; font-size: 1.4em; margin-bottom: 0.3em;'>📋 Manage Submitted Support Requests</div>
-                            <div style='color: #333; font-size: 1.08em; margin-bottom: 0.8em;'>
-                                View all submitted support requests and update their status. Assign yourself to requests and track your progress.
+                        <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 20px; box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3); padding: 2em 1.5em 1.5em 1.5em; margin-bottom: 2em; margin-top: 1em;'>
+                            <div style='color: white; font-family: "Segoe UI", "Arial", sans-serif; font-weight: 800; font-size: 1.6em; margin-bottom: 0.5em; text-align: center;'>
+                                📋 Support Request Management Center
+                            </div>
+                            <div style='color: rgba(255,255,255,0.9); font-size: 1.1em; margin-bottom: 0.8em; text-align: center; line-height: 1.4;'>
+                                View all submitted support requests and update their status. Assign yourself to requests and track your progress efficiently.
                             </div>
                         </div>
                     """, unsafe_allow_html=True)
@@ -3102,10 +3104,12 @@ GU-TAP System
                 st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
                 with st.expander("🚧 **MY ASSIGNED REQUESTS**"):
                     st.markdown("""
-                        <div style='background: #f0f4ff; border-radius: 16px; box-shadow: 0 2px 8px rgba(26,35,126,0.08); padding: 1.5em 1em 1em 1em; margin-bottom: 2em; margin-top: 1em;'>
-                            <div style='color: #1a237e; font-family: "Segoe UI", "Arial", sans-serif; font-weight: 700; font-size: 1.4em; margin-bottom: 0.3em;'>🚧 My Assigned Requests</div>
-                            <div style='color: #333; font-size: 1.08em; margin-bottom: 0.8em;'>
-                                Manage your assigned support requests. Update status and track your progress.
+                        <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 20px; box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3); padding: 2em 1.5em 1.5em 1.5em; margin-bottom: 2em; margin-top: 1em;'>
+                            <div style='color: white; font-family: "Segoe UI", "Arial", sans-serif; font-weight: 800; font-size: 1.6em; margin-bottom: 0.5em; text-align: center;'>
+                                🚧 My Assigned Requests Center
+                            </div>
+                            <div style='color: rgba(255,255,255,0.9); font-size: 1.1em; margin-bottom: 0.8em; text-align: center; line-height: 1.4;'>
+                                Manage your assigned support requests. Update status and track your progress efficiently. Mark requests as completed when finished.
                             </div>
                         </div>
                     """, unsafe_allow_html=True)
@@ -3273,10 +3277,12 @@ GU-TAP System
                 st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
                 with st.expander("✅ **COMPLETED REQUESTS**"):
                     st.markdown("""
-                        <div style='background: #f0f4ff; border-radius: 16px; box-shadow: 0 2px 8px rgba(26,35,126,0.08); padding: 1.5em 1em 1em 1em; margin-bottom: 2em; margin-top: 1em;'>
-                            <div style='color: #1a237e; font-family: "Segoe UI", "Arial", sans-serif; font-weight: 700; font-size: 1.4em; margin-bottom: 0.3em;'>✅ Completed Requests</div>
-                            <div style='color: #333; font-size: 1.08em; margin-bottom: 0.8em;'>
-                                View all your completed support requests.
+                        <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 20px; box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3); padding: 2em 1.5em 1.5em 1.5em; margin-bottom: 2em; margin-top: 1em;'>
+                            <div style='color: white; font-family: "Segoe UI", "Arial", sans-serif; font-weight: 800; font-size: 1.6em; margin-bottom: 0.5em; text-align: center;'>
+                                ✅ Completed Requests Archive
+                            </div>
+                            <div style='color: rgba(255,255,255,0.9); font-size: 1.1em; margin-bottom: 0.8em; text-align: center; line-height: 1.4;'>
+                                View all your completed support requests. Track your accomplishments and review past work for reference.
                             </div>
                         </div>
                     """, unsafe_allow_html=True)
