@@ -1837,10 +1837,12 @@ else:
 
                 with st.expander("📦 **SUBMIT DELIVERY FORM**"):
                     st.markdown("""
-                        <div style='background: #f0f4ff; border-radius: 16px; box-shadow: 0 2px 8px rgba(26,35,126,0.08); padding: 1.5em 1em 1em 1em; margin-bottom: 2em; margin-top: 1em;'>
-                            <div style='color: #1a237e; font-family: "Segoe UI", "Arial", sans-serif; font-weight: 700; font-size: 1.4em; margin-bottom: 0.3em;'>📦 Submit a New Delivery Form</div>
-                            <div style='color: #333; font-size: 1.08em; margin-bottom: 0.8em;'>
-                                Record a new delivery (e.g., report, dashboard, data) for a TA request. Use the form below to upload files and provide a summary of the delivery.
+                        <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 20px; box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3); padding: 2em 1.5em 1.5em 1.5em; margin-bottom: 2em; margin-top: 1em;'>
+                            <div style='color: white; font-family: "Segoe UI", "Arial", sans-serif; font-weight: 800; font-size: 1.6em; margin-bottom: 0.5em; text-align: center;'>
+                                📦 Delivery Management Center
+                            </div>
+                            <div style='color: rgba(255,255,255,0.9); font-size: 1.1em; margin-bottom: 0.8em; text-align: center; line-height: 1.4;'>
+                                Record new deliveries including reports, dashboards, and data. Upload files and provide comprehensive summaries of completed work.
                             </div>
                         </div>
                     """, unsafe_allow_html=True)
@@ -2142,7 +2144,16 @@ else:
 
                 # --- Section 2: Filter, Sort, Comment
                 with st.expander("🚧 **IN-PROGRESS REQUESTS**"):
-                    st.markdown("#### 🚧 In-progress Requests")
+                    st.markdown("""
+                        <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 20px; box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3); padding: 2em 1.5em 1.5em 1.5em; margin-bottom: 2em; margin-top: 1em;'>
+                            <div style='color: white; font-family: "Segoe UI", "Arial", sans-serif; font-weight: 800; font-size: 1.6em; margin-bottom: 0.5em; text-align: center;'>
+                                🚧 In-Progress Requests Management
+                            </div>
+                            <div style='color: rgba(255,255,255,0.9); font-size: 1.1em; margin-bottom: 0.8em; text-align: center; line-height: 1.4;'>
+                                Manage your assigned requests, add comments, and track progress. Filter and sort your active TA requests efficiently.
+                            </div>
+                        </div>
+                    """, unsafe_allow_html=True)
 
                     # Filter "In Progress" requests
                     if staff_df.empty:
@@ -2281,8 +2292,6 @@ else:
                         df_int_staff_display = df_int_staff_display.sort_values("Date of Interaction", ascending=True)
                         df_int_staff_display["Date of Interaction"] = df_int_staff_display["Date of Interaction"].dt.strftime("%Y-%m-%d")
                         
-                        st.dataframe(df_int_staff_display.reset_index(drop=True), use_container_width=True)
-                        
                         # Add summary stats
                         total_interactions = len(df_int_staff_display)
                         recent_interactions = len(df_int_staff_display[df_int_staff_display["Date of Interaction"] >= (datetime.now() - timedelta(days=30)).strftime("%Y-%m-%d")])
@@ -2301,6 +2310,10 @@ else:
                                 </div>
                             </div>
                         """, unsafe_allow_html=True)
+
+                        st.dataframe(df_int_staff_display.reset_index(drop=True), use_container_width=True)
+                        
+
                     else:
                         st.markdown("""
                             <div style='background: #fff3e0; border-radius: 15px; padding: 2em; text-align: center; border: 2px dashed #ff9800;'>
@@ -2476,10 +2489,12 @@ else:
 
                 with st.expander("👨‍💻 **SUBMIT STUDENT SUPPORT REQUEST FORM**"):
                     st.markdown("""
-                        <div style='background: #f0f4ff; border-radius: 16px; box-shadow: 0 2px 8px rgba(26,35,126,0.08); padding: 1.5em 1em 1em 1em; margin-bottom: 2em; margin-top: 1em;'>
-                            <div style='color: #1a237e; font-family: "Segoe UI", "Arial", sans-serif; font-weight: 700; font-size: 1.4em; margin-bottom: 0.3em;'>📦 Submit a New Student Support Request Form</div>
-                            <div style='color: #333; font-size: 1.08em; margin-bottom: 0.8em;'>
-                                Use the form below to submit a new student support request.
+                        <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 20px; box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3); padding: 2em 1.5em 1.5em 1.5em; margin-bottom: 2em; margin-top: 1em;'>
+                            <div style='color: white; font-family: "Segoe UI", "Arial", sans-serif; font-weight: 800; font-size: 1.6em; margin-bottom: 0.5em; text-align: center;'>
+                                👨‍💻 Student Support Request Center
+                            </div>
+                            <div style='color: rgba(255,255,255,0.9); font-size: 1.1em; margin-bottom: 0.8em; text-align: center; line-height: 1.4;'>
+                                Submit new student support requests with time preferences. The system will automatically notify available research assistants.
                             </div>
                         </div>
                     """, unsafe_allow_html=True)
@@ -2488,8 +2503,6 @@ else:
                     # Interaction Log form
                     date_support = st.date_input("Date of Support *",value=datetime.today().date())
                     col1, col2= st.columns(2)
-                    # Time range selector (8 AM to 6 PM)
-                    st.markdown("**Time Range (8 AM - 6 PM)**")
                     
                     # Create time options every 15 minutes from 8 AM to 6 PM
                     time_options = []
@@ -2632,10 +2645,12 @@ else:
 
                 with st.expander("📦 **SUBMIT DELIVERY FORM**"):
                     st.markdown("""
-                        <div style='background: #f0f4ff; border-radius: 16px; box-shadow: 0 2px 8px rgba(26,35,126,0.08); padding: 1.5em 1em 1em 1em; margin-bottom: 2em; margin-top: 1em;'>
-                            <div style='color: #1a237e; font-family: "Segoe UI", "Arial", sans-serif; font-weight: 700; font-size: 1.4em; margin-bottom: 0.3em;'>📦 Submit a New Delivery Form</div>
-                            <div style='color: #333; font-size: 1.08em; margin-bottom: 0.8em;'>
-                                Record a new delivery (e.g., report, dashboard, data) for a TA request. Use the form below to upload files and provide a summary of the delivery.
+                        <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 20px; box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3); padding: 2em 1.5em 1.5em 1.5em; margin-bottom: 2em; margin-top: 1em;'>
+                            <div style='color: white; font-family: "Segoe UI", "Arial", sans-serif; font-weight: 800; font-size: 1.6em; margin-bottom: 0.5em; text-align: center;'>
+                                📦 Delivery Management Center
+                            </div>
+                            <div style='color: rgba(255,255,255,0.9); font-size: 1.1em; margin-bottom: 0.8em; text-align: center; line-height: 1.4;'>
+                                Record new deliveries including reports, dashboards, and data. Upload files and provide comprehensive summaries of completed work.
                             </div>
                         </div>
                     """, unsafe_allow_html=True)
@@ -2758,7 +2773,16 @@ else:
 
                 # --- Section 1: Mark as Completed
                 with st.expander("✅ **MARK REQUESTS AS COMPLETED**"):
-                    st.markdown("#### ✅ Mark Requests as Completed")
+                    st.markdown("""
+                        <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 20px; box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3); padding: 2em 1.5em 1.5em 1.5em; margin-bottom: 2em; margin-top: 1em;'>
+                            <div style='color: white; font-family: "Segoe UI", "Arial", sans-serif; font-weight: 800; font-size: 1.6em; margin-bottom: 0.5em; text-align: center;'>
+                                ✅ Request Completion Center
+                            </div>
+                            <div style='color: rgba(255,255,255,0.9); font-size: 1.1em; margin-bottom: 0.8em; text-align: center; line-height: 1.4;'>
+                                Mark your assigned requests as completed when finished. Review request details and finalize your work efficiently.
+                            </div>
+                        </div>
+                    """, unsafe_allow_html=True)
                     if staff_df.empty:
                         st.info("No requests currently in progress to mark as completed.")
                     else:
