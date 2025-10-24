@@ -2259,10 +2259,21 @@ else:
                     """, unsafe_allow_html=True)
                     lis_ticket = ["No Ticket ID"] + sorted([tid for tid in df["Ticket ID"].dropna().astype(str).unique().tolist()])
 
-                    df_int = client.open('Example_TA_Request').worksheet('Interaction').get_all_values()
-                    df_int_staff = df_int[df_int["Submitted By"] == staff_name].drop_columns(['Submitted By', 'Submission Date']).\
-                        order_by("Date of Interaction", ascending=False).reset_index(drop=True)
-                    st.dataframe(df_int_staff)
+                    # Get interaction data properly
+                    df_int_staff = df_int[df_int["Submitted By"] == staff_name].copy()
+                    if not df_int_staff.empty:
+                        # Remove columns we don't want to display
+                        display_cols = [col for col in df_int_staff.columns if col not in ['Submitted By', 'Submission Date']]
+                        df_int_staff_display = df_int_staff[display_cols].copy()
+                        
+                        # Sort by Date of Interaction (most recent first)
+                        df_int_staff_display["Date of Interaction"] = pd.to_datetime(df_int_staff_display["Date of Interaction"], errors="coerce")
+                        df_int_staff_display = df_int_staff_display.sort_values("Date of Interaction", ascending=False)
+                        df_int_staff_display["Date of Interaction"] = df_int_staff_display["Date of Interaction"].dt.strftime("%Y-%m-%d")
+                        
+                        st.dataframe(df_int_staff_display.reset_index(drop=True))
+                    else:
+                        st.info("No previous interactions found for you.")
 
                     # Interaction Log form
                     col1, col2 = st.columns(2)
