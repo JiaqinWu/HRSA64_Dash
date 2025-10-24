@@ -437,8 +437,7 @@ df["Phone Number"] = df["Phone Number"].astype(str).apply(format_phone)
 USERS = {
     "jw2104@georgetown.edu": {
         "Coordinator": {"password": "Qin88251216", "name": "Jiaqin Wu"},
-        "Assignee/Staff": {"password": "Qin88251216", "name": "Jiaqin Wu"},
-        "Research Assistant": {"password": "Qin88251216", "name": "Jiaqin Wu"}
+        "Assignee/Staff": {"password": "Qin88251216", "name": "Jiaqin Wu"}
     },
     "Jenevieve.Opoku@georgetown.edu": {
         "Coordinator": {"password": "Tootles82!", "name": "Jenevieve Opoku"},
