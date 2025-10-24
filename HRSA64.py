@@ -271,6 +271,42 @@ GU-TAP System
         except Exception as e:
             st.warning(f"⚠️ Failed to send notification to {student['name']}: {e}")
 
+def send_project_request_notifications(request_description, anticipated_delivery, time_commitment, anticipated_deadline, tap_name, tap_email):
+    """Send email notifications to all students for non-meeting project requests"""
+    subject = f"New Project Request Available - {anticipated_delivery}"
+    
+    for student_name, student_info in STUDENT_SCHEDULE.items():
+        body = f"""
+Dear {student_name},
+
+A new project support request has been submitted and is available for assignment.
+
+Project Details:
+- Project Type: {anticipated_delivery}
+- Time Commitment: {time_commitment}
+- Anticipated Deadline: {anticipated_deadline}
+- TAP Name: {tap_name}
+- TAP Email: {tap_email}
+- Project Description: {request_description}
+
+This is a flexible project that can be completed according to your schedule. If you are interested in taking this project, please log into the GU-TAP System and assign it to yourself.
+
+GU-TAP System: https://hrsagutap.streamlit.app/
+
+Best regards,
+GU-TAP System
+        """
+        
+        try:
+            send_email_mailjet(
+                to_email=student_info['email'],
+                subject=subject,
+                body=body.strip()
+            )
+            st.success(f"📧 Project notification sent to {student_name} ({student_info['email']})")
+        except Exception as e:
+            st.warning(f"⚠️ Failed to send project notification to {student_name}: {e}")
+
 
 def upload_file_to_drive(file, filename, folder_id, creds_dict):
     # Convert Streamlit secret dict into Google Credentials object
@@ -2538,72 +2574,93 @@ else:
                             </div>
                         </div>
                     """, unsafe_allow_html=True)
-                    lis_ticket1 = df["Ticket ID"].unique().tolist()
 
-                    # Interaction Log form
-                    date_support = st.date_input("Date of Support *",value=datetime.today().date())
-                    col1, col2= st.columns(2)
-                    
-                    # Create time options every 15 minutes from 8 AM to 6 PM
-                    time_options = []
-                    for hour in range(8, 18):  # 8 AM to 5 PM
-                        for minute in [0, 15, 30, 45]:
-                            time_str = f"{hour:02d}:{minute:02d}"
-                            time_options.append(time_str)
-                    
-                    # Default to current time if within range, otherwise 9 AM
-                    current_time_str = datetime.now().strftime("%H:%M")
-                    if current_time_str in time_options:
-                        default_start_idx = time_options.index(current_time_str)
-                    else:
-                        default_start_idx = time_options.index("09:00")
-
-                    with col1:
-                        start_time_idx = st.selectbox("Start Time *", 
-                                                    options=range(len(time_options)), 
-                                                    index=default_start_idx,
-                                                    format_func=lambda x: time_options[x])
-                        start_time = time_options[start_time_idx]
-                    
-                    with col2:
-                        # Calculate default end time (1 hour later)
-                        start_hour, start_min = map(int, start_time.split(":"))
-                        end_hour = start_hour + 1
-                        end_min = start_min
-                        
-                        # Handle hour overflow and cap at 18:00
-                        if end_hour >= 18:
-                            end_time = "18:00"
-                        else:
-                            end_time = f"{end_hour:02d}:{end_min:02d}"
-                        
-                        # End time options (from start time to 18:00)
-                        end_time_options = []
-                        for i, time_str in enumerate(time_options):
-                            if i > start_time_idx and time_str <= "18:00":
-                                end_time_options.append((i, time_str))
-                        
-                        if end_time_options:
-                            default_end_idx = 0
-                            if end_time in [t[1] for t in end_time_options]:
-                                default_end_idx = next(i for i, t in enumerate(end_time_options) if t[1] == end_time)
-                            
-                            end_time_idx = st.selectbox("End Time *",
-                                                        options=range(len(end_time_options)),
-                                                        index=default_end_idx,
-                                                        format_func=lambda x: end_time_options[x][1])
-                            end_time = end_time_options[end_time_idx][1]
-                        else:
-                            end_time = "18:00"
-
-                    time_support = f"{start_time} - {end_time}"
-
-                    request_description = st.text_area("Request Description *", placeholder='Enter text', height=150,key='request_description1') 
+                    # Start with Anticipated Delivery
                     anticipated_delivery = st.selectbox("Anticipated Delivery *", options=["Meeting notes", "Dashboard", "Peer learning facilitation", "TA meeting", "Other"], index=None, placeholder="Select option...") 
                     if anticipated_delivery == "Other":
                         anticipated_delivery_other = st.text_input("Please specify the Anticipated Delivery *")
                         if anticipated_delivery_other:
-                            anticipated_delivery = anticipated_delivery_other 
+                            anticipated_delivery = anticipated_delivery_other
+
+                    # Conditional form fields based on delivery type
+                    if anticipated_delivery == "Meeting notes":
+                        st.markdown("**📅 Meeting Details**")
+                        date_support = st.date_input("Date of Meeting *", value=datetime.today().date())
+                        col1, col2 = st.columns(2)
+                        
+                        # Create time options every 15 minutes from 8 AM to 6 PM
+                        time_options = []
+                        for hour in range(8, 18):  # 8 AM to 5 PM
+                            for minute in [0, 15, 30, 45]:
+                                time_str = f"{hour:02d}:{minute:02d}"
+                                time_options.append(time_str)
+                        
+                        # Default to current time if within range, otherwise 9 AM
+                        current_time_str = datetime.now().strftime("%H:%M")
+                        if current_time_str in time_options:
+                            default_start_idx = time_options.index(current_time_str)
+                        else:
+                            default_start_idx = time_options.index("09:00")
+
+                        with col1:
+                            start_time_idx = st.selectbox("Start Time *", 
+                                                        options=range(len(time_options)), 
+                                                        index=default_start_idx,
+                                                        format_func=lambda x: time_options[x])
+                            start_time = time_options[start_time_idx]
+                        
+                        with col2:
+                            # Calculate default end time (1 hour later)
+                            start_hour, start_min = map(int, start_time.split(":"))
+                            end_hour = start_hour + 1
+                            end_min = start_min
+                            
+                            # Handle hour overflow and cap at 18:00
+                            if end_hour >= 18:
+                                end_time = "18:00"
+                            else:
+                                end_time = f"{end_hour:02d}:{end_min:02d}"
+                            
+                            # End time options (from start time to 18:00)
+                            end_time_options = []
+                            for i, time_str in enumerate(time_options):
+                                if i > start_time_idx and time_str <= "18:00":
+                                    end_time_options.append((i, time_str))
+                            
+                            if end_time_options:
+                                default_end_idx = 0
+                                if end_time in [t[1] for t in end_time_options]:
+                                    default_end_idx = next(i for i, t in enumerate(end_time_options) if t[1] == end_time)
+                                
+                                end_time_idx = st.selectbox("End Time *",
+                                                            options=range(len(end_time_options)),
+                                                            index=default_end_idx,
+                                                            format_func=lambda x: end_time_options[x][1])
+                                end_time = end_time_options[end_time_idx][1]
+                            else:
+                                end_time = "18:00"
+
+                        time_support = f"{start_time} - {end_time}"
+                        request_description = st.text_area("Meeting Description *", placeholder='Describe the meeting topic, agenda, or specific requirements...', height=150, key='meeting_description')
+                        
+                    else:
+                        st.markdown("**⏰ Project Timeline**")
+                        col1, col2 = st.columns(2)
+                        
+                        with col1:
+                            time_commitment = st.selectbox("Anticipated Time Commitment *", 
+                                                         options=["1-2 hours", "3-4 hours", "5-8 hours", "1-2 days", "3-5 days", "1-2 weeks", "More than 2 weeks"], 
+                                                         index=None, 
+                                                         placeholder="Select option...")
+                        
+                        with col2:
+                            anticipated_deadline = st.date_input("Anticipated Deadline *", value=datetime.today().date() + timedelta(days=7))
+                        
+                        request_description = st.text_area("Project Description *", placeholder='Describe the project requirements, deliverables, and any specific details...', height=150, key='project_description')
+                        
+                        # Set default values for non-meeting requests
+                        date_support = None
+                        time_support = None 
 
                     # Submit button
                     st.markdown("""
@@ -2625,24 +2682,40 @@ else:
                     if st.button("Submit",key='support_submit1'):
                         errors = []
                         drive_links_del = ""  # Ensure always defined
-                        # Required field checks
-                        if not date_support: errors.append("Date of support is required.")
-                        if not time_support: errors.append("Time of support is required.")
-                        if not request_description: errors.append("Request description is required.")
-                        if not anticipated_delivery: errors.append("Anticipated delivery is required.")
+                        
+                        # Required field checks based on delivery type
+                        if not anticipated_delivery: 
+                            errors.append("Anticipated delivery is required.")
+                        if not request_description: 
+                            errors.append("Description is required.")
+                        
+                        if anticipated_delivery == "Meeting notes":
+                            if not date_support: 
+                                errors.append("Date of meeting is required.")
+                            if not time_support: 
+                                errors.append("Time of meeting is required.")
+                        else:
+                            if not time_commitment: 
+                                errors.append("Time commitment is required.")
+                            if not anticipated_deadline: 
+                                errors.append("Anticipated deadline is required.")
 
                         # Show warnings or success
                         if errors:
                             for error in errors:
                                 st.warning(error)
                         else:
+                            # Prepare data for Google Sheets
                             new_row_support = {
-                                "Date": date_support.strftime("%Y-%m-%d"),  # Convert to string
-                                "Time request needed": time_support,
+                                "Date": date_support.strftime("%Y-%m-%d") if date_support else "",
+                                "Time request needed": time_support if time_support else "",
                                 "Request description": request_description,
                                 "Anticipated Deliverable": anticipated_delivery,
                                 "TAP Name": staff_name,
-                                "TAP email": user_email
+                                "TAP email": user_email,
+                                "Time Commitment": time_commitment if anticipated_delivery != "Meeting notes" else "",
+                                "Anticipated Deadline": anticipated_deadline.strftime("%Y-%m-%d") if anticipated_delivery != "Meeting notes" and anticipated_deadline else "",
+                                "Request Type": "Meeting" if anticipated_delivery == "Meeting notes" else "Project"
                             }
                             new_data_support = pd.DataFrame([new_row_support])
 
@@ -2663,17 +2736,30 @@ else:
                                 
                                 st.success("✅ Submission successful!")
                                 
-                                # Send notifications to available students
+                                # Send notifications based on request type
                                 st.markdown("---")
-                                st.markdown("**📧 Sending notifications to available students...**")
-                                send_support_request_notifications(
-                                    date_str=date_support.strftime("%Y-%m-%d"),
-                                    time_str=time_support,
-                                    request_description=request_description,
-                                    anticipated_delivery=anticipated_delivery,
-                                    tap_name=staff_name,
-                                    tap_email=user_email
-                                )
+                                st.markdown("**📧 Sending notifications to research assistants...**")
+                                
+                                if anticipated_delivery == "Meeting notes":
+                                    # Send to available students only
+                                    send_support_request_notifications(
+                                        date_str=date_support.strftime("%Y-%m-%d"),
+                                        time_str=time_support,
+                                        request_description=request_description,
+                                        anticipated_delivery=anticipated_delivery,
+                                        tap_name=staff_name,
+                                        tap_email=user_email
+                                    )
+                                else:
+                                    # Send to all students for non-meeting requests
+                                    send_project_request_notifications(
+                                        request_description=request_description,
+                                        anticipated_delivery=anticipated_delivery,
+                                        time_commitment=time_commitment,
+                                        anticipated_deadline=anticipated_deadline.strftime("%Y-%m-%d"),
+                                        tap_name=staff_name,
+                                        tap_email=user_email
+                                    )
                                 
                                 time.sleep(3)
                                 st.rerun()
