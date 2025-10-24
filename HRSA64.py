@@ -2250,87 +2250,169 @@ else:
 
                 with st.expander("🗒️ **CHECK & SUBMIT INTERACTION LOG**"):
                     st.markdown("""
-                        <div style='background: #f0f4ff; border-radius: 16px; box-shadow: 0 2px 8px rgba(26,35,126,0.08); padding: 1.5em 1em 1em 1em; margin-bottom: 2em; margin-top: 1em;'>
-                            <div style='color: #1a237e; font-family: "Segoe UI", "Arial", sans-serif; font-weight: 700; font-size: 1.4em; margin-bottom: 0.3em;'>🗒️ Submit a New Interaction Log Form</div>
-                            <div style='color: #333; font-size: 1.08em; margin-bottom: 0.8em;'>
-                                Check the interactions you made before submitting a new interaction. Log a new interaction with a jurisdiction. Fill out the form below to record emails, meetings, or other communications related to a TA request.
+                        <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 20px; box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3); padding: 2em 1.5em 1.5em 1.5em; margin-bottom: 2em; margin-top: 1em;'>
+                            <div style='color: white; font-family: "Segoe UI", "Arial", sans-serif; font-weight: 800; font-size: 1.6em; margin-bottom: 0.5em; text-align: center;'>
+                                🗒️ Interaction Management Center
+                            </div>
+                            <div style='color: rgba(255,255,255,0.9); font-size: 1.1em; margin-bottom: 0.8em; text-align: center; line-height: 1.4;'>
+                                Review your previous interactions and submit new ones. Track all your communications with jurisdictions and TA requests.
                             </div>
                         </div>
                     """, unsafe_allow_html=True)
-                    lis_ticket = ["No Ticket ID"] + sorted([tid for tid in df["Ticket ID"].dropna().astype(str).unique().tolist()])
 
-                    # Get interaction data properly
-                    df_int_staff = df_int[df_int["Submitted By"] == staff_name].copy()
-                    if not df_int_staff.empty:
-                        # Remove columns we don't want to display
-                        display_cols = [col for col in df_int_staff.columns if col not in ['Submitted By', 'Submission Date']]
-                        df_int_staff_display = df_int_staff[display_cols].copy()
-                        
-                        # Sort by Date of Interaction (most recent first)
-                        df_int_staff_display["Date of Interaction"] = pd.to_datetime(df_int_staff_display["Date of Interaction"], errors="coerce")
-                        df_int_staff_display = df_int_staff_display.sort_values("Date of Interaction", ascending=False)
-                        df_int_staff_display["Date of Interaction"] = df_int_staff_display["Date of Interaction"].dt.strftime("%Y-%m-%d")
-                        
-                        st.dataframe(df_int_staff_display.reset_index(drop=True))
-                    else:
-                        st.info("No previous interactions found for you.")
-
-                    # Interaction Log form
-                    col1, col2 = st.columns(2)
-                    with col1:
-                        ticket_id_int = st.selectbox("Ticket ID *", lis_ticket, index=None,
-                            placeholder="Select option...", key='interaction1')
-                    with col2:
-                        date_int = st.date_input("Date of Interaction *",value=datetime.today().date())
+                    # Create two columns for better layout
+                    col_check, col_submit = st.columns([1, 1])
                     
-                                        
-                    # If No Ticket ID, ask for Jurisdiction
-                    jurisdiction_for_no_ticket1 = None
-                    if ticket_id_int == "No Ticket ID":
-                        jurisdiction_for_no_ticket1 = st.selectbox(
-                            "Jurisdiction *",
-                            lis_location,
+                    with col_check:
+                        st.markdown("""
+                            <div style='background: #f8f9fa; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); padding: 1.5em; margin-bottom: 1em;'>
+                                <h3 style='color: #1a237e; font-family: "Segoe UI", sans-serif; font-weight: 700; margin-bottom: 1em; text-align: center;'>
+                                    📊 Your Previous Interactions
+                                </h3>
+                            </div>
+                        """, unsafe_allow_html=True)
+                        
+                        # Get interaction data properly
+                        df_int_staff = df_int[df_int["Submitted By"] == staff_name].copy()
+                        if not df_int_staff.empty:
+                            # Remove columns we don't want to display
+                            display_cols = [col for col in df_int_staff.columns if col not in ['Submitted By', 'Submission Date']]
+                            df_int_staff_display = df_int_staff[display_cols].copy()
+                            
+                            # Sort by Date of Interaction (most recent first)
+                            df_int_staff_display["Date of Interaction"] = pd.to_datetime(df_int_staff_display["Date of Interaction"], errors="coerce")
+                            df_int_staff_display = df_int_staff_display.sort_values("Date of Interaction", ascending=True)
+                            df_int_staff_display["Date of Interaction"] = df_int_staff_display["Date of Interaction"].dt.strftime("%Y-%m-%d")
+                            
+                            # Add some styling to the dataframe
+                            st.markdown("""
+                                <style>
+                                .dataframe {
+                                    border-radius: 10px;
+                                    overflow: hidden;
+                                    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                                }
+                                </style>
+                            """, unsafe_allow_html=True)
+                            
+                            st.dataframe(df_int_staff_display.reset_index(drop=True), use_container_width=True)
+                            
+                            # Add summary stats
+                            total_interactions = len(df_int_staff_display)
+                            recent_interactions = len(df_int_staff_display[df_int_staff_display["Date of Interaction"] >= (datetime.now() - timedelta(days=30)).strftime("%Y-%m-%d")])
+                            
+                            st.markdown(f"""
+                                <div style='background: #e3f2fd; border-radius: 10px; padding: 1em; margin-top: 1em; text-align: center;'>
+                                    <div style='display: flex; justify-content: space-around;'>
+                                        <div>
+                                            <div style='font-size: 1.5em; font-weight: bold; color: #1976d2;'>{total_interactions}</div>
+                                            <div style='font-size: 0.9em; color: #666;'>Total Interactions</div>
+                                        </div>
+                                        <div>
+                                            <div style='font-size: 1.5em; font-weight: bold; color: #388e3c;'>{recent_interactions}</div>
+                                            <div style='font-size: 0.9em; color: #666;'>Last 30 Days</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            """, unsafe_allow_html=True)
+                        else:
+                            st.markdown("""
+                                <div style='background: #fff3e0; border-radius: 15px; padding: 2em; text-align: center; border: 2px dashed #ff9800;'>
+                                    <div style='font-size: 3em; margin-bottom: 0.5em;'>📝</div>
+                                    <h4 style='color: #e65100; margin-bottom: 0.5em;'>No Previous Interactions</h4>
+                                    <p style='color: #666; margin: 0;'>You haven't logged any interactions yet. Start by submitting your first interaction below!</p>
+                                </div>
+                            """, unsafe_allow_html=True)
+
+                    with col_submit:
+                        st.markdown("""
+                            <div style='background: #f8f9fa; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); padding: 1.5em; margin-bottom: 1em;'>
+                                <h3 style='color: #1a237e; font-family: "Segoe UI", sans-serif; font-weight: 700; margin-bottom: 1em; text-align: center;'>
+                                    ✍️ Submit New Interaction
+                                </h3>
+                            </div>
+                        """, unsafe_allow_html=True)
+                        
+                        lis_ticket = ["No Ticket ID"] + sorted([tid for tid in df["Ticket ID"].dropna().astype(str).unique().tolist()])
+
+                        # Interaction Log form with better styling
+                        st.markdown("""
+                            <div style='background: white; border-radius: 12px; padding: 1.5em; box-shadow: 0 2px 8px rgba(0,0,0,0.05);'>
+                        """, unsafe_allow_html=True)
+                        
+                        col1, col2 = st.columns(2)
+                        with col1:
+                            ticket_id_int = st.selectbox("🎫 Ticket ID *", lis_ticket, index=None,
+                                placeholder="Select option...", key='interaction1')
+                        with col2:
+                            date_int = st.date_input("📅 Date of Interaction *", value=datetime.today().date())
+                        
+                        # If No Ticket ID, ask for Jurisdiction
+                        jurisdiction_for_no_ticket1 = None
+                        if ticket_id_int == "No Ticket ID":
+                            st.markdown("---")
+                            jurisdiction_for_no_ticket1 = st.selectbox(
+                                "🌍 Jurisdiction *",
+                                lis_location,
+                                index=None,
+                                placeholder="Select option...",
+                                key='juris_interaction1'
+                            )
+
+                        st.markdown("---")
+                        list_interaction = [
+                            "Email", "Phone Call", "In-Person Meeting", "Online Meeting", "Other"
+                        ]
+
+                        type_interaction = st.selectbox(
+                            "📞 Type of Interaction *",
+                            list_interaction,
                             index=None,
-                            placeholder="Select option...",
-                            key='juris_interaction1'
+                            placeholder="Select option..."
                         )
 
-                    list_interaction = [
-                        "Email", "Phone Call", "In-Person Meeting", "Online Meeting", "Other"
-                    ]
+                        # If "Other" is selected, show a text input for custom value
+                        if type_interaction == "Other":
+                            type_interaction_other = st.text_input("✏️ Please specify the Type of Interaction *")
+                            if type_interaction_other:
+                                type_interaction = type_interaction_other 
+                        
+                        st.markdown("---")
+                        interaction_description = st.text_area("📝 Short Summary *", placeholder='Enter text', height=120, key='interaction_description1') 
 
-                    type_interaction = st.selectbox(
-                        "Type of Interaction *",
-                        list_interaction,
-                        index=None,
-                        placeholder="Select option..."
-                    )
+                        st.markdown("---")
+                        document_int = st.file_uploader(
+                            "📎 Upload any files or attachments that are relevant to this interaction.", 
+                            accept_multiple_files=True,
+                            help="You can upload multiple files at once"
+                        )
+                        
+                        st.markdown("</div>", unsafe_allow_html=True)
 
-                    # If "Other" is selected, show a text input for custom value
-                    if type_interaction == "Other":
-                        type_interaction_other = st.text_input("Please specify the Type of Interaction *")
-                        if type_interaction_other:
-                            type_interaction = type_interaction_other 
-                    interaction_description = st.text_area("Short Summary *", placeholder='Enter text', height=150,key='interaction_description1') 
-
-                    document_int = st.file_uploader(
-                        "Upload any files or attachments that are relevant to this interaction.",accept_multiple_files=True
-                    )
-
-                    # Submit button
+                    # Enhanced Submit button
                     st.markdown("""
-                        <style>
-                        .stButton > button {
-                            width: 100%;
-                            background-color: #cdb4db;
-                            color: black;
-                            font-family: Arial, "Segoe UI", sans-serif;
-                            font-weight: 600;
-                            border-radius: 8px;
-                            padding: 0.6em;
-                            margin-top: 1em;
-                        }
-                        </style>
+                        <div style='text-align: center; margin-top: 2em;'>
+                            <style>
+                            .stButton > button {
+                                width: 100%;
+                                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                                color: white;
+                                font-family: "Segoe UI", sans-serif;
+                                font-weight: 700;
+                                font-size: 1.1em;
+                                border-radius: 12px;
+                                padding: 0.8em 2em;
+                                margin-top: 1em;
+                                border: none;
+                                box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+                                transition: all 0.3s ease;
+                            }
+                            .stButton > button:hover {
+                                transform: translateY(-2px);
+                                box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+                            }
+                            </style>
+                        </div>
                     """, unsafe_allow_html=True)
 
                     try:
