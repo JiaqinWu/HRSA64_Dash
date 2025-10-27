@@ -898,12 +898,12 @@ else:
                     st.cache_data.clear()
                     
                     # Send email notifications to all coordinators
-                    coordinator_emails = [email for email, user in USERS.items() if "Coordinator" in user]
+                    coordinator_emails = [coord_email for coord_email, user in USERS.items() if "Coordinator" in user]
                     #coordinator_emails = ["jw2104@georgetown.edu"]
 
                     subject = f"New TA Request Submitted: {new_ticket_id}"
-                    for email in coordinator_emails:
-                        coordinator_name = USERS[email]["Coordinator"]["name"]
+                    for coord_email in coordinator_emails:
+                        coordinator_name = USERS[coord_email]["Coordinator"]["name"]
                         personalized_body = f"""
                         Hi {coordinator_name},
 
@@ -925,12 +925,12 @@ else:
                         """
                         try:
                             send_email_mailjet(
-                                to_email=email,
+                                to_email=coord_email,
                                 subject=subject,
                                 body=personalized_body,
                             )
                         except Exception as e:
-                            st.warning(f"⚠️ Failed to send email to coordinator {email}: {e}")
+                            st.warning(f"⚠️ Failed to send email to coordinator {coord_email}: {e}")
 
 
                     # Send confirmation email to requester
