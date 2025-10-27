@@ -518,7 +518,7 @@ USERS = {
     'gh674@georgetown.edu':{
         "Assignee/Staff": {"password": "Grace123!", "name": "Grace Hazlett"}
     },
-        'htn16@georgetown.edu':{
+    'htn16@georgetown.edu':{
         "Research Assistant": {"password": "Hang123!", "name": "Hang Nyguen"}
     },
     'ooa36@georgetown.edu':{
