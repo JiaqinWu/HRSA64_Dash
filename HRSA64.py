@@ -48,6 +48,7 @@ client = gspread.authorize(creds)
 
 
 def send_email_mailjet(to_email, subject, body):
+    """Send email via Mailjet and return success status"""
     api_key = st.secrets["mailjet"]["api_key"]
     api_secret = st.secrets["mailjet"]["api_secret"]
     sender = st.secrets["mailjet"]["sender"]
@@ -75,12 +76,14 @@ def send_email_mailjet(to_email, subject, body):
 
     try:
         result = mailjet.send.create(data=data)
-        #if result.status_code == 200:
-            #st.success(f"📤 Email sent to {to_email}")
-        #else:
-            #st.warning(f"❌ Failed to email {to_email}: {result.status_code} - {result.json()}")
+        if result.status_code == 200:
+            return True
+        else:
+            st.warning(f"❌ Failed to email {to_email}: Status {result.status_code}")
+            return False
     except Exception as e:
         st.error(f"❗ Mailjet error: {e}")
+        return False
 
 # Student schedule data
 STUDENT_SCHEDULE = {
@@ -235,11 +238,13 @@ def send_support_request_notifications(date_str, time_str, request_description, 
     
     if not available_students:
         st.info("No students are available during the requested time slot.")
-        return
+        return True
     
     subject = f"New Support Request Available - {date_str} at {time_str}"
+    success_count = 0
+    total_count = len(available_students)
     
-    for student in available_students:
+    for i, student in enumerate(available_students, 1):
         body = f"""
 Dear {student['name']},
 
@@ -262,20 +267,37 @@ GU-TAP System
         """
         
         try:
-            send_email_mailjet(
+            status = send_email_mailjet(
                 to_email=student['email'],
                 subject=subject,
                 body=body.strip()
             )
-            st.success(f"📧 Notification sent to {student['name']} ({student['email']})")
+            if status:
+                success_count += 1
+                st.success(f"📧 ({i}/{total_count}) Sent to {student['name']} ({student['email']})")
+            
+            # Add delay between emails to avoid rate limiting (except after the last email)
+            if i < total_count:
+                time.sleep(0.8)  # 0.8 second delay between emails
+                
         except Exception as e:
             st.warning(f"⚠️ Failed to send notification to {student['name']}: {e}")
+    
+    if success_count == total_count:
+        return True
+    else:
+        st.warning(f"⚠️ Sent {success_count}/{total_count} emails successfully")
+        return False
 
 def send_project_request_notifications(request_description, anticipated_delivery, time_commitment, anticipated_deadline, tap_name, tap_email):
     """Send email notifications to all students for non-meeting project requests"""
     subject = f"New Project Request Available - {anticipated_delivery}"
     
-    for student_name, student_info in STUDENT_SCHEDULE.items():
+    student_list = list(STUDENT_SCHEDULE.items())
+    success_count = 0
+    total_count = len(student_list)
+    
+    for i, (student_name, student_info) in enumerate(student_list, 1):
         body = f"""
 Dear {student_name},
 
@@ -298,14 +320,27 @@ GU-TAP System
         """
         
         try:
-            send_email_mailjet(
+            status = send_email_mailjet(
                 to_email=student_info['email'],
                 subject=subject,
                 body=body.strip()
             )
-            st.success(f"📧 Project notification sent to {student_name} ({student_info['email']})")
+            if status:
+                success_count += 1
+                st.success(f"📧 ({i}/{total_count}) Sent to {student_name} ({student_info['email']})")
+            
+            # Add delay between emails to avoid rate limiting (except after the last email)
+            if i < total_count:
+                time.sleep(0.8)  # 0.8 second delay between emails
+                
         except Exception as e:
             st.warning(f"⚠️ Failed to send project notification to {student_name}: {e}")
+    
+    if success_count == total_count:
+        return True
+    else:
+        st.warning(f"⚠️ Sent {success_count}/{total_count} emails successfully")
+        return False
 
 
 def upload_file_to_drive(file, filename, folder_id, creds_dict):
@@ -2749,9 +2784,10 @@ else:
                                 st.markdown("---")
                                 st.markdown("**📧 Sending notifications to research assistants...**")
                                 
+                                notification_sent = False
                                 if anticipated_delivery == "Meeting notes":
                                     # Send to available students only
-                                    send_support_request_notifications(
+                                    notification_sent = send_support_request_notifications(
                                         date_str=date_support.strftime("%Y-%m-%d"),
                                         time_str=time_support,
                                         request_description=request_description,
@@ -2761,7 +2797,7 @@ else:
                                     )
                                 else:
                                     # Send to all students for non-meeting requests
-                                    send_project_request_notifications(
+                                    notification_sent = send_project_request_notifications(
                                         request_description=request_description,
                                         anticipated_delivery=anticipated_delivery,
                                         time_commitment=time_commitment,
@@ -2770,7 +2806,16 @@ else:
                                         tap_email=user_email
                                     )
                                 
-                                time.sleep(3)
+                                # Wait a moment to show completion status
+                                time.sleep(1)
+                                
+                                # Show final status and rerun
+                                if notification_sent:
+                                    st.success("✅ All notifications sent successfully!")
+                                else:
+                                    st.warning("⚠️ Some notifications may have failed. Please check the logs above.")
+                                
+                                time.sleep(2)
                                 st.rerun()
 
                             except Exception as e:
