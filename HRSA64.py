@@ -552,9 +552,9 @@ lis_location = ["Maricopa Co. - Arizona", "Alameda Co. - California", "Los Angel
 
 lis_organization = ["Maricopa County Public Health Department","Alameda County Public Health Department","Los Angeles County Department of Public Health",\
     "Orange County Health Care Agency","Riverside County Department of Public Health","Sacramento County Public Health","San Bernadino County Public Health",\
-    "County of San Diego Health and Human Services Agency","San Francisco Department of Public Health","Florida Department of Health in Broward County",\
-    "Florida Department of Health in Duval County","Florida Department of Health in Hillsborough County","Florida Department of Health in Miami-Dade County",\
-    "Florida Department of Health in Orange County","Florida Department of Health in Palm Beach County","Florida Department of Health in Pinellas County",\
+    "County of San Diego Health and Human Services Agency","San Francisco Department of Public Health","Broward County, Florida",\
+    "Duval County, Florida","Hillsborough County, Florida","Miami-Dade County, Florida",\
+    "Orange County, Florida","Palm Beach County, Florida","Pinellas County, Florida",\
     "Cobb and Douglas Public Health","Dekalb Public Health","Fulton County Board of Health","Gwinnett County Board of Health","Cook County Health",\
     "Marion County Public Health Department","East Baton Rouge Parish Health Unit","New Orleans Health Department","Baltimore City Health Department",\
     "Montgomery County Health Department","Prince George's County Health Department","Boston Public Health Commission","Wayne County Health, Human and Veterans Services",\
