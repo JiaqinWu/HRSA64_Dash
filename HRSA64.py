@@ -519,7 +519,7 @@ USERS = {
         "Assignee/Staff": {"password": "Grace123!", "name": "Grace Hazlett"}
     },
     'htn16@georgetown.edu':{
-        "Research Assistant": {"password": "Hang123!", "name": "Hang Nyguen"}
+        "Research Assistant": {"password": "Hang123!", "name": "Hang Nguyen"}
     },
     'ooa36@georgetown.edu':{
         "Research Assistant": {"password": "Olayinka123!", "name": "Olayinka Adedeji"}
