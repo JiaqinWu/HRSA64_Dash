@@ -3035,6 +3035,38 @@ else:
                         </style>
                     """, unsafe_allow_html=True)
 
+                # --- Section: View Completed Requests (Staff)
+                with st.expander("✅ **COMPLETED REQUESTS**"):
+                    st.markdown("""
+                        <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 20px; box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3); padding: 2em 1.5em 1.5em 1.5em; margin-bottom: 2em; margin-top: 1em;'>
+                            <div style='color: white; font-family: "Segoe UI", "Arial", sans-serif; font-weight: 800; font-size: 1.6em; margin-bottom: 0.5em; text-align: center;'>
+                                ✅ Completed Requests
+                            </div>
+                            <div style='color: rgba(255,255,255,0.9); font-size: 1.1em; margin-bottom: 0.8em; text-align: center; line-height: 1.4;'>
+                                View your completed TA requests.
+                            </div>
+                        </div>
+                    """, unsafe_allow_html=True)
+
+                    staff_completed_df = com_df.copy()
+                    if staff_completed_df.empty:
+                        st.info("You have no completed requests yet.")
+                    else:
+                        staff_completed_df["Assigned Date"] = pd.to_datetime(staff_completed_df["Assigned Date"], errors="coerce")
+                        staff_completed_df["Targeted Due Date"] = pd.to_datetime(staff_completed_df["Targeted Due Date"], errors="coerce")
+                        staff_completed_df["Close Date"] = pd.to_datetime(staff_completed_df["Close Date"], errors="coerce")
+
+                        staff_completed_df["Assigned Date"] = staff_completed_df["Assigned Date"].dt.strftime("%Y-%m-%d")
+                        staff_completed_df["Targeted Due Date"] = staff_completed_df["Targeted Due Date"].dt.strftime("%Y-%m-%d")
+                        staff_completed_df["Close Date"] = staff_completed_df["Close Date"].dt.strftime("%Y-%m-%d")
+
+                        st.dataframe(staff_completed_df[[
+                            "Ticket ID","Jurisdiction", "Organization", "Name", "Title/Position", "Email Address", "Phone Number",
+                            "Focus Area", "TA Type", "Priority", "Assigned Coach", "TA Description","Document",
+                            "Assigned Date", "Targeted Due Date", "Close Date",
+                            "Coordinator Comment History", "Staff Comment History", "Transfer History"
+                        ]].reset_index(drop=True))
+
                 st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
 
             elif st.session_state.role == "Research Assistant":
