@@ -3035,6 +3035,8 @@ else:
                         </style>
                     """, unsafe_allow_html=True)
 
+                st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
+
                 # --- Section: View Completed Requests (Staff)
                 with st.expander("✅ **COMPLETED REQUESTS**"):
                     st.markdown("""
