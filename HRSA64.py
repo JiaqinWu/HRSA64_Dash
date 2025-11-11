@@ -3772,9 +3772,15 @@ else:
                                 st.warning("⚠️ Excel template file not found. PDF generation will proceed without template validation.")
                                 wb, ws = None, None
                         
-                        # General Guidance (UI only)
-                        with st.expander("General Guidance", expanded=False):
-                            st.markdown("""
+                        # General Guidance (UI only) - Using HTML details instead of nested expander
+                        st.markdown("""
+                        <details>
+                        <summary style='cursor: pointer; font-weight: bold; font-size: 1.1em; padding: 10px; background-color: #f0f0f0; border-radius: 5px; margin-bottom: 10px;'>
+                        📋 General Guidance (Click to expand)
+                        </summary>
+                        <div style='padding: 15px; background-color: #fafafa; border-radius: 5px; margin-top: 10px;'>
+                        """, unsafe_allow_html=True)
+                        st.markdown("""
                             ### General Information
                             Fill out the fields highlighted in green, as applicable. Form must be submitted at least one month prior to your proposed dates of travel. Please inform ADVANCE leadership if extenuating circumstances will prevent you from meeting this deadline.
 
@@ -3800,7 +3806,8 @@ else:
                             Federal Guidelines stipulate that on the first and last travel day, travelers are only eligible for 75 percent of the total M&IE rate.
 
                             The cost of any meals provided at meetings and conferences will not be reimbursed by Georgetown University. For meals that have been provided by Georgetown University, please place an "x" in the appropriate box on the reimbursement form.
-                            """)
+                        """)
+                        st.markdown("</div></details>", unsafe_allow_html=True)
                         
                         # Date inputs outside form so they trigger immediate reruns
                         st.header("Travel Dates")
