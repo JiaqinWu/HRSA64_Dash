@@ -3772,42 +3772,45 @@ else:
                                 st.warning("⚠️ Excel template file not found. PDF generation will proceed without template validation.")
                                 wb, ws = None, None
                         
-                        # General Guidance (UI only) - Using HTML details instead of nested expander
-                        st.markdown("""
-                        <details>
-                        <summary style='cursor: pointer; font-weight: bold; font-size: 1.1em; padding: 10px; background-color: #f0f0f0; border-radius: 5px; margin-bottom: 10px;'>
-                        📋 General Guidance (Click to expand)
-                        </summary>
-                        <div style='padding: 15px; background-color: #fafafa; border-radius: 5px; margin-top: 10px;'>
-                        """, unsafe_allow_html=True)
-                        st.markdown("""
-                            ### General Information
-                            Fill out the fields highlighted in green, as applicable. Form must be submitted at least one month prior to your proposed dates of travel. Please inform ADVANCE leadership if extenuating circumstances will prevent you from meeting this deadline.
+                        # General Guidance (UI only) - Using button toggle instead of nested expander
+                        if 'show_travel_guidance' not in st.session_state:
+                            st.session_state.show_travel_guidance = False
+                        
+                        if st.button("📋 General Guidance (Click to show/hide)", key="travel_guidance_toggle"):
+                            st.session_state.show_travel_guidance = not st.session_state.show_travel_guidance
+                        
+                        if st.session_state.show_travel_guidance:
+                            st.markdown("""
+                            <div style='padding: 15px; background-color: #fafafa; border-radius: 5px; margin-top: 10px; border: 1px solid #e0e0e0;'>
+                            """, unsafe_allow_html=True)
+                            st.markdown("""
+                                ### General Information
+                                Fill out the fields highlighted in green, as applicable. Form must be submitted at least one month prior to your proposed dates of travel. Please inform ADVANCE leadership if extenuating circumstances will prevent you from meeting this deadline.
 
-                            ### Receipts
-                            You must submit receipts as part of your Expense Report in GMS for every item associated with your trip. This signed travel authorization will serve as your receipt for meals and incidentals. Meals are reimbursed at the Federal Per Diem rate for the destination city.
+                                ### Receipts
+                                You must submit receipts as part of your Expense Report in GMS for every item associated with your trip. This signed travel authorization will serve as your receipt for meals and incidentals. Meals are reimbursed at the Federal Per Diem rate for the destination city.
 
-                            ### Mileage
-                            In lieu of taxi expenses, you can choose to be reimbursed for the mileage driven from your point of origin to the airport, train station, or bus station. Georgetown University uses the IRS mileage rate.
+                                ### Mileage
+                                In lieu of taxi expenses, you can choose to be reimbursed for the mileage driven from your point of origin to the airport, train station, or bus station. Georgetown University uses the IRS mileage rate.
 
-                            Please attach documentation for the specified mileage in your GMS Expense report (e.g., Google Maps, MapQuest). Round all mileage to the nearest mile.
+                                Please attach documentation for the specified mileage in your GMS Expense report (e.g., Google Maps, MapQuest). Round all mileage to the nearest mile.
 
-                            ### Airfare, Transportation, Parking, Lodging, Baggage Fees, Miscellaneous/Other
-                            - **Airfare**: Should be booked through Concur and paid by Georgetown University. Include it as a cost in this Travel Authorization Form; your airfare should be included as an expense in your GMS Expense Report, but not as a personal reimbursement. If you are being reimbursed for your air travel, you must submit your itinerary and receipt.
-                            - **Ground Transportation**: Covers reasonable expenses for taxis or other modes of transportation to and from airports and/or train and bus stations. Receipts must indicate the point of departure and point of arrival.
-                            - **Parking**: If you are being reimbursed for parking, you must submit your receipt(s).
-                            - **Lodging**: If lodging is purchased by the traveler, hotel receipts must be submitted. Lodging includes room and tax; it does not include telephone calls, room service, or other incidentals.
-                            - **Baggage Fees**: Georgetown University will reimburse for one checked bag per passenger for each leg of trip (if the carrier charges for checked bags). For carriers with a free first bag, no reimbursement for additional bags will be allowed.
-                            - **Miscellaneous/Other**: Includes pre‑approved travel expenses not listed in this form.
+                                ### Airfare, Transportation, Parking, Lodging, Baggage Fees, Miscellaneous/Other
+                                - **Airfare**: Should be booked through Concur and paid by Georgetown University. Include it as a cost in this Travel Authorization Form; your airfare should be included as an expense in your GMS Expense Report, but not as a personal reimbursement. If you are being reimbursed for your air travel, you must submit your itinerary and receipt.
+                                - **Ground Transportation**: Covers reasonable expenses for taxis or other modes of transportation to and from airports and/or train and bus stations. Receipts must indicate the point of departure and point of arrival.
+                                - **Parking**: If you are being reimbursed for parking, you must submit your receipt(s).
+                                - **Lodging**: If lodging is purchased by the traveler, hotel receipts must be submitted. Lodging includes room and tax; it does not include telephone calls, room service, or other incidentals.
+                                - **Baggage Fees**: Georgetown University will reimburse for one checked bag per passenger for each leg of trip (if the carrier charges for checked bags). For carriers with a free first bag, no reimbursement for additional bags will be allowed.
+                                - **Miscellaneous/Other**: Includes pre‑approved travel expenses not listed in this form.
 
-                            ### Meals and Incidental Expenses (M&IE)
-                            Georgetown University will reimburse meals and incidentals at the U.S. Government per diem rates. This allowance covers tips, porter fees, etc.
+                                ### Meals and Incidental Expenses (M&IE)
+                                Georgetown University will reimburse meals and incidentals at the U.S. Government per diem rates. This allowance covers tips, porter fees, etc.
 
-                            Federal Guidelines stipulate that on the first and last travel day, travelers are only eligible for 75 percent of the total M&IE rate.
+                                Federal Guidelines stipulate that on the first and last travel day, travelers are only eligible for 75 percent of the total M&IE rate.
 
-                            The cost of any meals provided at meetings and conferences will not be reimbursed by Georgetown University. For meals that have been provided by Georgetown University, please place an "x" in the appropriate box on the reimbursement form.
-                        """)
-                        st.markdown("</div></details>", unsafe_allow_html=True)
+                                The cost of any meals provided at meetings and conferences will not be reimbursed by Georgetown University. For meals that have been provided by Georgetown University, please place an "x" in the appropriate box on the reimbursement form.
+                            """)
+                            st.markdown("</div>", unsafe_allow_html=True)
                         
                         # Date inputs outside form so they trigger immediate reruns
                         st.header("Travel Dates")
