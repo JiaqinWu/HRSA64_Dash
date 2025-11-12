@@ -1855,6 +1855,7 @@ else:
                     try:
                         folder_id = "1fy1CZSs_t6E6IF68rxblY6YeBihrSPNT" 
                         links = []
+                        upload_count = 0
                         for file in document:
                             # Rename file as: GU0001_filename.pdf
                             renamed_filename = f"{new_ticket_id}_{file.name}"
@@ -1865,10 +1866,13 @@ else:
                                 creds_dict=st.secrets["gcp_service_account"]
                             )
                             links.append(link)
+                            upload_count += 1
+                            st.success(f"✅ Successfully uploaded: {file.name}")
                         drive_links = ", ".join(links)
-                        st.success("File(s) uploaded to Google Drive.")    
+                        if upload_count > 0:
+                            st.success(f"✅ All {upload_count} file(s) uploaded successfully to Google Drive!")    
                     except Exception as e:
-                        st.error(f"Error uploading file(s) to Google Drive: {str(e)}")
+                        st.error(f"❌ Error uploading file(s) to Google Drive: {str(e)}")
 
                 new_row = {
                     'Ticket ID': new_ticket_id,
@@ -2872,6 +2876,7 @@ else:
                                 try:
                                     folder_id_int = "19-Sm8W151tg1zyDN0Nh14DUvOVUieqq7" 
                                     links_int = []
+                                    upload_count = 0
                                     for file in document_int:
                                         # Rename file as: GU0001_filename.pdf
                                         renamed_filename = f"{ticket_id_int}_{file.name}"
@@ -2882,10 +2887,13 @@ else:
                                             creds_dict=st.secrets["gcp_service_account"]
                                         )
                                         links_int.append(link)
+                                        upload_count += 1
+                                        st.success(f"✅ Successfully uploaded: {file.name}")
                                     drive_links_int = ", ".join(links_int)
-                                    st.success("File(s) uploaded to Google Drive.")    
+                                    if upload_count > 0:
+                                        st.success(f"✅ All {upload_count} file(s) uploaded successfully to Google Drive!")    
                                 except Exception as e:
-                                    st.error(f"Error uploading file(s) to Google Drive: {str(e)}")
+                                    st.error(f"❌ Error uploading file(s) to Google Drive: {str(e)}")
 
                             new_row_int = {
                                 'Ticket ID': ticket_id_int,
@@ -3006,6 +3014,7 @@ else:
                                 try:
                                     folder_id_del = "1gXfWxys2cxd67YDk8zKPmG_mLGID4qL2" 
                                     links_del = []
+                                    upload_count = 0
                                     for file in document_del:
                                         # Rename file as: GU0001_filename.pdf
                                         renamed_filename = f"{ticket_id_del}_{file.name}"
@@ -3016,10 +3025,13 @@ else:
                                             creds_dict=st.secrets["gcp_service_account"]
                                         )
                                         links_del.append(link)
+                                        upload_count += 1
+                                        st.success(f"✅ Successfully uploaded: {file.name}")
                                     drive_links_del = ", ".join(links_del)
-                                    st.success("File(s) uploaded to Google Drive.")    
+                                    if upload_count > 0:
+                                        st.success(f"✅ All {upload_count} file(s) uploaded successfully to Google Drive!")    
                                 except Exception as e:
-                                    st.error(f"Error uploading file(s) to Google Drive: {str(e)}")
+                                    st.error(f"❌ Error uploading file(s) to Google Drive: {str(e)}")
 
                             new_row_del = {
                                 'Ticket ID': ticket_id_del,
@@ -3893,6 +3905,7 @@ GU-TAP System
                                 try:
                                     folder_id_int = "19-Sm8W151tg1zyDN0Nh14DUvOVUieqq7" 
                                     links_int = []
+                                    upload_count = 0
                                     for file in document_int:
                                         # Rename file as: GU0001_filename.pdf
                                         renamed_filename = f"{ticket_id_int}_{file.name}"
@@ -3903,10 +3916,13 @@ GU-TAP System
                                             creds_dict=st.secrets["gcp_service_account"]
                                         )
                                         links_int.append(link)
+                                        upload_count += 1
+                                        st.success(f"✅ Successfully uploaded: {file.name}")
                                     drive_links_int = ", ".join(links_int)
-                                    st.success("File(s) uploaded to Google Drive.")    
+                                    if upload_count > 0:
+                                        st.success(f"✅ All {upload_count} file(s) uploaded successfully to Google Drive!")    
                                 except Exception as e:
-                                    st.error(f"Error uploading file(s) to Google Drive: {str(e)}")
+                                    st.error(f"❌ Error uploading file(s) to Google Drive: {str(e)}")
 
                             new_row_int = {
                                 'Ticket ID': ticket_id_int,
@@ -5042,6 +5058,7 @@ GU-TAP System
                                 try:
                                     folder_id_del = "1gXfWxys2cxd67YDk8zKPmG_mLGID4qL2" 
                                     links_del = []
+                                    upload_count = 0
                                     for file in document_del:
                                         # Rename file as: GU0001_filename.pdf
                                         renamed_filename = f"{ticket_id_del}_{file.name}"
@@ -5052,10 +5069,13 @@ GU-TAP System
                                             creds_dict=st.secrets["gcp_service_account"]
                                         )
                                         links_del.append(link)
+                                        upload_count += 1
+                                        st.success(f"✅ Successfully uploaded: {file.name}")
                                     drive_links_del = ", ".join(links_del)
-                                    st.success("File(s) uploaded to Google Drive.")    
+                                    if upload_count > 0:
+                                        st.success(f"✅ All {upload_count} file(s) uploaded successfully to Google Drive!")    
                                 except Exception as e:
-                                    st.error(f"Error uploading file(s) to Google Drive: {str(e)}")
+                                    st.error(f"❌ Error uploading file(s) to Google Drive: {str(e)}")
 
                             new_row_del = {
                                 'Ticket ID': ticket_id_del,
