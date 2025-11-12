@@ -3092,14 +3092,20 @@ else:
                                 approval_date_col = 'Mabintou Approval Date'
                                 signature_col = 'Mabintou Signature'
                                 note_col = 'Mabintou Note'
-                                coordinator_display_name = "Mabintou"
+                                coordinator_display_name = "Mabintou Ouattara"
                             
                             # Filter for forms pending this coordinator's approval
-                            pending_forms = df_travel_review[
-                                (df_travel_review.get(status_col, '') == 'pending') |
-                                (df_travel_review.get(status_col, '').isna()) |
-                                (df_travel_review.get(status_col, '') == '')
-                            ].copy()
+                            # Check if column exists, if not, all rows are pending
+                            if status_col in df_travel_review.columns:
+                                pending_forms = df_travel_review[
+                                    (df_travel_review[status_col].astype(str).str.lower() == 'pending') |
+                                    (df_travel_review[status_col].isna()) |
+                                    (df_travel_review[status_col].astype(str) == '') |
+                                    (df_travel_review[status_col].astype(str) == 'nan')
+                                ].copy()
+                            else:
+                                # If column doesn't exist, all forms are pending
+                                pending_forms = df_travel_review.copy()
                             
                             if pending_forms.empty:
                                 st.info("✅ No travel forms pending your approval at this time.")
@@ -3145,6 +3151,11 @@ else:
                                     # Show approval status
                                     kemisha_status = selected_form.get('Kemisha Approval Status', 'pending')
                                     mabintou_status = selected_form.get('Mabintou Approval Status', 'pending')
+                                    # Handle NaN values
+                                    if pd.isna(kemisha_status) or str(kemisha_status).lower() == 'nan':
+                                        kemisha_status = 'pending'
+                                    if pd.isna(mabintou_status) or str(mabintou_status).lower() == 'nan':
+                                        mabintou_status = 'pending'
                                     st.markdown(f"**Kemisha Status:** {kemisha_status}")
                                     st.markdown(f"**Mabintou Status:** {mabintou_status}")
                                     
@@ -3392,10 +3403,14 @@ GU-TAP System
                             # Show approved forms section
                             st.markdown("---")
                             st.markdown("#### ✅ Fully Approved Forms")
-                            fully_approved = df_travel_review[
-                                (df_travel_review.get('Kemisha Approval Status', '') == 'approve') &
-                                (df_travel_review.get('Mabintou Approval Status', '') == 'approve')
-                            ].copy()
+                            # Check if both status columns exist
+                            if 'Kemisha Approval Status' in df_travel_review.columns and 'Mabintou Approval Status' in df_travel_review.columns:
+                                fully_approved = df_travel_review[
+                                    (df_travel_review['Kemisha Approval Status'].astype(str).str.lower() == 'approve') &
+                                    (df_travel_review['Mabintou Approval Status'].astype(str).str.lower() == 'approve')
+                                ].copy()
+                            else:
+                                fully_approved = pd.DataFrame()
                             if not fully_approved.empty:
                                 approved_display_cols = ['Name', 'Destination', 'Departure Date', 'Return Date', 
                                                         'Kemisha Approval Date', 'Mabintou Approval Date', 'PDF Link']
