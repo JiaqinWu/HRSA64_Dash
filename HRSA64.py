@@ -748,9 +748,54 @@ def create_pdf(form_data, ws):
     ]))
     story.append(traveler_table)
     story.append(Spacer(1, 0.15*inch))
-    # Traveler Paid Expenses Section
+    
+    # Purpose of Travel Section
     story.append(Paragraph("<b>Purpose of Travel</b>", styles['Heading2']))
-    story.append(Spacer(1, 0.15*inch))
+    story.append(Spacer(1, 0.1*inch))
+    
+    purpose_of_travel = form_data.get('purpose_of_travel', '')
+    attendees = form_data.get('attendees', '')
+    deliverables = form_data.get('deliverables', '')
+    support_files = form_data.get('support_files', '')
+    
+    # Create purpose of travel table with Paragraph for text wrapping
+    purpose_data = []
+    purpose_style = ParagraphStyle(
+        'PurposeStyle',
+        parent=styles['Normal'],
+        fontSize=9,
+        textColor=colors.red,
+        leading=11,
+    )
+    
+    if purpose_of_travel:
+        purpose_data.append(['Purpose of Travel', Paragraph(purpose_of_travel, purpose_style)])
+    if attendees:
+        purpose_data.append(['Attendees', Paragraph(attendees, purpose_style)])
+    if deliverables:
+        purpose_data.append(['Deliverables', Paragraph(deliverables, purpose_style)])
+    if support_files and support_files.strip():
+        purpose_data.append(['Support Materials', Paragraph(support_files, purpose_style)])
+    
+    if purpose_data:
+        purpose_table = Table(purpose_data, colWidths=[2*inch, 5.5*inch])
+        purpose_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (0, -1), colors.HexColor('#E0E0E0')),
+            ('TEXTCOLOR', (0, 0), (0, -1), colors.black),
+            ('BACKGROUND', (1, 0), (1, -1), colors.HexColor('#FFEBEE')),  # Light red background
+            ('GRID', (0, 0), (-1, -1), 1, colors.black),
+            ('ALIGN', (0, 0), (0, -1), 'LEFT'),
+            ('ALIGN', (1, 0), (1, -1), 'LEFT'),
+            ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+            ('FONTNAME', (0, 0), (0, -1), 'Helvetica'),
+            ('FONTSIZE', (0, 0), (0, -1), 9),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+            ('TOPPADDING', (0, 0), (-1, -1), 6),
+            ('LEFTPADDING', (0, 0), (-1, -1), 4),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 4),
+        ]))
+        story.append(purpose_table)
+        story.append(Spacer(1, 0.15*inch))
     
     # Traveler Paid Expenses Section
     story.append(Paragraph("<b>Traveler Paid Expenses</b>", styles['Heading2']))
@@ -3894,15 +3939,14 @@ else:
                                 zip_code = st.text_input("Zip *", key="travel_zip")
 
                             st.header("Purpose of Travel")
+                            purpose_of_travel = st.text_area("Purpose of Travel *", key="travel_purpose_of_travel", height=100)
                             col_purpose1, col_purpose2 = st.columns([1, 1])
                             with col_purpose1:
-                                purpose_of_travel = st.text_area("Purpose of Travel *", key="travel_purpose_of_travel", height=100)
-                                agenda = st.text_area("Agenda", key="travel_agenda", height=100)
+                                attendees = st.text_area("Attendees *", key="travel_attendees", height=100)
                             with col_purpose2:
-                                attendees = st.text_area("Attendees", key="travel_attendees", height=100)
-                                outcomes = st.text_area("Desired Outcomes", key="travel_outcomes", height=100)
+                                deliverables = st.text_area("Deliverables *", key="travel_deliverables", height=100)
                             support_files = st.file_uploader(
-                                "Upload any files or attachments that are relevant to this travel.",accept_multiple_files=True, key="travel_document"
+                                "Upload Documents (i.e Agenda, TA Request, etc.)",accept_multiple_files=True, key="travel_document"
                             )
                             
                             st.header("Mileage Expenses")
@@ -4042,6 +4086,12 @@ else:
                                 missing_fields.append("Destination")
                             if not email or not email.strip():
                                 missing_fields.append("Email Address")
+                            if not purpose_of_travel or not purpose_of_travel.strip():
+                                missing_fields.append("Purpose of Travel")
+                            if not attendees or not attendees.strip():
+                                missing_fields.append("Attendees")
+                            if not deliverables or not deliverables.strip():
+                                missing_fields.append("Deliverables")
                             
                             if missing_fields:
                                 st.warning(f"⚠️ Please fill in all required fields: {', '.join(missing_fields)}")
@@ -4145,9 +4195,8 @@ else:
                                 'return_date': return_date.strftime('%m/%d/%Y') if return_date else '',
                                 'email': email,
                                 'purpose_of_travel': purpose_of_travel,
-                                'agenda': agenda,
                                 'attendees': attendees,
-                                'outcomes': outcomes,
+                                'deliverables': deliverables,
                                 'support_files': support_files_links,
                                 'mileage_dates': mileage_dates,
                                 'mileage_amounts': mileage_amounts,
@@ -4188,11 +4237,10 @@ else:
                                     'Name': name,
                                     'Destination': destination,
                                     'Purpose of Travel': purpose_of_travel,
-                                    'Agenda': agenda,
                                     'Attendees': attendees,
                                     'Departure Date': departure_date.strftime('%Y-%m-%d') if departure_date else '',
                                     'Return Date': return_date.strftime('%Y-%m-%d') if return_date else '',
-                                    'Outcomes': outcomes,
+                                    'Deliverables': deliverables,
                                     'Support Files': support_files_links,
                                     'Submission Date': datetime.now().strftime('%Y-%m-%d')
                                 }
@@ -4206,10 +4254,10 @@ else:
                                 # Update Google Sheet
                                 spreadsheet_travel = client.open('HRSA64_TA_Request')
                                 try:
-                                    worksheet_travel = spreadsheet_travel.worksheet('travel')
+                                    worksheet_travel = spreadsheet_travel.worksheet('Travel')
                                 except:
                                     # Create worksheet if it doesn't exist
-                                    worksheet_travel = spreadsheet_travel.add_worksheet(title='travel', rows=1000, cols=20)
+                                    worksheet_travel = spreadsheet_travel.add_worksheet(title='Travel', rows=1000, cols=20)
                                 
                                 worksheet_travel.update([updated_travel_sheet.columns.values.tolist()] + updated_travel_sheet.values.tolist())
                                 
