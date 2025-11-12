@@ -3370,34 +3370,118 @@ else:
                                                             kemisha_date = updated_df_travel.loc[selected_form_idx, 'Kemisha Approval Date']
                                                             mabintou_date = updated_df_travel.loc[selected_form_idx, 'Mabintou Approval Date']
                                                             
-                                                            # Get original form data to regenerate PDF with coordinator signatures
+                                                            # Helper function to safely parse JSON from sheet
+                                                            def safe_json_loads(value, default=[], data_type='auto'):
+                                                                if pd.isna(value) or value == '' or str(value).lower() == 'nan':
+                                                                    return default
+                                                                try:
+                                                                    parsed = json.loads(str(value))
+                                                                    if isinstance(parsed, list):
+                                                                        if data_type == 'bool':
+                                                                            # Convert to boolean: True for 1, True, "true", "True", False otherwise
+                                                                            return [bool(x) if isinstance(x, bool) else (True if str(x).lower() in ['true', '1', 1] else False) for x in parsed]
+                                                                        elif data_type == 'int':
+                                                                            # Convert to integers
+                                                                            return [int(float(x)) if isinstance(x, (int, float)) or (isinstance(x, str) and x.replace('.','').replace('-','').isdigit()) else (int(x) if isinstance(x, int) else 0) for x in parsed]
+                                                                        elif data_type == 'float':
+                                                                            # Convert to floats
+                                                                            return [float(x) if isinstance(x, (int, float)) or (isinstance(x, str) and x.replace('.','').replace('-','').isdigit()) else 0.0 for x in parsed]
+                                                                        else:
+                                                                            # Auto-detect: preserve strings (especially dates), convert numbers
+                                                                            result = []
+                                                                            for x in parsed:
+                                                                                if isinstance(x, bool):
+                                                                                    result.append(x)
+                                                                                elif isinstance(x, (int, float)):
+                                                                                    result.append(float(x))
+                                                                                elif isinstance(x, str):
+                                                                                    # Preserve date strings (contain '/') and other non-numeric strings
+                                                                                    if '/' in x or '-' in x or len(x) > 10:
+                                                                                        # Likely a date or non-numeric string, preserve as-is
+                                                                                        result.append(x)
+                                                                                    elif x.replace('.','').replace('-','').isdigit():
+                                                                                        # Numeric string, convert to float
+                                                                                        result.append(float(x))
+                                                                                    else:
+                                                                                        # Other string, preserve as-is
+                                                                                        result.append(x)
+                                                                                else:
+                                                                                    result.append(x)
+                                                                            return result
+                                                                    return default
+                                                                except:
+                                                                    return default
+                                                            
+                                                            def safe_get(value, default=''):
+                                                                if pd.isna(value) or value == '' or str(value).lower() == 'nan':
+                                                                    return default
+                                                                return str(value)
+                                                            
+                                                            def safe_get_numeric(value, default=0):
+                                                                if pd.isna(value) or value == '' or str(value).lower() == 'nan':
+                                                                    return default
+                                                                try:
+                                                                    return float(value) if value else default
+                                                                except:
+                                                                    return default
+                                                            
+                                                            # Retrieve all fields from Google Sheet
                                                             form_data_for_pdf = {
-                                                                'name': selected_form.get('Name', ''),
-                                                                'email': selected_form.get('Email', ''),
-                                                                'destination': selected_form.get('Destination', ''),
-                                                                'departure_date': selected_form.get('Departure Date', ''),
-                                                                'return_date': selected_form.get('Return Date', ''),
-                                                                'purpose_of_travel': selected_form.get('Purpose of Travel', ''),
-                                                                'objective': selected_form.get('Objective', ''),
-                                                                'attendees': selected_form.get('Attendees', ''),
-                                                                'deliverables': selected_form.get('Deliverables', ''),
-                                                                'signature': selected_form.get('Name', ''),  # Traveler signature (original)
+                                                                # Basic traveler information
+                                                                'name': safe_get(selected_form.get('Name', '')),
+                                                                'email': safe_get(selected_form.get('Email', '')),
+                                                                'destination': safe_get(selected_form.get('Destination', '')),
+                                                                'departure_date': safe_get(selected_form.get('Departure Date', '')),
+                                                                'return_date': safe_get(selected_form.get('Return Date', '')),
+                                                                'purpose_of_travel': safe_get(selected_form.get('Purpose of Travel', '')),
+                                                                'objective': safe_get(selected_form.get('Objective', '')),
+                                                                'attendees': safe_get(selected_form.get('Attendees', '')),
+                                                                'deliverables': safe_get(selected_form.get('Deliverables', '')),
+                                                                'support_files': safe_get(selected_form.get('Support Files', '')),
+                                                                # Traveler address information
+                                                                'address1': safe_get(selected_form.get('Address1', '')),
+                                                                'address2': safe_get(selected_form.get('Address2', '')),
+                                                                'city': safe_get(selected_form.get('City', '')),
+                                                                'state': safe_get(selected_form.get('State', '')),
+                                                                'zip': safe_get(selected_form.get('Zip', '')),
+                                                                'organization': safe_get(selected_form.get('Organization', 'Georgetown University')),
+                                                                'signature': safe_get(selected_form.get('Signature', '')),
+                                                                'signature_date': safe_get(selected_form.get('Signature Date', '')),
+                                                                # Mileage data - dates as strings, amounts as floats
+                                                                'mileage_dates': safe_json_loads(selected_form.get('Mileage Dates', '[]'), data_type='auto'),
+                                                                'mileage_amounts': safe_json_loads(selected_form.get('Mileage Amounts', '[]'), data_type='float'),
+                                                                'total_mileage': safe_get_numeric(selected_form.get('Total Mileage', 0)),
+                                                                # Expense data - dates as strings, amounts as floats
+                                                                'expense_dates': safe_json_loads(selected_form.get('Expense Dates', '[]'), data_type='auto'),
+                                                                'airfare': safe_json_loads(selected_form.get('Airfare', '[]'), data_type='float'),
+                                                                'ground_transport': safe_json_loads(selected_form.get('Ground Transport', '[]'), data_type='float'),
+                                                                'parking': safe_json_loads(selected_form.get('Parking', '[]'), data_type='float'),
+                                                                'lodging': safe_json_loads(selected_form.get('Lodging', '[]'), data_type='float'),
+                                                                'baggage': safe_json_loads(selected_form.get('Baggage', '[]'), data_type='float'),
+                                                                'misc': safe_json_loads(selected_form.get('Misc', '[]'), data_type='float'),
+                                                                'misc2': safe_json_loads(selected_form.get('Misc2', '[]'), data_type='float'),
+                                                                'misc_desc1': safe_get(selected_form.get('Misc Desc1', '')),
+                                                                'misc_desc2': safe_get(selected_form.get('Misc Desc2', '')),
+                                                                # Expense totals
+                                                                'total_airfare': safe_get_numeric(selected_form.get('Total Airfare', 0)),
+                                                                'total_ground_transport': safe_get_numeric(selected_form.get('Total Ground Transport', 0)),
+                                                                'total_parking': safe_get_numeric(selected_form.get('Total Parking', 0)),
+                                                                'total_lodging': safe_get_numeric(selected_form.get('Total Lodging', 0)),
+                                                                'total_baggage': safe_get_numeric(selected_form.get('Total Baggage', 0)),
+                                                                'total_misc': safe_get_numeric(selected_form.get('Total Misc', 0)),
+                                                                # Per diem data - dates as strings, amounts as integers, checks as booleans
+                                                                'per_diem_dates': safe_json_loads(selected_form.get('Per Diem Dates', '[]'), data_type='auto'),
+                                                                'per_diem_amounts': safe_json_loads(selected_form.get('Per Diem Amounts', '[]'), data_type='int'),
+                                                                'breakfast_checks': safe_json_loads(selected_form.get('Breakfast Checks', '[]'), data_type='bool'),
+                                                                'lunch_checks': safe_json_loads(selected_form.get('Lunch Checks', '[]'), data_type='bool'),
+                                                                'dinner_checks': safe_json_loads(selected_form.get('Dinner Checks', '[]'), data_type='bool'),
+                                                                'total_per_diem': safe_get_numeric(selected_form.get('Total Per Diem', 0)),
+                                                                'total_amount_due': safe_get_numeric(selected_form.get('Total Amount Due', 0)),
+                                                                # Coordinator signatures and dates
                                                                 'kemisha_signature': kemisha_sig,
                                                                 'mabintou_signature': mabintou_sig,
-                                                                'kemisha_approval_date': kemisha_date,
-                                                                'mabintou_approval_date': mabintou_date,
-                                                                # Add other required fields with defaults
-                                                                'address1': '', 'address2': '', 'city': '', 'state': '', 'zip': '',
-                                                                'organization': 'Georgetown University',
-                                                                'mileage_dates': [], 'mileage_amounts': [], 'total_mileage': 0,
-                                                                'expense_dates': [], 'airfare': [], 'ground_transport': [], 'parking': [],
-                                                                'lodging': [], 'baggage': [], 'misc': [], 'misc2': [],
-                                                                'misc_desc1': '', 'misc_desc2': '',
-                                                                'total_airfare': 0, 'total_ground_transport': 0, 'total_parking': 0,
-                                                                'total_lodging': 0, 'total_baggage': 0, 'total_misc': 0,
-                                                                'per_diem_dates': [], 'per_diem_amounts': [], 'breakfast_checks': [],
-                                                                'lunch_checks': [], 'dinner_checks': [], 'total_per_diem': 0,
-                                                                'total_amount_due': 0, 'signature_date': '', 'support_files': selected_form.get('Support Files', '')
+                                                                'kemisha_approval_date': safe_get(kemisha_date),
+                                                                'mabintou_approval_date': safe_get(mabintou_date),
                                                             }
                                                             
                                                             # Regenerate PDF with coordinator signatures
@@ -4878,6 +4962,43 @@ GU-TAP System
                                         'Support Files': support_files_links,
                                         'Submission Date': datetime.now().strftime('%Y-%m-%d'),
                                         'PDF Link': '',  # Will be filled when sent for approval
+                                        # Traveler information
+                                        'Address1': review.get('address1', ''),
+                                        'Address2': review.get('address2', ''),
+                                        'City': review.get('city', ''),
+                                        'State': review.get('state', ''),
+                                        'Zip': review.get('zip', ''),
+                                        'Organization': review.get('organization', 'Georgetown University'),
+                                        'Signature': review.get('signature', ''),
+                                        'Signature Date': review.get('signature_date', ''),
+                                        # Expense details - stored as JSON strings
+                                        'Mileage Dates': json.dumps(review.get('mileage_dates', [])),
+                                        'Mileage Amounts': json.dumps(review.get('mileage_amounts', [])),
+                                        'Total Mileage': review.get('total_mileage', 0),
+                                        'Expense Dates': json.dumps(review.get('expense_dates', [])),
+                                        'Airfare': json.dumps(review.get('airfare', [])),
+                                        'Ground Transport': json.dumps(review.get('ground_transport', [])),
+                                        'Parking': json.dumps(review.get('parking', [])),
+                                        'Lodging': json.dumps(review.get('lodging', [])),
+                                        'Baggage': json.dumps(review.get('baggage', [])),
+                                        'Misc': json.dumps(review.get('misc', [])),
+                                        'Misc2': json.dumps(review.get('misc2', [])),
+                                        'Misc Desc1': review.get('misc_desc1', ''),
+                                        'Misc Desc2': review.get('misc_desc2', ''),
+                                        'Total Airfare': review.get('total_airfare', 0),
+                                        'Total Ground Transport': review.get('total_ground_transport', 0),
+                                        'Total Parking': review.get('total_parking', 0),
+                                        'Total Lodging': review.get('total_lodging', 0),
+                                        'Total Baggage': review.get('total_baggage', 0),
+                                        'Total Misc': review.get('total_misc', 0),
+                                        'Per Diem Dates': json.dumps(review.get('per_diem_dates', [])),
+                                        'Per Diem Amounts': json.dumps(review.get('per_diem_amounts', [])),
+                                        'Breakfast Checks': json.dumps(review.get('breakfast_checks', [])),
+                                        'Lunch Checks': json.dumps(review.get('lunch_checks', [])),
+                                        'Dinner Checks': json.dumps(review.get('dinner_checks', [])),
+                                        'Total Per Diem': review.get('total_per_diem', 0),
+                                        'Total Amount Due': review.get('total_amount_due', 0),
+                                        # Approval fields
                                         'Kemisha Approval Status': 'pending',
                                         'Mabintou Approval Status': 'pending',
                                         'Kemisha Approval Date': '',
