@@ -754,6 +754,7 @@ def create_pdf(form_data, ws):
     story.append(Spacer(1, 0.1*inch))
     
     purpose_of_travel = form_data.get('purpose_of_travel', '')
+    objective = form_data.get('objective', '')
     attendees = form_data.get('attendees', '')
     deliverables = form_data.get('deliverables', '')
     support_files = form_data.get('support_files', '')
@@ -770,6 +771,8 @@ def create_pdf(form_data, ws):
     
     if purpose_of_travel:
         purpose_data.append(['Purpose of Travel', Paragraph(purpose_of_travel, purpose_style)])
+    if objective and objective.strip():
+        purpose_data.append(['Objective', Paragraph(objective, purpose_style)])
     if attendees:
         purpose_data.append(['Attendees', Paragraph(attendees, purpose_style)])
     if deliverables:
@@ -3939,11 +3942,12 @@ else:
                                 zip_code = st.text_input("Zip *", key="travel_zip")
 
                             st.header("Purpose of Travel")
-                            purpose_of_travel = st.text_area("Purpose of Travel *", key="travel_purpose_of_travel", height=100)
                             col_purpose1, col_purpose2 = st.columns([1, 1])
                             with col_purpose1:
+                                purpose_of_travel = st.text_area("Purpose of Travel *", key="travel_purpose_of_travel", height=100)
                                 attendees = st.text_area("Attendees *", key="travel_attendees", height=100)
                             with col_purpose2:
+                                objective = st.text_area("Objective", key="travel_objective", height=100)
                                 deliverables = st.text_area("Deliverables *", key="travel_deliverables", height=100)
                             support_files = st.file_uploader(
                                 "Upload Documents (i.e Agenda, TA Request, etc.)",accept_multiple_files=True, key="travel_document"
@@ -4165,7 +4169,7 @@ else:
                             support_files_links = ""
                             if support_files:
                                 try:
-                                    folder_id_travel = "/1Ue-eJ-lr8HPDVdmnRLLCaV_uMMwx5DLk?dmr=1&ec=wgc-drive-globalnav-goto"  
+                                    folder_id_travel = "1aDE0N_duNN6w8rLDLX5HHeychyhLIqbo"  
                                     links = []
                                     for file in support_files:
                                         # Create unique filename with timestamp
@@ -4195,6 +4199,7 @@ else:
                                 'return_date': return_date.strftime('%m/%d/%Y') if return_date else '',
                                 'email': email,
                                 'purpose_of_travel': purpose_of_travel,
+                                'objective': objective,
                                 'attendees': attendees,
                                 'deliverables': deliverables,
                                 'support_files': support_files_links,
@@ -4227,47 +4232,6 @@ else:
                                 'signature': signature,
                                 'signature_date': signature_date.strftime('%m/%d/%Y') if signature_date else ''
                             }
-                            
-                            # Save to Google Sheets
-                            try:
-                                df_travel = load_travel_sheet()
-                                
-                                # Create new row for travel sheet
-                                new_travel_row = {
-                                    'Name': name,
-                                    'Destination': destination,
-                                    'Purpose of Travel': purpose_of_travel,
-                                    'Attendees': attendees,
-                                    'Departure Date': departure_date.strftime('%Y-%m-%d') if departure_date else '',
-                                    'Return Date': return_date.strftime('%Y-%m-%d') if return_date else '',
-                                    'Deliverables': deliverables,
-                                    'Support Files': support_files_links,
-                                    'Submission Date': datetime.now().strftime('%Y-%m-%d')
-                                }
-                                
-                                new_travel_data = pd.DataFrame([new_travel_row])
-                                
-                                # Append new data to existing travel sheet
-                                updated_travel_sheet = pd.concat([df_travel, new_travel_data], ignore_index=True)
-                                updated_travel_sheet = updated_travel_sheet.fillna("")
-                                
-                                # Update Google Sheet
-                                spreadsheet_travel = client.open('HRSA64_TA_Request')
-                                try:
-                                    worksheet_travel = spreadsheet_travel.worksheet('Travel')
-                                except:
-                                    # Create worksheet if it doesn't exist
-                                    worksheet_travel = spreadsheet_travel.add_worksheet(title='Travel', rows=1000, cols=20)
-                                
-                                worksheet_travel.update([updated_travel_sheet.columns.values.tolist()] + updated_travel_sheet.values.tolist())
-                                
-                                # Clear cache to refresh data
-                                st.cache_data.clear()
-                                
-                                st.success("✅ Travel form data saved to Google Sheets!")
-                                
-                            except Exception as e:
-                                st.warning(f"⚠️ Error saving to Google Sheets: {str(e)}")
                             
                             # Store for review step
                             st.session_state['travel_review_data'] = form_data
@@ -4339,6 +4303,48 @@ else:
                             approved = st.checkbox("I have reviewed and approve this travel form.", key="travel_approve_review")
                             generate_now = st.button("Finalize and Download PDF", disabled=not approved, key="travel_generate_now")
                             if generate_now and approved:
+                                # Save to Google Sheets when PDF is generated
+                                try:
+                                    df_travel = load_travel_sheet()
+                                    
+                                    # Create new row for travel sheet
+                                    new_travel_row = {
+                                        'Name': review.get('name', ''),
+                                        'Destination': review.get('destination', ''),
+                                        'Purpose of Travel': review.get('purpose_of_travel', ''),
+                                        'Objective': review.get('objective', ''),
+                                        'Attendees': review.get('attendees', ''),
+                                        'Departure Date': review.get('departure_date', ''),
+                                        'Return Date': review.get('return_date', ''),
+                                        'Deliverables': review.get('deliverables', ''),
+                                        'Support Files': review.get('support_files', ''),
+                                        'Submission Date': datetime.now().strftime('%Y-%m-%d')
+                                    }
+                                    
+                                    new_travel_data = pd.DataFrame([new_travel_row])
+                                    
+                                    # Append new data to existing travel sheet
+                                    updated_travel_sheet = pd.concat([df_travel, new_travel_data], ignore_index=True)
+                                    updated_travel_sheet = updated_travel_sheet.fillna("")
+                                    
+                                    # Update Google Sheet
+                                    spreadsheet_travel = client.open('HRSA64_TA_Request')
+                                    try:
+                                        worksheet_travel = spreadsheet_travel.worksheet('Travel')
+                                    except:
+                                        # Create worksheet if it doesn't exist
+                                        worksheet_travel = spreadsheet_travel.add_worksheet(title='Travel', rows=1000, cols=20)
+                                    
+                                    worksheet_travel.update([updated_travel_sheet.columns.values.tolist()] + updated_travel_sheet.values.tolist())
+                                    
+                                    # Clear cache to refresh data
+                                    st.cache_data.clear()
+                                    
+                                    st.success("✅ Travel form data saved to Google Sheets!")
+                                    
+                                except Exception as e:
+                                    st.warning(f"⚠️ Error saving to Google Sheets: {str(e)}")
+                                
                                 pdf_buffer = create_pdf(review, ws)
                                 st.success("✅ PDF generated successfully!")
                                 st.download_button(
