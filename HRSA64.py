@@ -1317,7 +1317,7 @@ def _get_records_with_retry(spreadsheet_name, worksheet_name, retries=3, base_de
 
 @st.cache_data(ttl=600)
 def load_main_sheet():
-    df = pd.DataFrame(_get_records_with_retry('Example_TA_Request', 'Main'))
+    df = pd.DataFrame(_get_records_with_retry('HRSA64_TA_Request', 'Main'))
     df['Submit Date'] = pd.to_datetime(df['Submit Date'], errors='coerce')
     df["Phone Number"] = df["Phone Number"].astype(str)
     return df
@@ -1347,7 +1347,7 @@ for _col in comment_history_columns:
 
 @st.cache_data(ttl=600)
 def load_interaction_sheet():
-    return pd.DataFrame(_get_records_with_retry('Example_TA_Request', 'Interaction'))
+    return pd.DataFrame(_get_records_with_retry('HRSA64_TA_Request', 'Interaction'))
 
 df_int = load_interaction_sheet()
 
@@ -1357,15 +1357,21 @@ if "Jurisdiction" not in df_int.columns:
 
 @st.cache_data(ttl=600)
 def load_delivery_sheet():
-    return pd.DataFrame(_get_records_with_retry('Example_TA_Request', 'Delivery'))
+    return pd.DataFrame(_get_records_with_retry('HRSA64_TA_Request', 'Delivery'))
 
 df_del = load_delivery_sheet()
 
 @st.cache_data(ttl=600)
 def load_support_sheet():
-    return pd.DataFrame(_get_records_with_retry('Example_TA_Request', 'GA_Support'))
+    return pd.DataFrame(_get_records_with_retry('HRSA64_TA_Request', 'GA_Support'))
 
 df_support = load_support_sheet()
+
+@st.cache_data(ttl=600)
+def load_travel_sheet():
+    return pd.DataFrame(_get_records_with_retry('HRSA64_TA_Request', 'Travel'))
+
+df_travel = load_travel_sheet()
 
 # Extract last Ticket ID from the existing sheet
 last_ticket = df["Ticket ID"].dropna().astype(str).str.extract(r"GU(\d+)", expand=False).astype(int).max()
@@ -1845,7 +1851,7 @@ else:
                     )
                     # Replace NaN with empty strings to ensure JSON compatibility
                     updated_sheet = updated_sheet.fillna("")
-                    spreadsheet1 = client.open('Example_TA_Request')
+                    spreadsheet1 = client.open('HRSA64_TA_Request')
                     worksheet1 = spreadsheet1.worksheet('Main')
                     worksheet1.update([updated_sheet.columns.values.tolist()] + updated_sheet.values.tolist())
                     
@@ -2226,7 +2232,7 @@ else:
                                     lambda x: x.strftime("%Y-%m-%d") if isinstance(x, (pd.Timestamp, datetime)) and not pd.isna(x) else x
                                 )
                                 updated_df = updated_df.fillna("") 
-                                spreadsheet1 = client.open('Example_TA_Request')
+                                spreadsheet1 = client.open('HRSA64_TA_Request')
                                 worksheet1 = spreadsheet1.worksheet('Main')
 
                                 # Push to Google Sheet
@@ -2382,7 +2388,7 @@ else:
                                     )
                                     updated_df = updated_df.fillna("")
 
-                                    spreadsheet1 = client.open('Example_TA_Request')
+                                    spreadsheet1 = client.open('HRSA64_TA_Request')
                                     worksheet1 = spreadsheet1.worksheet('Main')
                                     worksheet1.update([updated_df.columns.values.tolist()] + updated_df.values.tolist())
 
@@ -2583,11 +2589,9 @@ else:
                                 )
                                 updated_df = updated_df.fillna("") 
 
-                                spreadsheet1 = client.open('Example_TA_Request')
-                                worksheet1 = spreadsheet1.worksheet('Main')
 
                                 # Push to Google Sheets
-                                spreadsheet1 = client.open('Example_TA_Request')
+                                spreadsheet1 = client.open('HRSA64_TA_Request')
                                 worksheet1 = spreadsheet1.worksheet('Main')
                                 worksheet1.update([updated_df.columns.values.tolist()] + updated_df.values.tolist())
 
@@ -2857,7 +2861,7 @@ else:
                                 )
                                 # Replace NaN with empty strings to ensure JSON compatibility
                                 updated_sheet1 = updated_sheet1.fillna("")
-                                spreadsheet2 = client.open('Example_TA_Request')
+                                spreadsheet2 = client.open('HRSA64_TA_Request')
                                 worksheet2 = spreadsheet2.worksheet('Interaction')
                                 worksheet2.update([updated_sheet1.columns.values.tolist()] + updated_sheet1.values.tolist())
 
@@ -2985,7 +2989,7 @@ else:
                                 )
                                 # Replace NaN with empty strings to ensure JSON compatibility
                                 updated_sheet2 = updated_sheet2.fillna("")
-                                spreadsheet3 = client.open('Example_TA_Request')
+                                spreadsheet3 = client.open('HRSA64_TA_Request')
                                 worksheet3 = spreadsheet3.worksheet('Delivery')
                                 worksheet3.update([updated_sheet2.columns.values.tolist()] + updated_sheet2.values.tolist())
 
@@ -3285,7 +3289,7 @@ else:
                                 updated_df = updated_df.fillna("") 
 
                                 # Push to Google Sheets
-                                spreadsheet1 = client.open('Example_TA_Request')
+                                spreadsheet1 = client.open('HRSA64_TA_Request')
                                 worksheet1 = spreadsheet1.worksheet('Main')
                                 worksheet1.update([updated_df.columns.values.tolist()] + updated_df.values.tolist())
 
@@ -3511,7 +3515,7 @@ else:
                                 updated_sheet2 = updated_sheet2.fillna("")
                                 
                                 # Get the worksheet first
-                                spreadsheet3 = client.open('Example_TA_Request')
+                                spreadsheet3 = client.open('HRSA64_TA_Request')
                                 worksheet3 = spreadsheet3.worksheet('Interaction')
                                 worksheet3.update([updated_sheet2.columns.values.tolist()] + updated_sheet2.values.tolist())
 
@@ -3691,7 +3695,7 @@ else:
                                 )
                                 # Replace NaN with empty strings to ensure JSON compatibility
                                 updated_sheet3 = updated_sheet3.fillna("")
-                                spreadsheet4 = client.open('Example_TA_Request')
+                                spreadsheet4 = client.open('HRSA64_TA_Request')
                                 worksheet4 = spreadsheet4.worksheet('GA_Support')
                                 worksheet4.update([updated_sheet3.columns.values.tolist()] + updated_sheet3.values.tolist())
 
@@ -3876,10 +3880,10 @@ else:
                             col1, col2 = st.columns(2)
                             
                             with col1:
-                                name = st.text_input("Name *", key="travel_name")
+                                name = st.text_input("Name *", value=staff_name, key="travel_name")
                                 organization = st.text_input("Organization", value="Georgetown University", key="travel_organization")
                                 destination = st.text_input("Destination *", key="travel_destination")
-                                email = st.text_input("Email Address *", key="travel_email")              
+                                email = st.text_input("Email Address *", value=user_email, key="travel_email")              
                                 
                             
                             with col2:
@@ -3890,6 +3894,16 @@ else:
                                 zip_code = st.text_input("Zip *", key="travel_zip")
 
                             st.header("Purpose of Travel")
+                            col_purpose1, col_purpose2 = st.columns([1, 1])
+                            with col_purpose1:
+                                purpose_of_travel = st.text_area("Purpose of Travel *", key="travel_purpose_of_travel", height=100)
+                                agenda = st.text_area("Agenda", key="travel_agenda", height=100)
+                            with col_purpose2:
+                                attendees = st.text_area("Attendees", key="travel_attendees", height=100)
+                                outcomes = st.text_area("Desired Outcomes", key="travel_outcomes", height=100)
+                            support_files = st.file_uploader(
+                                "Upload any files or attachments that are relevant to this travel.",accept_multiple_files=True, key="travel_document"
+                            )
                             
                             st.header("Mileage Expenses")
                             st.markdown("**Mileage rate for 2025: $0.70 per mile**")
@@ -4097,6 +4111,27 @@ else:
                                               total_parking + total_lodging + total_baggage + 
                                               total_misc + total_per_diem)
                             
+                            # Upload support files to Google Drive if provided
+                            support_files_links = ""
+                            if support_files:
+                                try:
+                                    folder_id_travel = "/1Ue-eJ-lr8HPDVdmnRLLCaV_uMMwx5DLk?dmr=1&ec=wgc-drive-globalnav-goto"  
+                                    links = []
+                                    for file in support_files:
+                                        # Create unique filename with timestamp
+                                        renamed_filename = f"Travel_{name.replace(' ', '_')}_{destination.replace(' ', '_')}_{file.name}"
+                                        link = upload_file_to_drive(
+                                            file=file,
+                                            filename=renamed_filename,
+                                            folder_id=folder_id_travel,
+                                            creds_dict=st.secrets["gcp_service_account"]
+                                        )
+                                        links.append(link)
+                                    support_files_links = ", ".join(links)
+                                    st.success("Support files uploaded to Google Drive.")
+                                except Exception as e:
+                                    st.warning(f"⚠️ Error uploading support files: {str(e)}")
+                            
                             form_data = {
                                 'name': name,
                                 'address1': address1,
@@ -4109,6 +4144,11 @@ else:
                                 'departure_date': departure_date.strftime('%m/%d/%Y') if departure_date else '',
                                 'return_date': return_date.strftime('%m/%d/%Y') if return_date else '',
                                 'email': email,
+                                'purpose_of_travel': purpose_of_travel,
+                                'agenda': agenda,
+                                'attendees': attendees,
+                                'outcomes': outcomes,
+                                'support_files': support_files_links,
                                 'mileage_dates': mileage_dates,
                                 'mileage_amounts': mileage_amounts,
                                 'total_mileage': total_mileage,
@@ -4138,6 +4178,49 @@ else:
                                 'signature': signature,
                                 'signature_date': signature_date.strftime('%m/%d/%Y') if signature_date else ''
                             }
+                            
+                            # Save to Google Sheets
+                            try:
+                                df_travel = load_travel_sheet()
+                                
+                                # Create new row for travel sheet
+                                new_travel_row = {
+                                    'Name': name,
+                                    'Destination': destination,
+                                    'Purpose of Travel': purpose_of_travel,
+                                    'Agenda': agenda,
+                                    'Attendees': attendees,
+                                    'Departure Date': departure_date.strftime('%Y-%m-%d') if departure_date else '',
+                                    'Return Date': return_date.strftime('%Y-%m-%d') if return_date else '',
+                                    'Outcomes': outcomes,
+                                    'Support Files': support_files_links,
+                                    'Submission Date': datetime.now().strftime('%Y-%m-%d')
+                                }
+                                
+                                new_travel_data = pd.DataFrame([new_travel_row])
+                                
+                                # Append new data to existing travel sheet
+                                updated_travel_sheet = pd.concat([df_travel, new_travel_data], ignore_index=True)
+                                updated_travel_sheet = updated_travel_sheet.fillna("")
+                                
+                                # Update Google Sheet
+                                spreadsheet_travel = client.open('HRSA64_TA_Request')
+                                try:
+                                    worksheet_travel = spreadsheet_travel.worksheet('travel')
+                                except:
+                                    # Create worksheet if it doesn't exist
+                                    worksheet_travel = spreadsheet_travel.add_worksheet(title='travel', rows=1000, cols=20)
+                                
+                                worksheet_travel.update([updated_travel_sheet.columns.values.tolist()] + updated_travel_sheet.values.tolist())
+                                
+                                # Clear cache to refresh data
+                                st.cache_data.clear()
+                                
+                                st.success("✅ Travel form data saved to Google Sheets!")
+                                
+                            except Exception as e:
+                                st.warning(f"⚠️ Error saving to Google Sheets: {str(e)}")
+                            
                             # Store for review step
                             st.session_state['travel_review_data'] = form_data
                             st.success("Please review the information below and approve to finalize.")
@@ -4340,7 +4423,7 @@ else:
                                 )
                                 # Replace NaN with empty strings to ensure JSON compatibility
                                 updated_sheet2 = updated_sheet2.fillna("")
-                                spreadsheet3 = client.open('Example_TA_Request')
+                                spreadsheet3 = client.open('HRSA64_TA_Request')
                                 worksheet3 = spreadsheet3.worksheet('Delivery')
                                 worksheet3.update([updated_sheet2.columns.values.tolist()] + updated_sheet2.values.tolist())
 
@@ -4409,7 +4492,7 @@ else:
                                     lambda x: x.strftime("%Y-%m-%d") if isinstance(x, (pd.Timestamp, datetime)) and not pd.isna(x) else x
                                 )
                                 updated_df = updated_df.fillna("") 
-                                spreadsheet1 = client.open('Example_TA_Request')
+                                spreadsheet1 = client.open('HRSA64_TA_Request')
                                 worksheet1 = spreadsheet1.worksheet('Main')
 
                                 # Push to Google Sheet
@@ -4620,7 +4703,7 @@ else:
 
                                     # Update Google Sheet
                                     updated_df_support = updated_df_support.fillna("")
-                                    spreadsheet_support = client.open('Example_TA_Request')
+                                    spreadsheet_support = client.open('HRSA64_TA_Request')
                                     worksheet_support = spreadsheet_support.worksheet('GA_Support')
                                     worksheet_support.update([updated_df_support.columns.values.tolist()] + updated_df_support.values.tolist())
 
@@ -4736,7 +4819,7 @@ GU-TAP System
 
                                         # Update Google Sheet
                                         updated_df_support = updated_df_support.fillna("")
-                                        spreadsheet_support = client.open('Example_TA_Request')
+                                        spreadsheet_support = client.open('HRSA64_TA_Request')
                                         worksheet_support = spreadsheet_support.worksheet('GA_Support')
                                         worksheet_support.update([updated_df_support.columns.values.tolist()] + updated_df_support.values.tolist())
 
@@ -4797,7 +4880,7 @@ GU-TAP System
 
                                     # Update Google Sheet
                                     updated_df_support = updated_df_support.fillna("")
-                                    spreadsheet_support = client.open('Example_TA_Request')
+                                    spreadsheet_support = client.open('HRSA64_TA_Request')
                                     worksheet_support = spreadsheet_support.worksheet('GA_Support')
                                     worksheet_support.update([updated_df_support.columns.values.tolist()] + updated_df_support.values.tolist())
 
