@@ -1276,10 +1276,80 @@ def create_pdf(form_data, ws):
     program_assistant_label = Paragraph("Program Assistant", label_style)
     lead_provider_text = Paragraph("Lead Technical\nAssistance Provider", label_style)
     
+    # Get coordinator signatures and dates if available
+    mabintou_sig_text = form_data.get('mabintou_signature', '').strip()
+    kemisha_sig_text = form_data.get('kemisha_signature', '').strip()
+    mabintou_date = form_data.get('mabintou_approval_date', '')
+    kemisha_date = form_data.get('kemisha_approval_date', '')
+    
+    # Generate Mabintou signature image (Program Assistant)
+    mabintou_signature_cell = ''
+    if mabintou_sig_text:
+        try:
+            mabintou_img_pil = generate_signature_image(mabintou_sig_text, width=800, height=150, scale_factor=3)
+            if mabintou_img_pil:
+                if mabintou_img_pil.mode != 'RGB':
+                    rgb_mabintou = PILImage.new('RGB', mabintou_img_pil.size, (255, 255, 255))
+                    if mabintou_img_pil.mode == 'RGBA':
+                        rgb_mabintou.paste(mabintou_img_pil, mask=mabintou_img_pil.split()[3])
+                    else:
+                        rgb_mabintou.paste(mabintou_img_pil)
+                    mabintou_img_pil = rgb_mabintou
+                
+                max_width = 1.88 * inch
+                max_height = 0.5 * inch
+                img_width, img_height = mabintou_img_pil.size
+                aspect_ratio = img_height / img_width if img_width > 0 else 1
+                new_width = min(img_width, max_width)
+                new_height = new_width * aspect_ratio
+                if new_height > max_height:
+                    new_height = max_height
+                    new_width = new_height / aspect_ratio
+                new_width = min(new_width, max_width)
+                
+                mabintou_buffer = io.BytesIO()
+                mabintou_img_pil.save(mabintou_buffer, format='PNG', optimize=False, compress_level=1)
+                mabintou_buffer.seek(0)
+                mabintou_signature_cell = Image(mabintou_buffer, width=new_width, height=new_height)
+        except Exception:
+            mabintou_signature_cell = mabintou_sig_text
+    
+    # Generate Kemisha signature image (Lead Technical Assistance Provider)
+    kemisha_signature_cell = ''
+    if kemisha_sig_text:
+        try:
+            kemisha_img_pil = generate_signature_image(kemisha_sig_text, width=800, height=150, scale_factor=3)
+            if kemisha_img_pil:
+                if kemisha_img_pil.mode != 'RGB':
+                    rgb_kemisha = PILImage.new('RGB', kemisha_img_pil.size, (255, 255, 255))
+                    if kemisha_img_pil.mode == 'RGBA':
+                        rgb_kemisha.paste(kemisha_img_pil, mask=kemisha_img_pil.split()[3])
+                    else:
+                        rgb_kemisha.paste(kemisha_img_pil)
+                    kemisha_img_pil = rgb_kemisha
+                
+                max_width = 1.88 * inch
+                max_height = 0.5 * inch
+                img_width, img_height = kemisha_img_pil.size
+                aspect_ratio = img_height / img_width if img_width > 0 else 1
+                new_width = min(img_width, max_width)
+                new_height = new_width * aspect_ratio
+                if new_height > max_height:
+                    new_height = max_height
+                    new_width = new_height / aspect_ratio
+                new_width = min(new_width, max_width)
+                
+                kemisha_buffer = io.BytesIO()
+                kemisha_img_pil.save(kemisha_buffer, format='PNG', optimize=False, compress_level=1)
+                kemisha_buffer.seek(0)
+                kemisha_signature_cell = Image(kemisha_buffer, width=new_width, height=new_height)
+        except Exception:
+            kemisha_signature_cell = kemisha_sig_text
+    
     combined_data = [
         [traveler_label, signature_cell_value, 'DATE', form_data.get('signature_date', '')],
-        [program_assistant_label, '', 'DATE', ''],
-        [lead_provider_text, '', 'DATE', ''],
+        [program_assistant_label, mabintou_signature_cell, 'DATE', str(mabintou_date) if mabintou_date else ''],
+        [lead_provider_text, kemisha_signature_cell, 'DATE', str(kemisha_date) if kemisha_date else ''],
         ['AWD', 'AWD-7776588', 'GR', 'GR426936'],
     ]
     
@@ -1300,8 +1370,16 @@ def create_pdf(form_data, ws):
         ('BACKGROUND', (0, 0), (-1, 0), colors.white),
         ('TEXTCOLOR', (1, 0), (1, 0), colors.red),
         ('TEXTCOLOR', (3, 0), (3, 0), colors.red),
-        # Operations rows (rows 1-3) - all white background
-        ('BACKGROUND', (0, 1), (-1, 3), colors.white),
+        # Program Assistant row (row 1) - signature and date cells red if signature exists
+        ('BACKGROUND', (0, 1), (-1, 1), colors.white),
+        ('TEXTCOLOR', (1, 1), (1, 1), colors.red),
+        ('TEXTCOLOR', (3, 1), (3, 1), colors.red),
+        # Lead Technical Assistance Provider row (row 2) - signature and date cells red if signature exists
+        ('BACKGROUND', (0, 2), (-1, 2), colors.white),
+        ('TEXTCOLOR', (1, 2), (1, 2), colors.red),
+        ('TEXTCOLOR', (3, 2), (3, 2), colors.red),
+        # Operations row (row 3) - all white background
+        ('BACKGROUND', (0, 3), (-1, 3), colors.white),
     ]))
     story.append(combined_table)
     
@@ -3184,45 +3262,89 @@ else:
                                     st.markdown("---")
                                     st.markdown("#### ✍️ Approval Section")
                                     
-                                    # Coordinator signature input (like traveler signature)
-                                    coordinator_signature_text = st.text_input(
-                                        "Type your full name to sign",
-                                        key="travel_coordinator_signature",
-                                        placeholder="Type your full name",
-                                        help="Your typed name will be converted to a signature-style image"
+                                    # Beautiful approval section with selection first
+                                    st.markdown("""
+                                        <div style='background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); border-radius: 15px; padding: 1.5em; margin-bottom: 1.5em;'>
+                                            <h4 style='color: #2c3e50; margin-bottom: 1em;'>Select Your Decision</h4>
+                                        </div>
+                                    """, unsafe_allow_html=True)
+                                    
+                                    # Approval decision selection
+                                    approval_decision = st.radio(
+                                        "**Decision:**",
+                                        ["✅ Approve", "❌ Reject"],
+                                        key="travel_approval_decision",
+                                        horizontal=True,
+                                        help="Select whether you approve or reject this travel authorization form"
                                     )
                                     
-                                    # Show signature preview
-                                    if coordinator_signature_text:
-                                        try:
-                                            preview_img = generate_signature_image(coordinator_signature_text, width=600, height=120, scale_factor=2)
-                                            if preview_img:
-                                                if preview_img.mode != 'RGB':
-                                                    rgb_preview = PILImage.new('RGB', preview_img.size, (255, 255, 255))
-                                                    if preview_img.mode == 'RGBA':
-                                                        rgb_preview.paste(preview_img, mask=preview_img.split()[3])
-                                                    else:
-                                                        rgb_preview.paste(preview_img)
-                                                    preview_img = rgb_preview
-                                                preview_display = preview_img.resize((400, int(400 * preview_img.size[1] / preview_img.size[0])))
-                                                st.image(preview_display, caption="Signature Preview", width=400)
-                                        except Exception as e:
-                                            pass
-                                    
                                     approval_date = st.date_input(
-                                        "Approval Date",
+                                        "**Approval Date:**",
                                         value=datetime.now().date(),
                                         key="travel_approval_date"
                                     )
                                     
-                                    col_approve, col_reject = st.columns(2)
+                                    st.markdown("<br>", unsafe_allow_html=True)
                                     
-                                    with col_approve:
+                                    # Conditional display based on decision
+                                    if approval_decision == "✅ Approve":
+                                        # Show signature section for approval
+                                        st.markdown("""
+                                            <div style='background: #e8f5e9; border-left: 4px solid #4caf50; padding: 1em; border-radius: 5px; margin-bottom: 1em;'>
+                                                <strong style='color: #2e7d32;'>Approval Selected</strong>
+                                            </div>
+                                        """, unsafe_allow_html=True)
+                                        
+                                        coordinator_signature_text = st.text_input(
+                                            "**Type your full name to sign:**",
+                                            key="travel_coordinator_signature",
+                                            placeholder="Type your full name",
+                                            help="Your typed name will be converted to a signature-style image"
+                                        )
+                                        
+                                        # Show signature preview
+                                        if coordinator_signature_text:
+                                            try:
+                                                preview_img = generate_signature_image(coordinator_signature_text, width=600, height=120, scale_factor=2)
+                                                if preview_img:
+                                                    if preview_img.mode != 'RGB':
+                                                        rgb_preview = PILImage.new('RGB', preview_img.size, (255, 255, 255))
+                                                        if preview_img.mode == 'RGBA':
+                                                            rgb_preview.paste(preview_img, mask=preview_img.split()[3])
+                                                        else:
+                                                            rgb_preview.paste(preview_img)
+                                                        preview_img = rgb_preview
+                                                    preview_display = preview_img.resize((400, int(400 * preview_img.size[1] / preview_img.size[0])))
+                                                    st.image(preview_display, caption="Signature Preview", width=400)
+                                            except Exception as e:
+                                                pass
+                                        
                                         # Approve button
-                                        if st.button("✅ Sign and Approve", key="travel_approve_button", type="primary"):
-                                            if not coordinator_signature_text or not coordinator_signature_text.strip():
-                                                st.warning("⚠️ Please enter your signature (full name) to approve.")
-                                            else:
+                                        approve_button_clicked = st.button("✅ Sign and Approve", key="travel_approve_button", type="primary", use_container_width=True)
+                                    else:  # Reject selected
+                                        # Show rejection reason section
+                                        st.markdown("""
+                                            <div style='background: #ffebee; border-left: 4px solid #f44336; padding: 1em; border-radius: 5px; margin-bottom: 1em;'>
+                                                <strong style='color: #c62828;'>Rejection Selected</strong>
+                                            </div>
+                                        """, unsafe_allow_html=True)
+                                        
+                                        reject_note = st.text_area(
+                                            "**Reason for rejection:** *",
+                                            key="travel_reject_note",
+                                            height=150,
+                                            placeholder="Please provide a detailed reason for rejection (required)",
+                                            help="This reason will be sent to the traveler via email"
+                                        )
+                                        
+                                        coordinator_signature_text = ""  # Not needed for rejection
+                                        approve_button_clicked = False
+                                    
+                                    # Handle approval/rejection based on decision
+                                    if approval_decision == "✅ Approve" and approve_button_clicked:
+                                        if not coordinator_signature_text or not coordinator_signature_text.strip():
+                                            st.warning("⚠️ Please enter your signature (full name) to approve.")
+                                        else:
                                                 try:
                                                     # Update the travel form status
                                                     updated_df_travel = df_travel_review.copy()
@@ -3250,8 +3372,11 @@ else:
                                                             kemisha_sig = updated_df_travel.loc[selected_form_idx, 'Kemisha Signature']
                                                             mabintou_sig = updated_df_travel.loc[selected_form_idx, 'Mabintou Signature']
                                                             
+                                                            # Get both approval dates
+                                                            kemisha_date = updated_df_travel.loc[selected_form_idx, 'Kemisha Approval Date']
+                                                            mabintou_date = updated_df_travel.loc[selected_form_idx, 'Mabintou Approval Date']
+                                                            
                                                             # Get original form data to regenerate PDF with coordinator signatures
-                                                            # We need to reconstruct form_data from the sheet row
                                                             form_data_for_pdf = {
                                                                 'name': selected_form.get('Name', ''),
                                                                 'email': selected_form.get('Email', ''),
@@ -3265,6 +3390,8 @@ else:
                                                                 'signature': selected_form.get('Name', ''),  # Traveler signature (original)
                                                                 'kemisha_signature': kemisha_sig,
                                                                 'mabintou_signature': mabintou_sig,
+                                                                'kemisha_approval_date': kemisha_date,
+                                                                'mabintou_approval_date': mabintou_date,
                                                                 # Add other required fields with defaults
                                                                 'address1': '', 'address2': '', 'city': '', 'state': '', 'zip': '',
                                                                 'organization': 'Georgetown University',
@@ -3276,7 +3403,7 @@ else:
                                                                 'total_lodging': 0, 'total_baggage': 0, 'total_misc': 0,
                                                                 'per_diem_dates': [], 'per_diem_amounts': [], 'breakfast_checks': [],
                                                                 'lunch_checks': [], 'dinner_checks': [], 'total_per_diem': 0,
-                                                                'total_amount_due': 0, 'signature_date': '', 'support_files': ''
+                                                                'total_amount_due': 0, 'signature_date': '', 'support_files': selected_form.get('Support Files', '')
                                                             }
                                                             
                                                             # Regenerate PDF with coordinator signatures
@@ -3285,9 +3412,27 @@ else:
                                                             except:
                                                                 ws = None
                                                             
-                                                            # Note: We'll need to update create_pdf to handle coordinator signatures
-                                                            # For now, upload the original PDF and send notification
-                                                            final_pdf_link = pdf_link  # Use original PDF link for now
+                                                            # Generate new PDF with signatures
+                                                            final_pdf_buffer = create_pdf(form_data_for_pdf, ws)
+                                                            final_pdf_filename = f"Travel_Authorization_Form_Approved_{selected_form.get('Name','')}_{selected_form.get('Departure Date','')}.pdf"
+                                                            
+                                                            # Upload new PDF to Google Drive
+                                                            folder_id_travel_pdf = "1_O_L-jPR7bldiryRNB3WxbAaG8VqvmCt"
+                                                            pdf_file_obj = io.BytesIO(final_pdf_buffer.getvalue())
+                                                            pdf_file_obj.name = final_pdf_filename
+                                                            pdf_file_obj.type = 'application/pdf'
+                                                            
+                                                            final_pdf_link = upload_file_to_drive(
+                                                                file=pdf_file_obj,
+                                                                filename=final_pdf_filename,
+                                                                folder_id=folder_id_travel_pdf,
+                                                                creds_dict=st.secrets["gcp_service_account"]
+                                                            )
+                                                            
+                                                            # Update PDF link in sheet
+                                                            updated_df_travel.loc[selected_form_idx, 'PDF Link'] = final_pdf_link
+                                                            updated_df_travel = updated_df_travel.fillna("")
+                                                            worksheet_travel.update([updated_df_travel.columns.values.tolist()] + updated_df_travel.values.tolist())
                                                             
                                                             traveler_email = selected_form.get('Email', '')
                                                             traveler_name = selected_form.get('Name', 'Unknown')
@@ -3305,8 +3450,8 @@ Travel Details:
 - Return Date: {selected_form.get('Return Date', 'N/A')}
 
 Approved by:
-- Kemisha Denny: {updated_df_travel.loc[selected_form_idx, 'Kemisha Approval Date']}
-- Mabintou: {updated_df_travel.loc[selected_form_idx, 'Mabintou Approval Date']}
+- Kemisha Denny: {kemisha_date}
+- Mabintou Ouattara: {mabintou_date}
 
 PDF Link: {final_pdf_link}
 
@@ -3339,23 +3484,19 @@ GU-TAP System
                                                 except Exception as e:
                                                     st.error(f"❌ Error approving travel form: {str(e)}")
                                     
-                                    with col_reject:
-                                        # Reject button with required note
-                                        reject_note = st.text_area(
-                                            "Reason for rejection *",
-                                            key="travel_reject_note",
-                                            height=100,
-                                            placeholder="Please provide a reason for rejection (required)"
-                                        )
+                                    # Handle rejection
+                                    if approval_decision == "❌ Reject":
+                                        reject_button_clicked = st.button("❌ Reject Travel Form", key="travel_reject_button", type="primary", use_container_width=True)
                                         
-                                        if st.button("❌ Reject Travel Form", key="travel_reject_button"):
+                                        if reject_button_clicked:
+                                            reject_note = st.session_state.get('travel_reject_note', '')
                                             if not reject_note or not reject_note.strip():
                                                 st.warning("⚠️ Please provide a reason for rejection.")
                                             else:
                                                 try:
                                                     updated_df_travel = df_travel_review.copy()
                                                     updated_df_travel.loc[selected_form_idx, status_col] = 'reject'
-                                                    updated_df_travel.loc[selected_form_idx, approval_date_col] = datetime.now().strftime('%Y-%m-%d')
+                                                    updated_df_travel.loc[selected_form_idx, approval_date_col] = approval_date.strftime('%Y-%m-%d')
                                                     updated_df_travel.loc[selected_form_idx, note_col] = reject_note
                                                     
                                                     updated_df_travel = updated_df_travel.fillna("")
