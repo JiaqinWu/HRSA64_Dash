@@ -747,7 +747,7 @@ def create_pdf(form_data, ws):
         ('TOPPADDING', (0, 0), (-1, -1), 4),
     ]))
     story.append(traveler_table)
-    story.append(Spacer(1, 0.15*inch))
+    story.append(Spacer(1, 0.1*inch))
     
     # Purpose of Travel Section
     story.append(Paragraph("<b>Purpose of Travel</b>", styles['Heading2']))
@@ -798,7 +798,7 @@ def create_pdf(form_data, ws):
             ('RIGHTPADDING', (0, 0), (-1, -1), 4),
         ]))
         story.append(purpose_table)
-        story.append(Spacer(1, 0.15*inch))
+        story.append(Spacer(1, 0.1*inch))
     
     # Traveler Paid Expenses Section
     story.append(Paragraph("<b>Traveler Paid Expenses</b>", styles['Heading2']))
@@ -871,7 +871,7 @@ def create_pdf(form_data, ws):
         mileage_tables.append(mileage_table)
     for t in mileage_tables:
         story.append(t)
-        story.append(Spacer(1, 0.15*inch))
+        story.append(Spacer(1, 0.1*inch))
     
     # Expenses Section - 7 days + total column
     story.append(Paragraph("<b>Airfare, Transportation, Parking, Lodging, Miscellaneous.</b>", styles['Heading3']))
@@ -994,7 +994,7 @@ def create_pdf(form_data, ws):
         expense_tables.append(expenses_table)
     for t in expense_tables:
         story.append(t)
-        story.append(Spacer(1, 0.15*inch))
+        story.append(Spacer(1, 0.1*inch))
     
     # Meals and Incidentals Section
     story.append(Paragraph("<b>Meals and Incidentals Per Diem</b>", styles['Heading2']))
@@ -1147,7 +1147,7 @@ def create_pdf(form_data, ws):
         per_diem_tables.append(per_diem_table)
     for t in per_diem_tables:
         story.append(t)
-        story.append(Spacer(1, 0.15*inch))
+        story.append(Spacer(1, 0.1*inch))
     
     # Totals Section
     total_mileage = form_data.get('total_mileage', 0)
@@ -1201,7 +1201,7 @@ def create_pdf(form_data, ws):
         ('FONTNAME', (0, 9), (1, 9), 'Helvetica-Bold'),
     ]))
     story.append(totals_table)
-    story.append(Spacer(1, 0.15*inch))
+    story.append(Spacer(1, 0.1*inch))
 
 
     story.append(Paragraph("<b>Approval Signatures</b>", styles['Heading2']))
@@ -4165,26 +4165,22 @@ else:
                                               total_parking + total_lodging + total_baggage + 
                                               total_misc + total_per_diem)
                             
-                            # Upload support files to Google Drive if provided
-                            support_files_links = ""
+                            # Store support files in session state for later upload
                             if support_files:
-                                try:
-                                    folder_id_travel = "1aDE0N_duNN6w8rLDLX5HHeychyhLIqbo"  
-                                    links = []
-                                    for file in support_files:
-                                        # Create unique filename with timestamp
-                                        renamed_filename = f"Travel_{name.replace(' ', '_')}_{destination.replace(' ', '_')}_{file.name}"
-                                        link = upload_file_to_drive(
-                                            file=file,
-                                            filename=renamed_filename,
-                                            folder_id=folder_id_travel,
-                                            creds_dict=st.secrets["gcp_service_account"]
-                                        )
-                                        links.append(link)
-                                    support_files_links = ", ".join(links)
-                                    st.success("Support files uploaded to Google Drive.")
-                                except Exception as e:
-                                    st.warning(f"⚠️ Error uploading support files: {str(e)}")
+                                # Store file bytes and metadata in session state
+                                file_data_list = []
+                                for file in support_files:
+                                    file.seek(0)  # Reset file pointer
+                                    file_bytes = file.read()
+                                    file.seek(0)  # Reset again for potential reuse
+                                    file_data_list.append({
+                                        'name': file.name,
+                                        'bytes': file_bytes,
+                                        'type': file.type
+                                    })
+                                st.session_state['travel_support_files_data'] = file_data_list
+                            else:
+                                st.session_state['travel_support_files_data'] = []
                             
                             form_data = {
                                 'name': name,
@@ -4202,7 +4198,7 @@ else:
                                 'objective': objective,
                                 'attendees': attendees,
                                 'deliverables': deliverables,
-                                'support_files': support_files_links,
+                                'support_files': '',  # Will be updated after upload
                                 'mileage_dates': mileage_dates,
                                 'mileage_amounts': mileage_amounts,
                                 'total_mileage': total_mileage,
@@ -4303,6 +4299,45 @@ else:
                             approved = st.checkbox("I have reviewed and approve this travel form.", key="travel_approve_review")
                             generate_now = st.button("Finalize and Download PDF", disabled=not approved, key="travel_generate_now")
                             if generate_now and approved:
+                                # Upload support files to Google Drive if provided
+                                support_files_links = ""
+                                if 'travel_support_files_data' in st.session_state and st.session_state['travel_support_files_data']:
+                                    try:
+                                        folder_id_travel = "1aDE0N_duNN6w8rLDLX5HHeychyhLIqbo"
+                                        links = []
+                                        name_for_files = review.get('name', 'Unknown')
+                                        destination_for_files = review.get('destination', 'Unknown')
+                                        
+                                        for file_data in st.session_state['travel_support_files_data']:
+                                            # Create unique filename
+                                            renamed_filename = f"Travel_{name_for_files.replace(' ', '_')}_{destination_for_files.replace(' ', '_')}_{file_data['name']}"
+                                            
+                                            # Create a file-like object from bytes with required attributes
+                                            file_obj = io.BytesIO(file_data['bytes'])
+                                            file_obj.name = file_data['name']
+                                            file_obj.type = file_data.get('type', 'application/octet-stream')
+                                            
+                                            # Upload to Google Drive
+                                            link = upload_file_to_drive(
+                                                file=file_obj,
+                                                filename=renamed_filename,
+                                                folder_id=folder_id_travel,
+                                                creds_dict=st.secrets["gcp_service_account"]
+                                            )
+                                            links.append(link)
+                                        
+                                        support_files_links = ", ".join(links)
+                                        st.success("✅ Support files uploaded to Google Drive!")
+                                        
+                                        # Update review data with file links
+                                        review['support_files'] = support_files_links
+                                        
+                                        # Clear file data from session state to free memory
+                                        del st.session_state['travel_support_files_data']
+                                        
+                                    except Exception as e:
+                                        st.warning(f"⚠️ Error uploading support files: {str(e)}")
+                                
                                 # Save to Google Sheets when PDF is generated
                                 try:
                                     df_travel = load_travel_sheet()
@@ -4317,7 +4352,7 @@ else:
                                         'Departure Date': review.get('departure_date', ''),
                                         'Return Date': review.get('return_date', ''),
                                         'Deliverables': review.get('deliverables', ''),
-                                        'Support Files': review.get('support_files', ''),
+                                        'Support Files': support_files_links,
                                         'Submission Date': datetime.now().strftime('%Y-%m-%d')
                                     }
                                     
