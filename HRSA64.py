@@ -4817,9 +4817,11 @@ GU-TAP System
                                                 worksheet_travel.update([updated_df_travel.columns.values.tolist()] + updated_df_travel.values.tolist())
                                             
                                             # Send email notification to both coordinators
-                                            kemisha_email = "kd802@georgetown.edu"
+                                            #kemisha_email = "kd802@georgetown.edu"
+                                            kemisha_email = "jw2104@georgetown.edu"
                                             kemisha_name = "Kemisha Denny"
-                                            mabintou_email = "mo887@georgetown.edu"
+                                            #mabintou_email = "mo887@georgetown.edu"
+                                            mabintou_email = "jw2104@georgetown.edu"
                                             mabintou_name = "Mabintou Ouattara"
                                             
                                             traveler_name = review.get('name', 'Unknown')
