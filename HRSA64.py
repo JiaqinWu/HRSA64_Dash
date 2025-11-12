@@ -3260,22 +3260,16 @@ else:
                                         st.markdown(f"**Support Files:** {support_files}")
                                     
                                     st.markdown("---")
-                                    st.markdown("#### ✍️ Approval Section")
+                                    st.markdown("#### ✍️ Decision Section")
                                     
-                                    # Beautiful approval section with selection first
-                                    st.markdown("""
-                                        <div style='background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); border-radius: 15px; padding: 1.5em; margin-bottom: 1.5em;'>
-                                            <h4 style='color: #2c3e50; margin-bottom: 1em;'>Select Your Decision</h4>
-                                        </div>
-                                    """, unsafe_allow_html=True)
                                     
                                     # Approval decision selection
                                     approval_decision = st.radio(
-                                        "**Decision:**",
+                                        "**Select Your Decision:**",
                                         ["✅ Approve", "❌ Reject"],
                                         key="travel_approval_decision",
                                         horizontal=True,
-                                        help="Select whether you approve or reject this travel authorization form"
+                                        help="Select your decision to approve or reject this travel authorization form"
                                     )
                                     
                                     approval_date = st.date_input(
