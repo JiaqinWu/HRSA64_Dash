@@ -4668,7 +4668,7 @@ GU-TAP System
                             """
                             st.markdown(totals_html, unsafe_allow_html=True)
                             approved = st.checkbox("I have reviewed and approve this travel form.", key="travel_approve_review")
-                            generate_now = st.button("Finalize and Download PDF", disabled=not approved, key="travel_generate_now")
+                            generate_now = st.button("✅ Finalize and Send for Approval", disabled=not approved, key="travel_generate_now", type="primary", use_container_width=True)
                             if generate_now and approved:
                                 # Upload support files to Google Drive if provided
                                 support_files_links = ""
@@ -4764,98 +4764,94 @@ GU-TAP System
                                 pdf_buffer = create_pdf(review, ws)
                                 pdf_filename = f"Travel_Authorization_Form_{review.get('name','')}_{review.get('departure_date','')}_{review.get('return_date','')}.pdf"
                                 
-                                # Store PDF buffer and review data in session state for approval workflow
-                                st.session_state['travel_pdf_buffer'] = pdf_buffer.getvalue()
-                                st.session_state['travel_pdf_filename'] = pdf_filename
-                                st.session_state['travel_review_for_approval'] = review
-                                st.session_state['travel_submission_date'] = datetime.now().strftime('%Y-%m-%d')
-                                
                                 st.success("✅ PDF generated successfully!")
                                 
-                                # Only show Send for Approval button
-                                if st.button("📤 Send for Approval", key="travel_send_approval", type="primary", use_container_width=True):
-                                    # Upload PDF to Google Drive
-                                    try:
-                                        folder_id_travel_pdf = "1_O_L-jPR7bldiryRNB3WxbAaG8VqvmCt"
-                                        pdf_file_obj = io.BytesIO(st.session_state['travel_pdf_buffer'])
-                                        pdf_file_obj.name = st.session_state['travel_pdf_filename']
-                                        pdf_file_obj.type = 'application/pdf'
+                                # Upload PDF to Google Drive and send for approval
+                                try:
+                                    folder_id_travel_pdf = "1_O_L-jPR7bldiryRNB3WxbAaG8VqvmCt"
+                                    pdf_file_obj = io.BytesIO(pdf_buffer.getvalue())
+                                    pdf_file_obj.name = pdf_filename
+                                    pdf_file_obj.type = 'application/pdf'
+                                    
+                                    pdf_link = upload_file_to_drive(
+                                        file=pdf_file_obj,
+                                        filename=pdf_filename,
+                                        folder_id=folder_id_travel_pdf,
+                                        creds_dict=st.secrets["gcp_service_account"]
+                                    )
+                                    
+                                    st.success("✅ PDF uploaded to Google Drive!")
+                                    
+                                    # Update Google Sheet with PDF link and status
+                                    # Reload the sheet to get the latest data
+                                    st.cache_data.clear()
+                                    df_travel = load_travel_sheet()
+                                    
+                                    if df_travel.empty:
+                                        st.error("❌ No travel forms found in the sheet. Please submit the form first.")
+                                        st.stop()
+                                    
+                                    # Find the row that matches this submission (by name and submission date)
+                                    submission_date = datetime.now().strftime('%Y-%m-%d')
+                                    traveler_name = review.get('name', '')
+                                    
+                                    # Try to find matching row
+                                    row_idx = None
+                                    if 'Name' in df_travel.columns and 'Submission Date' in df_travel.columns:
+                                        matching_rows = df_travel[
+                                            (df_travel['Name'].astype(str) == str(traveler_name)) &
+                                            (df_travel['Submission Date'].astype(str).str.contains(submission_date, na=False))
+                                        ]
                                         
-                                        pdf_link = upload_file_to_drive(
-                                            file=pdf_file_obj,
-                                            filename=st.session_state['travel_pdf_filename'],
-                                            folder_id=folder_id_travel_pdf,
-                                            creds_dict=st.secrets["gcp_service_account"]
-                                        )
+                                        if not matching_rows.empty:
+                                            # Use the most recent matching row (last one)
+                                            row_idx = matching_rows.index[-1]
+                                    
+                                    # Fallback to last row if no match found
+                                    if row_idx is None:
+                                        row_idx = len(df_travel) - 1
+                                    
+                                    if row_idx >= 0 and row_idx < len(df_travel):
+                                        updated_df_travel = df_travel.copy()
                                         
-                                        # Update Google Sheet with PDF link and status
-                                        # Reload the sheet to get the latest data
-                                        st.cache_data.clear()
-                                        df_travel = load_travel_sheet()
+                                        # Ensure required columns exist
+                                        required_cols = ['PDF Link', 'Kemisha Approval Status', 'Mabintou Approval Status']
+                                        for col in required_cols:
+                                            if col not in updated_df_travel.columns:
+                                                updated_df_travel[col] = ''
                                         
-                                        if df_travel.empty:
-                                            st.error("❌ No travel forms found in the sheet. Please submit the form first.")
-                                            st.stop()
+                                        updated_df_travel.loc[row_idx, 'PDF Link'] = pdf_link
+                                        updated_df_travel.loc[row_idx, 'Kemisha Approval Status'] = 'pending'
+                                        updated_df_travel.loc[row_idx, 'Mabintou Approval Status'] = 'pending'
                                         
-                                        # Find the row that matches this submission (by name and submission date)
-                                        submission_date = st.session_state.get('travel_submission_date', datetime.now().strftime('%Y-%m-%d'))
-                                        traveler_name = review.get('name', '')
+                                        updated_df_travel = updated_df_travel.fillna("")
+                                        spreadsheet_travel = client.open('HRSA64_TA_Request')
+                                        try:
+                                            worksheet_travel = spreadsheet_travel.worksheet('Travel')
+                                        except:
+                                            worksheet_travel = spreadsheet_travel.add_worksheet(title='Travel', rows=1000, cols=20)
                                         
-                                        # Try to find matching row
-                                        row_idx = None
-                                        if 'Name' in df_travel.columns and 'Submission Date' in df_travel.columns:
-                                            matching_rows = df_travel[
-                                                (df_travel['Name'].astype(str) == str(traveler_name)) &
-                                                (df_travel['Submission Date'].astype(str).str.contains(submission_date, na=False))
-                                            ]
-                                            
-                                            if not matching_rows.empty:
-                                                # Use the most recent matching row (last one)
-                                                row_idx = matching_rows.index[-1]
+                                        worksheet_travel.update([updated_df_travel.columns.values.tolist()] + updated_df_travel.values.tolist())
                                         
-                                        # Fallback to last row if no match found
-                                        if row_idx is None:
-                                            row_idx = len(df_travel) - 1
+                                        st.success("✅ Travel form status updated in Google Sheets!")
                                         
-                                        if row_idx >= 0 and row_idx < len(df_travel):
-                                            updated_df_travel = df_travel.copy()
-                                            
-                                            # Ensure required columns exist
-                                            required_cols = ['PDF Link', 'Kemisha Approval Status', 'Mabintou Approval Status']
-                                            for col in required_cols:
-                                                if col not in updated_df_travel.columns:
-                                                    updated_df_travel[col] = ''
-                                            
-                                            updated_df_travel.loc[row_idx, 'PDF Link'] = pdf_link
-                                            updated_df_travel.loc[row_idx, 'Kemisha Approval Status'] = 'pending'
-                                            updated_df_travel.loc[row_idx, 'Mabintou Approval Status'] = 'pending'
-                                            
-                                            updated_df_travel = updated_df_travel.fillna("")
-                                            spreadsheet_travel = client.open('HRSA64_TA_Request')
-                                            try:
-                                                worksheet_travel = spreadsheet_travel.worksheet('Travel')
-                                            except:
-                                                worksheet_travel = spreadsheet_travel.add_worksheet(title='Travel', rows=1000, cols=20)
-                                            
-                                            worksheet_travel.update([updated_df_travel.columns.values.tolist()] + updated_df_travel.values.tolist())
-                                            
-                                            # Send email notification to both coordinators
-                                            #kemisha_email = "kd802@georgetown.edu"
-                                            kemisha_email = "jw2104@georgetown.edu"
-                                            kemisha_name = "Kemisha Denny"
-                                            #mabintou_email = "mo887@georgetown.edu"
-                                            mabintou_email = "jw2104@georgetown.edu"
-                                            mabintou_name = "Mabintou Ouattara"
-                                            
-                                            traveler_name = review.get('name', 'Unknown')
-                                            destination = review.get('destination', 'Unknown')
-                                            departure_date = review.get('departure_date', 'Unknown')
-                                            return_date = review.get('return_date', 'Unknown')
-                                            total_amount = review.get('total_amount_due', 0)
-                                            
-                                            # Email to Kemisha
-                                            email_subject_kemisha = f"Travel Authorization Form Pending Approval - {traveler_name}"
-                                            email_body_kemisha = f"""
+                                        # Send email notification to both coordinators
+                                        #kemisha_email = "kd802@georgetown.edu"
+                                        kemisha_email = "jw2104@georgetown.edu"
+                                        kemisha_name = "Kemisha Denny"
+                                        #mabintou_email = "mo887@georgetown.edu"
+                                        mabintou_email = "nathaniel.wong@georgetown.edu"
+                                        mabintou_name = "Mabintou Ouattara"
+                                        
+                                        traveler_name = review.get('name', 'Unknown')
+                                        destination = review.get('destination', 'Unknown')
+                                        departure_date = review.get('departure_date', 'Unknown')
+                                        return_date = review.get('return_date', 'Unknown')
+                                        total_amount = review.get('total_amount_due', 0)
+                                        
+                                        # Email to Kemisha
+                                        email_subject_kemisha = f"Travel Authorization Form Pending Approval - {traveler_name}"
+                                        email_body_kemisha = f"""
 Dear {kemisha_name},
 
 A new travel authorization form has been submitted and is pending your approval.
@@ -4873,11 +4869,11 @@ Please review and approve this travel authorization form via the GU-TAP System: 
 
 Best regards,
 GU-TAP System
-                                            """
-                                            
-                                            # Email to Mabintou
-                                            email_subject_mabintou = f"Travel Authorization Form Pending Approval - {traveler_name}"
-                                            email_body_mabintou = f"""
+                                        """
+                                        
+                                        # Email to Mabintou
+                                        email_subject_mabintou = f"Travel Authorization Form Pending Approval - {traveler_name}"
+                                        email_body_mabintou = f"""
 Dear {mabintou_name},
 
 A new travel authorization form has been submitted and is pending your approval.
@@ -4895,64 +4891,70 @@ Please review and approve this travel authorization form via the GU-TAP System: 
 
 Best regards,
 GU-TAP System
-                                            """
-                                            
-                                            # Send emails to both coordinators
-                                            email_success_count = 0
-                                            try:
-                                                send_email_mailjet(
-                                                    to_email=kemisha_email,
-                                                    subject=email_subject_kemisha,
-                                                    body=email_body_kemisha.strip()
-                                                )
-                                                email_success_count += 1
-                                            except Exception as e:
-                                                st.warning(f"⚠️ Failed to send email to Kemisha: {str(e)}")
-                                            
-                                            try:
-                                                send_email_mailjet(
-                                                    to_email=mabintou_email,
-                                                    subject=email_subject_mabintou,
-                                                    body=email_body_mabintou.strip()
-                                                )
-                                                email_success_count += 1
-                                            except Exception as e:
-                                                st.warning(f"⚠️ Failed to send email to Mabintou: {str(e)}")
-                                            
-                                            if email_success_count == 2:
-                                                st.success("✅ Travel form sent for approval! Email notifications sent to both coordinators.")
-                                            elif email_success_count == 1:
-                                                st.warning("⚠️ PDF uploaded but only one email was sent successfully.")
+                                        """
+                                        
+                                        # Send emails to both coordinators
+                                        email_success_count = 0
+                                        email_messages = []
+                                        
+                                        try:
+                                            send_email_mailjet(
+                                                to_email=kemisha_email,
+                                                subject=email_subject_kemisha,
+                                                body=email_body_kemisha.strip()
+                                            )
+                                            email_success_count += 1
+                                            email_messages.append(f"✅ Email sent successfully to {kemisha_name} ({kemisha_email})")
+                                        except Exception as e:
+                                            email_messages.append(f"⚠️ Failed to send email to {kemisha_name}: {str(e)}")
+                                        
+                                        try:
+                                            send_email_mailjet(
+                                                to_email=mabintou_email,
+                                                subject=email_subject_mabintou,
+                                                body=email_body_mabintou.strip()
+                                            )
+                                            email_success_count += 1
+                                            email_messages.append(f"✅ Email sent successfully to {mabintou_name} ({mabintou_email})")
+                                        except Exception as e:
+                                            email_messages.append(f"⚠️ Failed to send email to {mabintou_name}: {str(e)}")
+                                        
+                                        # Display email results
+                                        for msg in email_messages:
+                                            if msg.startswith("✅"):
+                                                st.success(msg)
                                             else:
-                                                st.warning("⚠️ PDF uploaded but failed to send emails to coordinators.")
-                                            
-                                            # Clear session state
-                                            if 'travel_pdf_buffer' in st.session_state:
-                                                del st.session_state['travel_pdf_buffer']
-                                            if 'travel_pdf_filename' in st.session_state:
-                                                del st.session_state['travel_pdf_filename']
-                                            if 'travel_review_for_approval' in st.session_state:
-                                                del st.session_state['travel_review_for_approval']
-                                            if 'travel_review_data' in st.session_state:
-                                                del st.session_state['travel_review_data']
-                                            if 'travel_submission_date' in st.session_state:
-                                                del st.session_state['travel_submission_date']
-                                            
-                                            st.cache_data.clear()
-                                            time.sleep(2)
-                                            st.rerun()
+                                                st.warning(msg)
+                                        
+                                        if email_success_count == 2:
+                                            st.success("🎉 Travel form sent for approval! Both coordinators have been notified.")
+                                        elif email_success_count == 1:
+                                            st.warning("⚠️ PDF uploaded and one email sent, but one email failed. Please check the messages above.")
                                         else:
-                                            st.error("❌ Could not find the travel form entry to update. Please try again.")
-                                            st.stop()
-                                            
-                                    except Exception as e:
-                                        st.error(f"❌ Error sending for approval: {str(e)}")
-                                        st.exception(e)
-                                
-                                # Clear review data after generation (but keep PDF buffer for approval)
-                                if 'travel_review_data' in st.session_state and 'travel_send_approval' not in st.session_state:
-                                    # Only clear if not sending for approval
-                                    pass
+                                            st.error("❌ PDF uploaded but failed to send emails to coordinators. Please contact support.")
+                                        
+                                        # Clear session state
+                                        if 'travel_pdf_buffer' in st.session_state:
+                                            del st.session_state['travel_pdf_buffer']
+                                        if 'travel_pdf_filename' in st.session_state:
+                                            del st.session_state['travel_pdf_filename']
+                                        if 'travel_review_for_approval' in st.session_state:
+                                            del st.session_state['travel_review_for_approval']
+                                        if 'travel_review_data' in st.session_state:
+                                            del st.session_state['travel_review_data']
+                                        if 'travel_submission_date' in st.session_state:
+                                            del st.session_state['travel_submission_date']
+                                        
+                                        st.cache_data.clear()
+                                        time.sleep(3)
+                                        st.rerun()
+                                    else:
+                                        st.error("❌ Could not find the travel form entry to update. Please try again.")
+                                        st.stop()
+                                        
+                                except Exception as e:
+                                    st.error(f"❌ Error sending for approval: {str(e)}")
+                                    st.exception(e)
                     
                     except Exception as e:
                         st.error(f"Error: {str(e)}")
