@@ -805,6 +805,7 @@ def create_pdf(form_data, ws):
     
     # Mileage Section
     story.append(Paragraph("<b>Mileage</b>", styles['Heading3']))
+    story.append(Paragraph("The Mileage (Per Day) should be rounded to the nearest mile.", styles['Normal']))
     story.append(Paragraph("Mileage for 2025 is $0.70 per mile.", styles['Normal']))
     story.append(Spacer(1, 0.1*inch))
     
@@ -816,7 +817,7 @@ def create_pdf(form_data, ws):
     for amount in all_mileage_amounts:
         if amount and str(amount).strip():
             try:
-                grand_mileage_rate_total += round(float(amount) * 0.70, 0)
+                grand_mileage_rate_total += round(float(amount) * 0.70, 2)
             except:
                 pass
     grand_mileage_rate_total = round(grand_mileage_rate_total, 0)
@@ -836,7 +837,7 @@ def create_pdf(form_data, ws):
         for amount in amounts_chunk:
             if amount and str(amount).strip():
                 try:
-                    rate = round(float(amount) * 0.70, 0)
+                    rate = round(float(amount) * 0.70, 2)
                     mileage_rates.append(f"${int(rate)}")
                 except:
                     mileage_rates.append('')
@@ -1276,11 +1277,51 @@ def create_pdf(form_data, ws):
     program_assistant_label = Paragraph("Program Assistant", label_style)
     lead_provider_text = Paragraph("Lead Technical\nAssistance Provider", label_style)
     
+    # Helper function to format dates consistently to MM/DD/YYYY
+    def format_date_for_pdf(date_value):
+        """Format date to MM/DD/YYYY format consistently"""
+        if not date_value or date_value == '':
+            return ''
+        try:
+            # If it's already in MM/DD/YYYY format, return as-is
+            if isinstance(date_value, str) and '/' in date_value:
+                # Check if it's already MM/DD/YYYY
+                parts = date_value.split('/')
+                if len(parts) == 3:
+                    # Validate it's MM/DD/YYYY (not DD/MM/YYYY)
+                    if len(parts[0]) <= 2 and len(parts[1]) <= 2 and len(parts[2]) == 4:
+                        return date_value
+                    elif len(parts[2]) == 4:
+                        # Might be MM/DD/YYYY, return as-is
+                        return date_value
+            # Try parsing as YYYY-MM-DD format
+            if isinstance(date_value, str) and '-' in date_value:
+                try:
+                    parsed_date = datetime.strptime(date_value, '%Y-%m-%d')
+                    return parsed_date.strftime('%m/%d/%Y')
+                except:
+                    pass
+            # Try parsing as date object
+            if hasattr(date_value, 'strftime'):
+                return date_value.strftime('%m/%d/%Y')
+            # Try parsing various string formats
+            for fmt in ['%Y-%m-%d', '%m/%d/%Y', '%m/%d/%y', '%Y/%m/%d']:
+                try:
+                    parsed_date = datetime.strptime(str(date_value), fmt)
+                    return parsed_date.strftime('%m/%d/%Y')
+                except:
+                    continue
+            # If all parsing fails, return as string
+            return str(date_value)
+        except:
+            return str(date_value) if date_value else ''
+    
     # Get coordinator signatures and dates if available
     mabintou_sig_text = form_data.get('mabintou_signature', '').strip()
     kemisha_sig_text = form_data.get('kemisha_signature', '').strip()
-    mabintou_date = form_data.get('mabintou_approval_date', '')
-    kemisha_date = form_data.get('kemisha_approval_date', '')
+    mabintou_date = format_date_for_pdf(form_data.get('mabintou_approval_date', ''))
+    kemisha_date = format_date_for_pdf(form_data.get('kemisha_approval_date', ''))
+    traveler_date = format_date_for_pdf(form_data.get('signature_date', ''))
     
     # Generate Mabintou signature image (Program Assistant)
     mabintou_signature_cell = ''
@@ -1347,9 +1388,9 @@ def create_pdf(form_data, ws):
             kemisha_signature_cell = kemisha_sig_text
     
     combined_data = [
-        [traveler_label, signature_cell_value, 'DATE', form_data.get('signature_date', '')],
-        [program_assistant_label, mabintou_signature_cell, 'DATE', str(mabintou_date) if mabintou_date else ''],
-        [lead_provider_text, kemisha_signature_cell, 'DATE', str(kemisha_date) if kemisha_date else ''],
+        [traveler_label, signature_cell_value, 'DATE', traveler_date],
+        [program_assistant_label, mabintou_signature_cell, 'DATE', mabintou_date],
+        [lead_provider_text, kemisha_signature_cell, 'DATE', kemisha_date],
         ['AWD', 'AWD-7776588', 'GR', 'GR426936'],
     ]
     
@@ -4553,13 +4594,14 @@ GU-TAP System
                                 purpose_of_travel = st.text_area("Purpose of Travel *", key="travel_purpose_of_travel", height=100)
                                 attendees = st.text_area("Attendees *", key="travel_attendees", height=100)
                             with col_purpose2:
-                                objective = st.text_area("Objective", key="travel_objective", height=100)
+                                objective = st.text_area("Objective *", key="travel_objective", height=100)
                                 deliverables = st.text_area("Deliverables *", key="travel_deliverables", height=100)
                             support_files = st.file_uploader(
                                 "Upload Documents (i.e Agenda, TA Request, etc.)",accept_multiple_files=True, key="travel_document"
                             )
                             
                             st.header("Mileage Expenses")
+                            st.markdown("**The Mileage (Per Day) should be rounded to the nearest mile.**")
                             st.markdown("**Mileage rate for 2025: $0.70 per mile**")
                             
                             mileage_dates = []
@@ -4575,7 +4617,7 @@ GU-TAP System
                                         mileage_dates.append(st.text_input(f"Day {i+1}", key=f"travel_mileage_date_{i}", placeholder="MM/DD/YY"))
                                         mileage_amounts.append(number_text_input(f"Miles", key=f"travel_mileage_{i}", value=0.0, placeholder="0"))
                             
-                            total_mileage = round(sum([m * 0.70 for m in mileage_amounts if m]),0)
+                            total_mileage = round(sum([m * 0.70 for m in mileage_amounts if m]),2)
                             
                             st.header("Travel Expenses")
                             expense_dates = []
