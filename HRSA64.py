@@ -2335,9 +2335,6 @@ else:
 
                     st.dataframe(staff_dfff[display_cols].reset_index(drop=True))
 
-                    # Filter submitted requests
-                    submitted_requests = df[df["Status"] == "Submitted"].copy()
-
                     st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
                     with st.expander("📝 **ASSIGN TA REQUESTS**"):
                         st.markdown("""
@@ -2350,122 +2347,125 @@ else:
                             </div>
                         </div>
                     """, unsafe_allow_html=True)
-                    st.markdown("#### 📋 Unassigned Requests")
+                        st.markdown("#### 📋 Unassigned Requests")
 
-                    if submitted_requests.empty:
-                        st.info("No submitted requests at the moment.")
-                    else:
-                        # Define custom priority order
-                        priority_order = {"Critical": 1, "High": 2, "Normal": 3, "Low": 4}
+                        # Filter submitted requests
+                        submitted_requests = df[df["Status"] == "Submitted"].copy()
 
-                        # Create a temporary column for sort priority
-                        submitted_requests["PriorityOrder"] = submitted_requests["Priority"].map(priority_order)
+                        if submitted_requests.empty:
+                            st.info("No submitted requests at the moment.")
+                        else:
+                            # Define custom priority order
+                            priority_order = {"Critical": 1, "High": 2, "Normal": 3, "Low": 4}
 
-                        # Convert date columns if needed
-                        submitted_requests["Submit Date"] = pd.to_datetime(submitted_requests["Submit Date"], errors='coerce')
-                        submitted_requests["Targeted Due Date"] = pd.to_datetime(submitted_requests["Targeted Due Date"], errors='coerce')
+                            # Create a temporary column for sort priority
+                            submitted_requests["PriorityOrder"] = submitted_requests["Priority"].map(priority_order)
 
-                        # Format dates to "YYYY-MM-DD" for display
-                        submitted_requests["Submit Date"] = submitted_requests["Submit Date"].dt.strftime("%Y-%m-%d")
-                        submitted_requests["Targeted Due Date"] = submitted_requests["Targeted Due Date"].dt.strftime("%Y-%m-%d")
+                            # Convert date columns if needed
+                            submitted_requests["Submit Date"] = pd.to_datetime(submitted_requests["Submit Date"], errors='coerce')
+                            submitted_requests["Targeted Due Date"] = pd.to_datetime(submitted_requests["Targeted Due Date"], errors='coerce')
 
-                        # Sort by custom priority, then submit date, then due date
-                        submitted_requests_sorted = submitted_requests.sort_values(
-                            by=["PriorityOrder", "Submit Date", "Targeted Due Date"],
-                            ascending=[True, True, True]
-                        )
+                            # Format dates to "YYYY-MM-DD" for display
+                            submitted_requests["Submit Date"] = submitted_requests["Submit Date"].dt.strftime("%Y-%m-%d")
+                            submitted_requests["Targeted Due Date"] = submitted_requests["Targeted Due Date"].dt.strftime("%Y-%m-%d")
 
-                        # Display clean table (exclude PriorityOrder column)
-                        st.dataframe(submitted_requests_sorted[[
-                            "Ticket ID","Jurisdiction", "Organization", "Name", "Title/Position", "Email Address", "Phone Number",
-                            "Focus Area", "TA Type", "Submit Date", "Targeted Due Date", "Priority", "TA Description","Document"
-                        ]].reset_index(drop=True))
+                            # Sort by custom priority, then submit date, then due date
+                            submitted_requests_sorted = submitted_requests.sort_values(
+                                by=["PriorityOrder", "Submit Date", "Targeted Due Date"],
+                                ascending=[True, True, True]
+                            )
 
-                        # Select request by index 
-                        request_indices = submitted_requests_sorted.index.tolist()
-                        selected_request_index = st.selectbox(
-                            "Select a request to assign",
-                            options=request_indices,
-                            format_func=lambda idx: f"{submitted_requests_sorted.at[idx, 'Ticket ID']} | {submitted_requests_sorted.at[idx, 'Name']} | {submitted_requests_sorted.at[idx, 'Jurisdiction']}",
-                        )
+                            # Display clean table (exclude PriorityOrder column)
+                            st.dataframe(submitted_requests_sorted[[
+                                "Ticket ID","Jurisdiction", "Organization", "Name", "Title/Position", "Email Address", "Phone Number",
+                                "Focus Area", "TA Type", "Submit Date", "Targeted Due Date", "Priority", "TA Description","Document"
+                            ]].reset_index(drop=True))
 
-                        # Select coach
-                        selected_coach = st.selectbox(
-                            "Assign a coach",
-                            options=staff_list_sorted,
-                            index=None,
-                            placeholder="Select option..."
-                        )
+                            # Select request by index 
+                            request_indices = submitted_requests_sorted.index.tolist()
+                            selected_request_index = st.selectbox(
+                                "Select a request to assign",
+                                options=request_indices,
+                                format_func=lambda idx: f"{submitted_requests_sorted.at[idx, 'Ticket ID']} | {submitted_requests_sorted.at[idx, 'Name']} | {submitted_requests_sorted.at[idx, 'Jurisdiction']}",
+                            )
 
-                        # Assign button
-                        if st.button("✅ Assign Coach and Start TA"):
-                            try:
-                                updated_df = df.copy()
-                                # Update the selected row
-                                updated_df.loc[selected_request_index, "Assigned Coach"] = selected_coach
-                                updated_df.loc[selected_request_index, "Assigned Coordinator"] = coordinator_name
-                                updated_df.loc[selected_request_index, "Status"] = "In Progress"
-                                updated_df.loc[selected_request_index, "Assigned Date"] = datetime.today().strftime("%Y-%m-%d")
+                            # Select coach
+                            selected_coach = st.selectbox(
+                                "Assign a coach",
+                                options=staff_list_sorted,
+                                index=None,
+                                placeholder="Select option..."
+                            )
 
-                                updated_df = updated_df.applymap(
-                                    lambda x: x.strftime("%Y-%m-%d") if isinstance(x, (pd.Timestamp, datetime)) and not pd.isna(x) else x
-                                )
-                                updated_df = updated_df.fillna("") 
-                                spreadsheet1 = client.open('HRSA64_TA_Request')
-                                worksheet1 = spreadsheet1.worksheet('Main')
+                            # Assign button
+                            if st.button("✅ Assign Coach and Start TA"):
+                                try:
+                                    updated_df = df.copy()
+                                    # Update the selected row
+                                    updated_df.loc[selected_request_index, "Assigned Coach"] = selected_coach
+                                    updated_df.loc[selected_request_index, "Assigned Coordinator"] = coordinator_name
+                                    updated_df.loc[selected_request_index, "Status"] = "In Progress"
+                                    updated_df.loc[selected_request_index, "Assigned Date"] = datetime.today().strftime("%Y-%m-%d")
 
-                                # Push to Google Sheet
-                                worksheet1.update([updated_df.columns.values.tolist()] + updated_df.values.tolist())
+                                    updated_df = updated_df.applymap(
+                                        lambda x: x.strftime("%Y-%m-%d") if isinstance(x, (pd.Timestamp, datetime)) and not pd.isna(x) else x
+                                    )
+                                    updated_df = updated_df.fillna("") 
+                                    spreadsheet1 = client.open('HRSA64_TA_Request')
+                                    worksheet1 = spreadsheet1.worksheet('Main')
 
-                                # Clear cache to refresh data
-                                st.cache_data.clear()
-                                
-                                st.success(f"Coach {selected_coach} assigned! Status updated to 'In Progress'.")
+                                    # Push to Google Sheet
+                                    worksheet1.update([updated_df.columns.values.tolist()] + updated_df.values.tolist())
 
-                                # Send email to staff   
-                                # Find staff email by name
-                                staff_email = None
-                                for email, roles in USERS.items():
-                                    if "Assignee/Staff" in roles and roles["Assignee/Staff"]["name"] == selected_coach:
-                                        staff_email = email
-                                        break
+                                    # Clear cache to refresh data
+                                    st.cache_data.clear()
+                                    
+                                    st.success(f"Coach {selected_coach} assigned! Status updated to 'In Progress'.")
 
-                                if staff_email:
-                                    staff_subject = f"You have been assigned a new TA request: {updated_df.loc[selected_request_index, 'Ticket ID']}"
-                                    staff_body = f"""
-                                    Hi {selected_coach},
+                                    # Send email to staff   
+                                    # Find staff email by name
+                                    staff_email = None
+                                    for email, roles in USERS.items():
+                                        if "Assignee/Staff" in roles and roles["Assignee/Staff"]["name"] == selected_coach:
+                                            staff_email = email
+                                            break
 
-                                    You have been assigned as the coach for the following Technical Assistance request:
+                                    if staff_email:
+                                        staff_subject = f"You have been assigned a new TA request: {updated_df.loc[selected_request_index, 'Ticket ID']}"
+                                        staff_body = f"""
+                                        Hi {selected_coach},
 
-                                    Ticket ID: {updated_df.loc[selected_request_index, 'Ticket ID']}
-                                    Jurisdiction: {updated_df.loc[selected_request_index, 'Jurisdiction']}
-                                    Organization: {updated_df.loc[selected_request_index, 'Organization']}
-                                    Name: {updated_df.loc[selected_request_index, 'Name']}
-                                    Description: {updated_df.loc[selected_request_index, 'TA Description']}
-                                    Priority: {updated_df.loc[selected_request_index, 'Priority']}
-                                    Targeted Due Date: {updated_df.loc[selected_request_index, 'Targeted Due Date']}
-                                    Attachments: {updated_df.loc[selected_request_index, 'Document'] or 'None'}
+                                        You have been assigned as the coach for the following Technical Assistance request:
 
-                                    Please view and manage this request via the GU-TAP System: https://hrsagutap.streamlit.app/.
-                                    Please contact gutap@georgetown.edu for any questions or concerns.
+                                        Ticket ID: {updated_df.loc[selected_request_index, 'Ticket ID']}
+                                        Jurisdiction: {updated_df.loc[selected_request_index, 'Jurisdiction']}
+                                        Organization: {updated_df.loc[selected_request_index, 'Organization']}
+                                        Name: {updated_df.loc[selected_request_index, 'Name']}
+                                        Description: {updated_df.loc[selected_request_index, 'TA Description']}
+                                        Priority: {updated_df.loc[selected_request_index, 'Priority']}
+                                        Targeted Due Date: {updated_df.loc[selected_request_index, 'Targeted Due Date']}
+                                        Attachments: {updated_df.loc[selected_request_index, 'Document'] or 'None'}
 
-                                    Best,
-                                    GU-TAP System
-                                    """
-                                    try:
-                                        send_email_mailjet(
-                                            to_email=staff_email,
-                                            subject=staff_subject,
-                                            body=staff_body,
-                                        )
-                                    except Exception as e:
-                                        st.warning(f"⚠️ Failed to send assignment email to staff {selected_coach}: {e}")
+                                        Please view and manage this request via the GU-TAP System: https://hrsagutap.streamlit.app/.
+                                        Please contact gutap@georgetown.edu for any questions or concerns.
 
-                                time.sleep(2)
-                                st.rerun()
+                                        Best,
+                                        GU-TAP System
+                                        """
+                                        try:
+                                            send_email_mailjet(
+                                                to_email=staff_email,
+                                                subject=staff_subject,
+                                                body=staff_body,
+                                            )
+                                        except Exception as e:
+                                            st.warning(f"⚠️ Failed to send assignment email to staff {selected_coach}: {e}")
 
-                            except Exception as e:
-                                st.error(f"Error updating Google Sheets: {str(e)}")
+                                    time.sleep(2)
+                                    st.rerun()
+
+                                except Exception as e:
+                                    st.error(f"Error updating Google Sheets: {str(e)}")
 
                         # --- Submit button styling (CSS injection)
                         st.markdown("""
