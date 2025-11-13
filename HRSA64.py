@@ -3207,18 +3207,51 @@ else:
                         current_coordinator_email = st.session_state.user_email
                         is_kemisha = current_coordinator_email == "kd802@georgetown.edu"
                         is_mabintou = current_coordinator_email == "mo887@georgetown.edu"
+                        is_jen = current_coordinator_email == "Jenevieve.Opoku@georgetown.edu"
+                        is_lauren = current_coordinator_email == "lm1353@georgetown.edu"
+                        is_jiaqin = current_coordinator_email == "jw2104@georgetown.edu"
                         
-                        if not (is_kemisha or is_mabintou):
-                            st.info("This section is only available for Kemisha Denny and Mabintou.")
+                        # Access control: Mabintou can only view travel form generator (staff page), not review section
+                        # Jen, Kemisha, Lauren, Jiaqin can view all functions including review
+                        # Other coordinators can view all except review section
+                        if is_mabintou:
+                            st.info("This section is not available for Mabintou. Please use the travel form generator in the staff page.")
+                        elif not (is_kemisha or is_jen or is_lauren or is_jiaqin):
+                            st.info("This section is only available for Kemisha Denny, Jenevieve Opoku, Lauren Mathae, and Jiaqin Wu.")
                         else:
                             # Determine status column based on coordinator
+                            # Note: Approval routing is dynamic based on traveler:
+                            # - Kemisha's requests → Mabintou + Jen
+                            # - Mabintou's requests → Lauren + Kemisha
+                            # - Others → Mabintou + Kemisha (or alternatives)
                             if is_kemisha:
                                 status_col = 'Kemisha Approval Status'
                                 approval_date_col = 'Kemisha Approval Date'
                                 signature_col = 'Kemisha Signature'
                                 note_col = 'Kemisha Note'
                                 coordinator_display_name = "Kemisha Denny"
+                            elif is_jen:
+                                status_col = 'Jen Approval Status'
+                                approval_date_col = 'Jen Approval Date'
+                                signature_col = 'Jen Signature'
+                                note_col = 'Jen Note'
+                                coordinator_display_name = "Jenevieve Opoku"
+                            elif is_lauren:
+                                status_col = 'Lauren Approval Status'
+                                approval_date_col = 'Lauren Approval Date'
+                                signature_col = 'Lauren Signature'
+                                note_col = 'Lauren Note'
+                                coordinator_display_name = "Lauren Mathae"
+                            elif is_jiaqin:
+                                # Jiaqin can view but needs to determine which column based on form routing
+                                # For now, default to Kemisha column, but will be filtered by actual routing
+                                status_col = 'Kemisha Approval Status'
+                                approval_date_col = 'Kemisha Approval Date'
+                                signature_col = 'Kemisha Signature'
+                                note_col = 'Kemisha Note'
+                                coordinator_display_name = "Jiaqin Wu"
                             else:
+                                # Fallback (shouldn't reach here due to access control)
                                 status_col = 'Mabintou Approval Status'
                                 approval_date_col = 'Mabintou Approval Date'
                                 signature_col = 'Mabintou Signature'
@@ -3226,26 +3259,83 @@ else:
                                 coordinator_display_name = "Mabintou Ouattara"
                             
                             # Filter for forms pending this coordinator's approval
-                            # Check if column exists, if not, all rows are pending
-                            if status_col in df_travel_review.columns:
-                                pending_forms = df_travel_review[
-                                    (df_travel_review[status_col].astype(str).str.lower() == 'pending') |
-                                    (df_travel_review[status_col].isna()) |
-                                    (df_travel_review[status_col].astype(str) == '') |
-                                    (df_travel_review[status_col].astype(str) == 'nan')
+                            # First, determine which forms are routed to this coordinator based on traveler
+                            pending_forms = df_travel_review.copy()
+                            
+                            # Filter forms that are routed to this coordinator
+                            def is_routed_to_coordinator(row):
+                                """Check if form is routed to current coordinator"""
+                                traveler_name_check = str(row.get('Name', '')).lower()
+                                traveler_email_check = str(row.get('Email', '')).lower()
+                                
+                                is_kemisha_traveler = (traveler_email_check == 'kd802@georgetown.edu' or 
+                                                      'kemisha' in traveler_name_check)
+                                is_mabintou_traveler = (traveler_email_check == 'mo887@georgetown.edu' or 
+                                                       'mabintou' in traveler_name_check)
+                                
+                                # Determine routing based on traveler
+                                if is_kemisha_traveler:
+                                    # Kemisha's requests → Mabintou + Jen
+                                    if is_mabintou:
+                                        return status_col == 'Mabintou Approval Status'
+                                    elif is_jen:
+                                        return status_col == 'Jen Approval Status'
+                                    else:
+                                        return False
+                                elif is_mabintou_traveler:
+                                    # Mabintou's requests → Lauren + Kemisha
+                                    if is_lauren:
+                                        return status_col == 'Lauren Approval Status'
+                                    elif is_kemisha:
+                                        return status_col == 'Kemisha Approval Status'
+                                    else:
+                                        return False
+                                else:
+                                    # Others → Mabintou + Kemisha (or alternatives)
+                                    if is_mabintou:
+                                        return status_col == 'Mabintou Approval Status'
+                                    elif is_kemisha:
+                                        return status_col == 'Kemisha Approval Status'
+                                    elif is_jen:
+                                        # Jen might be alternative for Kemisha
+                                        return status_col == 'Jen Approval Status'
+                                    elif is_lauren:
+                                        # Lauren might be alternative for Mabintou
+                                        return status_col == 'Lauren Approval Status'
+                                    else:
+                                        return False
+                            
+                            # Filter by routing
+                            if len(pending_forms) > 0:
+                                routed_mask = pending_forms.apply(is_routed_to_coordinator, axis=1)
+                                pending_forms = pending_forms[routed_mask].copy()
+                            
+                            # Then filter by status
+                            if status_col in pending_forms.columns and len(pending_forms) > 0:
+                                pending_forms = pending_forms[
+                                    (pending_forms[status_col].astype(str).str.lower() == 'pending') |
+                                    (pending_forms[status_col].isna()) |
+                                    (pending_forms[status_col].astype(str) == '') |
+                                    (pending_forms[status_col].astype(str) == 'nan')
                                 ].copy()
-                            else:
-                                # If column doesn't exist, all forms are pending
-                                pending_forms = df_travel_review.copy()
+                            elif status_col not in pending_forms.columns:
+                                # If column doesn't exist, no forms pending
+                                pending_forms = pd.DataFrame()
                             
                             if pending_forms.empty:
                                 st.info("✅ No travel forms pending your approval at this time.")
                             else:
                                 st.markdown(f"#### 📋 Forms Pending Your Approval ({coordinator_display_name})")
                                 
-                                # Display pending forms
+                                # Display pending forms - show relevant approval status columns
                                 display_cols = ['Name', 'Destination', 'Departure Date', 'Return Date', 'Purpose of Travel', 
-                                              'Submission Date', 'PDF Link', 'Kemisha Approval Status', 'Mabintou Approval Status']
+                                              'Submission Date', 'PDF Link']
+                                # Add approval status columns that exist
+                                approval_status_cols = ['Kemisha Approval Status', 'Mabintou Approval Status', 
+                                                       'Jen Approval Status', 'Lauren Approval Status']
+                                for col in approval_status_cols:
+                                    if col in pending_forms.columns:
+                                        display_cols.append(col)
                                 available_cols = [col for col in display_cols if col in pending_forms.columns]
                                 
                                 pending_display = pending_forms[available_cols].copy()
@@ -3396,20 +3486,120 @@ else:
                                                     
                                                     worksheet_travel.update([updated_df_travel.columns.values.tolist()] + updated_df_travel.values.tolist())
                                                     
-                                                    # Check if both have approved
-                                                    kemisha_status_new = updated_df_travel.loc[selected_form_idx, 'Kemisha Approval Status']
-                                                    mabintou_status_new = updated_df_travel.loc[selected_form_idx, 'Mabintou Approval Status']
+                                                    # Determine which status columns to check based on form routing
+                                                    # Check traveler to determine routing
+                                                    traveler_name_check = selected_form.get('Name', '').lower()
+                                                    traveler_email_check = selected_form.get('Email', '').lower()
                                                     
-                                                    if kemisha_status_new == 'approve' and mabintou_status_new == 'approve':
+                                                    is_kemisha_traveler_check = (traveler_email_check == 'kd802@georgetown.edu' or 
+                                                                                'kemisha' in traveler_name_check)
+                                                    is_mabintou_traveler_check = (traveler_email_check == 'mo887@georgetown.edu' or 
+                                                                                 'mabintou' in traveler_name_check)
+                                                    
+                                                    # Determine the two approver status columns for this form
+                                                    if is_kemisha_traveler_check:
+                                                        approver1_status_col_check = 'Mabintou Approval Status'
+                                                        approver2_status_col_check = 'Jen Approval Status'
+                                                        approver1_sig_col = 'Mabintou Signature'
+                                                        approver2_sig_col = 'Jen Signature'
+                                                        approver1_date_col = 'Mabintou Approval Date'
+                                                        approver2_date_col = 'Jen Approval Date'
+                                                        approver1_name_final = "Mabintou Ouattara"
+                                                        approver2_name_final = "Jenevieve Opoku"
+                                                    elif is_mabintou_traveler_check:
+                                                        approver1_status_col_check = 'Lauren Approval Status'
+                                                        approver2_status_col_check = 'Kemisha Approval Status'
+                                                        approver1_sig_col = 'Lauren Signature'
+                                                        approver2_sig_col = 'Kemisha Signature'
+                                                        approver1_date_col = 'Lauren Approval Date'
+                                                        approver2_date_col = 'Kemisha Approval Date'
+                                                        approver1_name_final = "Lauren Mathae"
+                                                        approver2_name_final = "Kemisha Denny"
+                                                    else:
+                                                        # Default routing: Mabintou + Kemisha (or alternatives)
+                                                        # Check for alternatives based on out of office status
+                                                        out_of_office_check = {
+                                                            'kemisha': False,  # Set to True if Kemisha is out
+                                                            'mabintou': False  # Set to True if Mabintou is out
+                                                        }
+                                                        
+                                                        if out_of_office_check.get('mabintou', False):
+                                                            # Mabintou is out, use Lauren
+                                                            approver1_status_col_check = 'Lauren Approval Status'
+                                                            approver1_sig_col = 'Lauren Signature'
+                                                            approver1_date_col = 'Lauren Approval Date'
+                                                            approver1_name_final = "Lauren Mathae"
+                                                        else:
+                                                            approver1_status_col_check = 'Mabintou Approval Status'
+                                                            approver1_sig_col = 'Mabintou Signature'
+                                                            approver1_date_col = 'Mabintou Approval Date'
+                                                            approver1_name_final = "Mabintou Ouattara"
+                                                        
+                                                        if out_of_office_check.get('kemisha', False):
+                                                            # Kemisha is out, use Jen
+                                                            approver2_status_col_check = 'Jen Approval Status'
+                                                            approver2_sig_col = 'Jen Signature'
+                                                            approver2_date_col = 'Jen Approval Date'
+                                                            approver2_name_final = "Jenevieve Opoku"
+                                                        else:
+                                                            approver2_status_col_check = 'Kemisha Approval Status'
+                                                            approver2_sig_col = 'Kemisha Signature'
+                                                            approver2_date_col = 'Kemisha Approval Date'
+                                                            approver2_name_final = "Kemisha Denny"
+                                                    
+                                                    # Ensure columns exist
+                                                    for col in [approver1_status_col_check, approver2_status_col_check]:
+                                                        if col not in updated_df_travel.columns:
+                                                            updated_df_travel[col] = ''
+                                                    
+                                                    # Check if both have approved
+                                                    approver1_status_new = updated_df_travel.loc[selected_form_idx, approver1_status_col_check] if approver1_status_col_check in updated_df_travel.columns else ''
+                                                    approver2_status_new = updated_df_travel.loc[selected_form_idx, approver2_status_col_check] if approver2_status_col_check in updated_df_travel.columns else ''
+                                                    
+                                                    # Handle NaN values
+                                                    if pd.isna(approver1_status_new) or str(approver1_status_new).lower() == 'nan':
+                                                        approver1_status_new = ''
+                                                    if pd.isna(approver2_status_new) or str(approver2_status_new).lower() == 'nan':
+                                                        approver2_status_new = ''
+                                                    
+                                                    if str(approver1_status_new).lower() == 'approve' and str(approver2_status_new).lower() == 'approve':
                                                         # Both approved - generate final PDF with both signatures and send to traveler
                                                         try:
-                                                            # Get both signatures
-                                                            kemisha_sig = updated_df_travel.loc[selected_form_idx, 'Kemisha Signature']
-                                                            mabintou_sig = updated_df_travel.loc[selected_form_idx, 'Mabintou Signature']
+                                                            # Get both signatures using dynamic columns
+                                                            approver1_sig = updated_df_travel.loc[selected_form_idx, approver1_sig_col] if approver1_sig_col in updated_df_travel.columns else ''
+                                                            approver2_sig = updated_df_travel.loc[selected_form_idx, approver2_sig_col] if approver2_sig_col in updated_df_travel.columns else ''
                                                             
                                                             # Get both approval dates
-                                                            kemisha_date = updated_df_travel.loc[selected_form_idx, 'Kemisha Approval Date']
-                                                            mabintou_date = updated_df_travel.loc[selected_form_idx, 'Mabintou Approval Date']
+                                                            approver1_date = updated_df_travel.loc[selected_form_idx, approver1_date_col] if approver1_date_col in updated_df_travel.columns else ''
+                                                            approver2_date = updated_df_travel.loc[selected_form_idx, approver2_date_col] if approver2_date_col in updated_df_travel.columns else ''
+                                                            
+                                                            # Map to PDF format (Mabintou goes to Program Assistant, others to Lead)
+                                                            # For Kemisha's requests: Mabintou (Program Assistant) + Jen (Lead)
+                                                            # For Mabintou's requests: Lauren (Program Assistant) + Kemisha (Lead)
+                                                            # For others: Mabintou (Program Assistant) + Kemisha (Lead)
+                                                            if is_kemisha_traveler_check:
+                                                                mabintou_sig = approver1_sig  # Mabintou is approver1
+                                                                kemisha_sig = approver2_sig   # Jen is approver2, but goes to Lead position
+                                                                mabintou_date = approver1_date
+                                                                kemisha_date = approver2_date
+                                                                # Note: Jen's signature goes to Lead position, Mabintou to Program Assistant
+                                                                # We need to adjust this mapping
+                                                                mabintou_sig_pdf = approver1_sig
+                                                                kemisha_sig_pdf = approver2_sig  # Jen's signature
+                                                            elif is_mabintou_traveler_check:
+                                                                mabintou_sig = approver1_sig  # Lauren is approver1, goes to Program Assistant
+                                                                kemisha_sig = approver2_sig   # Kemisha is approver2, goes to Lead
+                                                                mabintou_date = approver1_date
+                                                                kemisha_date = approver2_date
+                                                                mabintou_sig_pdf = approver1_sig  # Lauren's signature
+                                                                kemisha_sig_pdf = approver2_sig  # Kemisha's signature
+                                                            else:
+                                                                mabintou_sig = approver1_sig
+                                                                kemisha_sig = approver2_sig
+                                                                mabintou_date = approver1_date
+                                                                kemisha_date = approver2_date
+                                                                mabintou_sig_pdf = approver1_sig
+                                                                kemisha_sig_pdf = approver2_sig
                                                             
                                                             # Helper function to safely parse JSON from sheet
                                                             def safe_json_loads(value, default=[], data_type='auto'):
@@ -3519,10 +3709,14 @@ else:
                                                                 'total_per_diem': safe_get_numeric(selected_form.get('Total Per Diem', 0)),
                                                                 'total_amount_due': safe_get_numeric(selected_form.get('Total Amount Due', 0)),
                                                                 # Coordinator signatures and dates
-                                                                'kemisha_signature': kemisha_sig,
-                                                                'mabintou_signature': mabintou_sig,
-                                                                'kemisha_approval_date': safe_get(kemisha_date),
+                                                                # Note: mabintou_signature goes to Program Assistant row, kemisha_signature goes to Lead row
+                                                                # For Kemisha's requests: Mabintou (Program Assistant) + Jen (Lead)
+                                                                # For Mabintou's requests: Lauren (Program Assistant) + Kemisha (Lead)
+                                                                # For others: Mabintou (Program Assistant) + Kemisha (Lead)
+                                                                'mabintou_signature': mabintou_sig_pdf,  # Goes to Program Assistant row
+                                                                'kemisha_signature': kemisha_sig_pdf,    # Goes to Lead Technical Assistance Provider row
                                                                 'mabintou_approval_date': safe_get(mabintou_date),
+                                                                'kemisha_approval_date': safe_get(kemisha_date),
                                                             }
                                                             
                                                             # Regenerate PDF with coordinator signatures
@@ -3569,8 +3763,8 @@ Travel Details:
 - Return Date: {selected_form.get('Return Date', 'N/A')}
 
 Approved by:
-- Kemisha Denny: {kemisha_date}
-- Mabintou Ouattara: {mabintou_date}
+- {approver1_name_final}: {mabintou_date}
+- {approver2_name_final}: {kemisha_date}
 
 PDF Link: {final_pdf_link}
 
@@ -3675,17 +3869,61 @@ GU-TAP System
                             # Show approved forms section
                             st.markdown("---")
                             st.markdown("#### ✅ Fully Approved Forms")
-                            # Check if both status columns exist
-                            if 'Kemisha Approval Status' in df_travel_review.columns and 'Mabintou Approval Status' in df_travel_review.columns:
-                                fully_approved = df_travel_review[
-                                    (df_travel_review['Kemisha Approval Status'].astype(str).str.lower() == 'approve') &
-                                    (df_travel_review['Mabintou Approval Status'].astype(str).str.lower() == 'approve')
-                                ].copy()
+                            
+                            # Check for fully approved forms based on dynamic routing
+                            # A form is fully approved when both approvers (determined by routing) have approved
+                            def is_fully_approved(row):
+                                """Check if form is fully approved based on its routing"""
+                                traveler_name_check = str(row.get('Name', '')).lower()
+                                traveler_email_check = str(row.get('Email', '')).lower()
+                                
+                                is_kemisha_traveler = (traveler_email_check == 'kd802@georgetown.edu' or 
+                                                      'kemisha' in traveler_name_check)
+                                is_mabintou_traveler = (traveler_email_check == 'mo887@georgetown.edu' or 
+                                                       'mabintou' in traveler_name_check)
+                                
+                                if is_kemisha_traveler:
+                                    # Kemisha's requests → Mabintou + Jen must both approve
+                                    mabintou_status = str(row.get('Mabintou Approval Status', '')).lower()
+                                    jen_status = str(row.get('Jen Approval Status', '')).lower()
+                                    return mabintou_status == 'approve' and jen_status == 'approve'
+                                elif is_mabintou_traveler:
+                                    # Mabintou's requests → Lauren + Kemisha must both approve
+                                    lauren_status = str(row.get('Lauren Approval Status', '')).lower()
+                                    kemisha_status = str(row.get('Kemisha Approval Status', '')).lower()
+                                    return lauren_status == 'approve' and kemisha_status == 'approve'
+                                else:
+                                    # Others → Mabintou + Kemisha (or alternatives) must both approve
+                                    mabintou_status = str(row.get('Mabintou Approval Status', '')).lower()
+                                    kemisha_status = str(row.get('Kemisha Approval Status', '')).lower()
+                                    jen_status = str(row.get('Jen Approval Status', '')).lower()
+                                    lauren_status = str(row.get('Lauren Approval Status', '')).lower()
+                                    
+                                    # Check primary approvers
+                                    if mabintou_status == 'approve' and kemisha_status == 'approve':
+                                        return True
+                                    # Check alternatives
+                                    if lauren_status == 'approve' and kemisha_status == 'approve':
+                                        return True
+                                    if mabintou_status == 'approve' and jen_status == 'approve':
+                                        return True
+                                    return False
+                            
+                            if len(df_travel_review) > 0:
+                                approved_mask = df_travel_review.apply(is_fully_approved, axis=1)
+                                fully_approved = df_travel_review[approved_mask].copy()
                             else:
                                 fully_approved = pd.DataFrame()
+                            
                             if not fully_approved.empty:
-                                approved_display_cols = ['Name', 'Destination', 'Departure Date', 'Return Date', 
-                                                        'Kemisha Approval Date', 'Mabintou Approval Date', 'PDF Link']
+                                approved_display_cols = ['Name', 'Destination', 'Departure Date', 'Return Date', 'PDF Link']
+                                # Add all approval status and date columns that exist
+                                approval_cols = ['Kemisha Approval Status', 'Mabintou Approval Status', 'Jen Approval Status', 
+                                               'Lauren Approval Status', 'Kemisha Approval Date', 'Mabintou Approval Date',
+                                               'Jen Approval Date', 'Lauren Approval Date']
+                                for col in approval_cols:
+                                    if col in fully_approved.columns:
+                                        approved_display_cols.append(col)
                                 available_approved_cols = [col for col in approved_display_cols if col in fully_approved.columns]
                                 st.dataframe(fully_approved[available_approved_cols].reset_index(drop=True), use_container_width=True)
                             else:
@@ -5040,15 +5278,23 @@ GU-TAP System
                                         'Dinner Checks': json.dumps(review.get('dinner_checks', [])),
                                         'Total Per Diem': review.get('total_per_diem', 0),
                                         'Total Amount Due': review.get('total_amount_due', 0),
-                                        # Approval fields
-                                        'Kemisha Approval Status': 'pending',
-                                        'Mabintou Approval Status': 'pending',
+                                        # Approval fields (all possible approvers)
+                                        'Kemisha Approval Status': '',
+                                        'Mabintou Approval Status': '',
+                                        'Jen Approval Status': '',
+                                        'Lauren Approval Status': '',
                                         'Kemisha Approval Date': '',
                                         'Mabintou Approval Date': '',
+                                        'Jen Approval Date': '',
+                                        'Lauren Approval Date': '',
                                         'Kemisha Signature': '',
                                         'Mabintou Signature': '',
+                                        'Jen Signature': '',
+                                        'Lauren Signature': '',
                                         'Kemisha Note': '',
                                         'Mabintou Note': '',
+                                        'Jen Note': '',
+                                        'Lauren Note': '',
                                     }
                                     
                                     new_travel_data = pd.DataFrame([new_travel_row])
@@ -5128,15 +5374,82 @@ GU-TAP System
                                     if row_idx >= 0 and row_idx < len(df_travel):
                                         updated_df_travel = df_travel.copy()
                                         
+                                        # Determine approval routing based on traveler
+                                        traveler_email = review.get('email', '').lower()
+                                        traveler_name_lower = traveler_name.lower()
+                                        
+                                        # Check if traveler is Kemisha or Mabintou
+                                        is_kemisha_traveler = (traveler_email == 'kd802@georgetown.edu' or 
+                                                              'kemisha' in traveler_name_lower)
+                                        is_mabintou_traveler = (traveler_email == 'mo887@georgetown.edu' or 
+                                                               'mabintou' in traveler_name_lower)
+                                        
+                                        # Determine approvers based on routing rules:
+                                        # - Kemisha's requests → Mabintou + Jen
+                                        # - Mabintou's requests → Lauren + Kemisha
+                                        # - Others → Mabintou + Kemisha (or alternatives if out)
+                                        
+                                        if is_kemisha_traveler:
+                                            # Kemisha's requests go to Mabintou and Jen
+                                            approver1_email = "mo887@georgetown.edu"
+                                            approver1_name = "Mabintou Ouattara"
+                                            approver1_status_col = 'Mabintou Approval Status'
+                                            approver2_email = "Jenevieve.Opoku@georgetown.edu"
+                                            approver2_name = "Jenevieve Opoku"
+                                            approver2_status_col = 'Jen Approval Status'
+                                        elif is_mabintou_traveler:
+                                            # Mabintou's requests go to Lauren and Kemisha
+                                            approver1_email = "lm1353@georgetown.edu"
+                                            approver1_name = "Lauren Mathae"
+                                            approver1_status_col = 'Lauren Approval Status'
+                                            approver2_email = "kd802@georgetown.edu"
+                                            approver2_name = "Kemisha Denny"
+                                            approver2_status_col = 'Kemisha Approval Status'
+                                        else:
+                                            # Default: Mabintou + Kemisha (with alternatives if out)
+                                            # Check if Kemisha or Mabintou are out and use alternatives
+                                            # If Kemisha is out → Jen is alternative for lead
+                                            # If Mabintou is out → Lauren is alternative
+                                            
+                                            # Out of Office configuration (can be updated as needed)
+                                            # Set to True if the person is out of office
+                                            out_of_office = {
+                                                'kemisha': False,  # Set to True if Kemisha is out
+                                                'mabintou': False  # Set to True if Mabintou is out
+                                            }
+                                            
+                                            # Determine approvers with alternatives
+                                            if out_of_office.get('mabintou', False):
+                                                # Mabintou is out, use Lauren as alternative
+                                                approver1_email = "lm1353@georgetown.edu"
+                                                approver1_name = "Lauren Mathae"
+                                                approver1_status_col = 'Lauren Approval Status'
+                                            else:
+                                                # Mabintou is available
+                                                approver1_email = "mo887@georgetown.edu"
+                                                approver1_name = "Mabintou Ouattara"
+                                                approver1_status_col = 'Mabintou Approval Status'
+                                            
+                                            if out_of_office.get('kemisha', False):
+                                                # Kemisha is out, use Jen as alternative for lead
+                                                approver2_email = "Jenevieve.Opoku@georgetown.edu"
+                                                approver2_name = "Jenevieve Opoku"
+                                                approver2_status_col = 'Jen Approval Status'
+                                            else:
+                                                # Kemisha is available
+                                                approver2_email = "kd802@georgetown.edu"
+                                                approver2_name = "Kemisha Denny"
+                                                approver2_status_col = 'Kemisha Approval Status'
+                                        
                                         # Ensure required columns exist
-                                        required_cols = ['PDF Link', 'Kemisha Approval Status', 'Mabintou Approval Status']
+                                        required_cols = ['PDF Link', approver1_status_col, approver2_status_col]
                                         for col in required_cols:
                                             if col not in updated_df_travel.columns:
                                                 updated_df_travel[col] = ''
                                         
                                         updated_df_travel.loc[row_idx, 'PDF Link'] = pdf_link
-                                        updated_df_travel.loc[row_idx, 'Kemisha Approval Status'] = 'pending'
-                                        updated_df_travel.loc[row_idx, 'Mabintou Approval Status'] = 'pending'
+                                        updated_df_travel.loc[row_idx, approver1_status_col] = 'pending'
+                                        updated_df_travel.loc[row_idx, approver2_status_col] = 'pending'
                                         
                                         updated_df_travel = updated_df_travel.fillna("")
                                         spreadsheet_travel = client.open('HRSA64_TA_Request')
@@ -5149,24 +5462,18 @@ GU-TAP System
                                         
                                         st.success("✅ Travel form status updated in Google Sheets!")
                                         
-                                        # Send email notification to both coordinators
-                                        #kemisha_email = "kd802@georgetown.edu"
-                                        kemisha_email = "jw2104@georgetown.edu"
-                                        kemisha_name = "Kemisha Denny"
-                                        #mabintou_email = "mo887@georgetown.edu"
-                                        mabintou_email = "nathaniel.wong@georgetown.edu"
-                                        mabintou_name = "Mabintou Ouattara"
-                                        
+                                        # Send email notification to both approvers (determined dynamically above)
                                         traveler_name = review.get('name', 'Unknown')
                                         destination = review.get('destination', 'Unknown')
                                         departure_date = review.get('departure_date', 'Unknown')
                                         return_date = review.get('return_date', 'Unknown')
                                         total_amount = review.get('total_amount_due', 0)
                                         
-                                        # Email to Kemisha
-                                        email_subject_kemisha = f"Travel Authorization Form Pending Approval - {traveler_name}"
-                                        email_body_kemisha = f"""
-Dear {kemisha_name},
+                                        # Helper function to send email to an approver
+                                        def send_approval_email(approver_email, approver_name):
+                                            email_subject = f"Travel Authorization Form Pending Approval - {traveler_name}"
+                                            email_body = f"""
+Dear {approver_name},
 
 A new travel authorization form has been submitted and is pending your approval.
 
@@ -5183,55 +5490,32 @@ Please review and approve this travel authorization form via the GU-TAP System: 
 
 Best regards,
 GU-TAP System
-                                        """
+                                            """
+                                            try:
+                                                send_email_mailjet(
+                                                    to_email=approver_email,
+                                                    subject=email_subject,
+                                                    body=email_body.strip()
+                                                )
+                                                return True, f"✅ Email sent successfully to {approver_name} ({approver_email})"
+                                            except Exception as e:
+                                                return False, f"⚠️ Failed to send email to {approver_name}: {str(e)}"
                                         
-                                        # Email to Mabintou
-                                        email_subject_mabintou = f"Travel Authorization Form Pending Approval - {traveler_name}"
-                                        email_body_mabintou = f"""
-Dear {mabintou_name},
-
-A new travel authorization form has been submitted and is pending your approval.
-
-Travel Details:
-- Traveler: {traveler_name}
-- Destination: {destination}
-- Departure Date: {departure_date}
-- Return Date: {return_date}
-- Total Amount Due: ${total_amount:.2f}
-
-PDF Link: {pdf_link}
-
-Please review and approve this travel authorization form via the GU-TAP System: https://hrsagutap.streamlit.app/
-
-Best regards,
-GU-TAP System
-                                        """
-                                        
-                                        # Send emails to both coordinators
+                                        # Send emails to both approvers
                                         email_success_count = 0
                                         email_messages = []
                                         
-                                        try:
-                                            send_email_mailjet(
-                                                to_email=kemisha_email,
-                                                subject=email_subject_kemisha,
-                                                body=email_body_kemisha.strip()
-                                            )
+                                        # Send to approver 1
+                                        success1, msg1 = send_approval_email(approver1_email, approver1_name)
+                                        if success1:
                                             email_success_count += 1
-                                            email_messages.append(f"✅ Email sent successfully to {kemisha_name} ({kemisha_email})")
-                                        except Exception as e:
-                                            email_messages.append(f"⚠️ Failed to send email to {kemisha_name}: {str(e)}")
+                                        email_messages.append(msg1)
                                         
-                                        try:
-                                            send_email_mailjet(
-                                                to_email=mabintou_email,
-                                                subject=email_subject_mabintou,
-                                                body=email_body_mabintou.strip()
-                                            )
+                                        # Send to approver 2
+                                        success2, msg2 = send_approval_email(approver2_email, approver2_name)
+                                        if success2:
                                             email_success_count += 1
-                                            email_messages.append(f"✅ Email sent successfully to {mabintou_name} ({mabintou_email})")
-                                        except Exception as e:
-                                            email_messages.append(f"⚠️ Failed to send email to {mabintou_name}: {str(e)}")
+                                        email_messages.append(msg2)
                                         
                                         # Display email results
                                         for msg in email_messages:
