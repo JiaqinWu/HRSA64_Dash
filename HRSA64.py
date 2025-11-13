@@ -2239,103 +2239,103 @@ else:
                             </div>
                         </div>
                     """, unsafe_allow_html=True)
-                    # Convert date columns
-                    df["Assigned Date"] = pd.to_datetime(df["Assigned Date"], errors="coerce")
-                    df["Targeted Due Date"] = pd.to_datetime(df["Targeted Due Date"], errors="coerce")
-                    df["Submit Date"] = pd.to_datetime(df["Submit Date"], errors="coerce")
+                        # Convert date columns
+                        df["Assigned Date"] = pd.to_datetime(df["Assigned Date"], errors="coerce")
+                        df["Targeted Due Date"] = pd.to_datetime(df["Targeted Due Date"], errors="coerce")
+                        df["Submit Date"] = pd.to_datetime(df["Submit Date"], errors="coerce")
 
-                    inprogress = df[df['Status'] == 'In Progress']
-                    next_month = today + timedelta(days=30)
-                    request_pastmonth = df[(df["Targeted Due Date"] <= next_month)&(df['Status'] == 'In Progress')]
+                        inprogress = df[df['Status'] == 'In Progress']
+                        next_month = today + timedelta(days=30)
+                        request_pastmonth = df[(df["Targeted Due Date"] <= next_month)&(df['Status'] == 'In Progress')]
 
-                    col4, col5 = st.columns(2)
-                    # --- Pie 1: In Progress
-                    with col4:
-                        st.markdown("##### 🟡 In Progress Requests by Coach")
-                        if not inprogress.empty:
-                            chart_data = inprogress['Assigned Coach'].value_counts().reset_index()
-                            chart_data.columns = ['Assigned Coach', 'Count']
-                            pie1 = alt.Chart(chart_data).mark_arc(innerRadius=50).encode(
-                                theta=alt.Theta(field="Count", type="quantitative"),
-                                color=alt.Color(field="Assigned Coach", type="nominal"),
-                                tooltip=["Assigned Coach", "Count"]
-                            ).properties(width=250, height=250)
-                            st.altair_chart(pie1, use_container_width=True)
-                        else:
-                            st.info("No in-progress requests to show.")
+                        col4, col5 = st.columns(2)
+                        # --- Pie 1: In Progress
+                        with col4:
+                            st.markdown("##### 🟡 In Progress Requests by Coach")
+                            if not inprogress.empty:
+                                chart_data = inprogress['Assigned Coach'].value_counts().reset_index()
+                                chart_data.columns = ['Assigned Coach', 'Count']
+                                pie1 = alt.Chart(chart_data).mark_arc(innerRadius=50).encode(
+                                    theta=alt.Theta(field="Count", type="quantitative"),
+                                    color=alt.Color(field="Assigned Coach", type="nominal"),
+                                    tooltip=["Assigned Coach", "Count"]
+                                ).properties(width=250, height=250)
+                                st.altair_chart(pie1, use_container_width=True)
+                            else:
+                                st.info("No in-progress requests to show.")
 
-                    # --- Pie 2: Requests in Past Month
-                    with col5:
-                        st.markdown("##### 📅 Due in 30 Days by Coach")
-                        if not request_pastmonth.empty:
-                            chart_data = request_pastmonth['Assigned Coach'].value_counts().reset_index()
-                            chart_data.columns = ['Assigned Coach', 'Count']
-                            pie2 = alt.Chart(chart_data).mark_arc(innerRadius=50).encode(
-                                theta=alt.Theta(field="Count", type="quantitative"),
-                                color=alt.Color(field="Assigned Coach", type="nominal"),
-                                tooltip=["Assigned Coach", "Count"]
-                            ).properties(width=250, height=250)
-                            st.altair_chart(pie2, use_container_width=True)
-                        else:
-                            st.info("No requests with coming dues to show.")
+                        # --- Pie 2: Requests in Past Month
+                        with col5:
+                            st.markdown("##### 📅 Due in 30 Days by Coach")
+                            if not request_pastmonth.empty:
+                                chart_data = request_pastmonth['Assigned Coach'].value_counts().reset_index()
+                                chart_data.columns = ['Assigned Coach', 'Count']
+                                pie2 = alt.Chart(chart_data).mark_arc(innerRadius=50).encode(
+                                    theta=alt.Theta(field="Count", type="quantitative"),
+                                    color=alt.Color(field="Assigned Coach", type="nominal"),
+                                    tooltip=["Assigned Coach", "Count"]
+                                ).properties(width=250, height=250)
+                                st.altair_chart(pie2, use_container_width=True)
+                            else:
+                                st.info("No requests with coming dues to show.")
 
 
-                    staff_list = ["Jenevieve Opoku", "Deus Bazira", "Kemisha Denny", "Katherine Robsky", 
-                    "Martine Etienne-Mesubi", "Seble Kassaye", "Weijun Yu", "Jiaqin Wu", "Zelalem Temesgen", "Carlos Rodriguez-Diaz",
-                    "Kiah Moorehead","Vanessa Da Costa","Trena Mukherjee","Abby Jordan","Megan Highland","Jesus Hernandez Burgos",
-                    "Samantha Cinnick","Bryan Shaw","Tara Hixson","Dzifa Awunyo-Akaba","Masill Miranda","Joy Berry","Ashley Clonchmore",
-                    "Grace Hazlett"]
+                        staff_list = ["Jenevieve Opoku", "Deus Bazira", "Kemisha Denny", "Katherine Robsky", 
+                        "Martine Etienne-Mesubi", "Seble Kassaye", "Weijun Yu", "Jiaqin Wu", "Zelalem Temesgen", "Carlos Rodriguez-Diaz",
+                        "Kiah Moorehead","Vanessa Da Costa","Trena Mukherjee","Abby Jordan","Megan Highland","Jesus Hernandez Burgos",
+                        "Samantha Cinnick","Bryan Shaw","Tara Hixson","Dzifa Awunyo-Akaba","Masill Miranda","Joy Berry","Ashley Clonchmore",
+                        "Grace Hazlett"]
 
-                    staff_list_sorted = sorted(staff_list, key=lambda x: x.split()[0])
+                        staff_list_sorted = sorted(staff_list, key=lambda x: x.split()[0])
 
-                    selected_staff = st.selectbox("Select a staff to view their requests", staff_list_sorted, index=None,
-                            placeholder="Select option...")
+                        selected_staff = st.selectbox("Select a staff to view their requests", staff_list_sorted, index=None,
+                                placeholder="Select option...")
 
-                    today = datetime.today()
-                    last_month = today - timedelta(days=30)
-                    staff_dff = df[df["Assigned Coach"] == selected_staff].copy()
-                    in_progress_count = staff_dff[staff_dff["Status"] == "In Progress"]['Ticket ID'].nunique()
-                    due_soon_count = staff_dff[
-                        (staff_dff["Status"] == "In Progress") & 
-                        (staff_dff["Targeted Due Date"] <= next_month)
-                    ]['Ticket ID'].nunique()
-                    completed_recently = staff_dff[
-                        (staff_dff["Status"] == "Completed") & 
-                        (staff_dff["Submit Date"] >= last_month)
-                    ]['Ticket ID'].nunique()
+                        today = datetime.today()
+                        last_month = today - timedelta(days=30)
+                        staff_dff = df[df["Assigned Coach"] == selected_staff].copy()
+                        in_progress_count = staff_dff[staff_dff["Status"] == "In Progress"]['Ticket ID'].nunique()
+                        due_soon_count = staff_dff[
+                            (staff_dff["Status"] == "In Progress") & 
+                            (staff_dff["Targeted Due Date"] <= next_month)
+                        ]['Ticket ID'].nunique()
+                        completed_recently = staff_dff[
+                            (staff_dff["Status"] == "Completed") & 
+                            (staff_dff["Submit Date"] >= last_month)
+                        ]['Ticket ID'].nunique()
 
-                    # Metric 
-                    col1, col2, col3 = st.columns(3)
-                    col1.metric("🟡 In Progress", in_progress_count)
-                    col2.metric("📅 Due in 30 Days", due_soon_count)
-                    col3.metric("✅ Completed (Last 30 Days)", completed_recently)
+                        # Metric 
+                        col1, col2, col3 = st.columns(3)
+                        col1.metric("🟡 In Progress", in_progress_count)
+                        col2.metric("📅 Due in 30 Days", due_soon_count)
+                        col3.metric("✅ Completed (Last 30 Days)", completed_recently)
 
-                    # Detailed Table
-                    st.markdown("##### 📋 Detailed Request List")
+                        # Detailed Table
+                        st.markdown("##### 📋 Detailed Request List")
 
-                    # Status filter
-                    status_options = ["In Progress", "Completed"]
-                    selected_status = st.multiselect(
-                        "Filter by request status",
-                        options=status_options,
-                        default=["In Progress"]
-                    )
+                        # Status filter
+                        status_options = ["In Progress", "Completed"]
+                        selected_status = st.multiselect(
+                            "Filter by request status",
+                            options=status_options,
+                            default=["In Progress"]
+                        )
 
-                    # Apply filters: staff and status
-                    staff_dfff = staff_dff[staff_dff["Status"].isin(selected_status)].copy()
+                        # Apply filters: staff and status
+                        staff_dfff = staff_dff[staff_dff["Status"].isin(selected_status)].copy()
 
-                    display_cols = [
-                        "Ticket ID", "Jurisdiction", "Organization", "Name", "Focus Area", "TA Type",
-                        "Targeted Due Date", "Priority", "Status", "TA Description","Document"
-                    ]
+                        display_cols = [
+                            "Ticket ID", "Jurisdiction", "Organization", "Name", "Focus Area", "TA Type",
+                            "Targeted Due Date", "Priority", "Status", "TA Description","Document"
+                        ]
 
-                    # Sort by due date
-                    staff_dfff = staff_dfff.sort_values(by="Targeted Due Date")
+                        # Sort by due date
+                        staff_dfff = staff_dfff.sort_values(by="Targeted Due Date")
 
-                    # Format dates for display
-                    staff_dfff["Targeted Due Date"] = staff_dfff["Targeted Due Date"].dt.strftime("%Y-%m-%d")
+                        # Format dates for display
+                        staff_dfff["Targeted Due Date"] = staff_dfff["Targeted Due Date"].dt.strftime("%Y-%m-%d")
 
-                    st.dataframe(staff_dfff[display_cols].reset_index(drop=True))
+                        st.dataframe(staff_dfff[display_cols].reset_index(drop=True))
 
                     st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
                     with st.expander("📝 **ASSIGN TA REQUESTS**"):
@@ -2349,259 +2349,104 @@ else:
                             </div>
                         </div>
                     """, unsafe_allow_html=True)
-                    st.markdown("#### 📋 Unassigned Requests")
+                        st.markdown("#### 📋 Unassigned Requests")
 
-                    # Filter submitted requests
-                    submitted_requests = df[df["Status"] == "Submitted"].copy()
+                        # Filter submitted requests
+                        submitted_requests = df[df["Status"] == "Submitted"].copy()
 
-                    if submitted_requests.empty:
-                        st.info("No submitted requests at the moment.")
-                    else:
-                        # Define custom priority order
-                        priority_order = {"Critical": 1, "High": 2, "Normal": 3, "Low": 4}
+                        if submitted_requests.empty:
+                            st.info("No submitted requests at the moment.")
+                        else:
+                            # Define custom priority order
+                            priority_order = {"Critical": 1, "High": 2, "Normal": 3, "Low": 4}
 
-                        # Create a temporary column for sort priority
-                        submitted_requests["PriorityOrder"] = submitted_requests["Priority"].map(priority_order)
+                            # Create a temporary column for sort priority
+                            submitted_requests["PriorityOrder"] = submitted_requests["Priority"].map(priority_order)
 
-                        # Convert date columns if needed
-                        submitted_requests["Submit Date"] = pd.to_datetime(submitted_requests["Submit Date"], errors='coerce')
-                        submitted_requests["Targeted Due Date"] = pd.to_datetime(submitted_requests["Targeted Due Date"], errors='coerce')
+                            # Convert date columns if needed
+                            submitted_requests["Submit Date"] = pd.to_datetime(submitted_requests["Submit Date"], errors='coerce')
+                            submitted_requests["Targeted Due Date"] = pd.to_datetime(submitted_requests["Targeted Due Date"], errors='coerce')
 
-                        # Format dates to "YYYY-MM-DD" for display
-                        submitted_requests["Submit Date"] = submitted_requests["Submit Date"].dt.strftime("%Y-%m-%d")
-                        submitted_requests["Targeted Due Date"] = submitted_requests["Targeted Due Date"].dt.strftime("%Y-%m-%d")
+                            # Format dates to "YYYY-MM-DD" for display
+                            submitted_requests["Submit Date"] = submitted_requests["Submit Date"].dt.strftime("%Y-%m-%d")
+                            submitted_requests["Targeted Due Date"] = submitted_requests["Targeted Due Date"].dt.strftime("%Y-%m-%d")
 
-                        # Sort by custom priority, then submit date, then due date
-                        submitted_requests_sorted = submitted_requests.sort_values(
-                            by=["PriorityOrder", "Submit Date", "Targeted Due Date"],
-                            ascending=[True, True, True]
-                        )
+                            # Sort by custom priority, then submit date, then due date
+                            submitted_requests_sorted = submitted_requests.sort_values(
+                                by=["PriorityOrder", "Submit Date", "Targeted Due Date"],
+                                ascending=[True, True, True]
+                            )
 
-                        # Display clean table (exclude PriorityOrder column)
-                        st.dataframe(submitted_requests_sorted[[
-                            "Ticket ID","Jurisdiction", "Organization", "Name", "Title/Position", "Email Address", "Phone Number",
-                            "Focus Area", "TA Type", "Submit Date", "Targeted Due Date", "Priority", "TA Description","Document"
-                        ]].reset_index(drop=True))
+                            # Display clean table (exclude PriorityOrder column)
+                            st.dataframe(submitted_requests_sorted[[
+                                "Ticket ID","Jurisdiction", "Organization", "Name", "Title/Position", "Email Address", "Phone Number",
+                                "Focus Area", "TA Type", "Submit Date", "Targeted Due Date", "Priority", "TA Description","Document"
+                            ]].reset_index(drop=True))
 
-                        # Select request by index 
-                        request_indices = submitted_requests_sorted.index.tolist()
-                        selected_request_index = st.selectbox(
-                            "Select a request to assign",
-                            options=request_indices,
-                            format_func=lambda idx: f"{submitted_requests_sorted.at[idx, 'Ticket ID']} | {submitted_requests_sorted.at[idx, 'Name']} | {submitted_requests_sorted.at[idx, 'Jurisdiction']}",
-                        )
+                            # Select request by index 
+                            request_indices = submitted_requests_sorted.index.tolist()
+                            selected_request_index = st.selectbox(
+                                "Select a request to assign",
+                                options=request_indices,
+                                format_func=lambda idx: f"{submitted_requests_sorted.at[idx, 'Ticket ID']} | {submitted_requests_sorted.at[idx, 'Name']} | {submitted_requests_sorted.at[idx, 'Jurisdiction']}",
+                            )
 
-                        # Select coach
-                        selected_coach = st.selectbox(
-                            "Assign a coach",
-                            options=staff_list_sorted,
-                            index=None,
-                            placeholder="Select option..."
-                        )
+                            # Select coach
+                            selected_coach = st.selectbox(
+                                "Assign a coach",
+                                options=staff_list_sorted,
+                                index=None,
+                                placeholder="Select option..."
+                            )
 
-                        # Assign button
-                        if st.button("✅ Assign Coach and Start TA"):
-                            try:
-                                updated_df = df.copy()
-                                # Update the selected row
-                                updated_df.loc[selected_request_index, "Assigned Coach"] = selected_coach
-                                updated_df.loc[selected_request_index, "Assigned Coordinator"] = coordinator_name
-                                updated_df.loc[selected_request_index, "Status"] = "In Progress"
-                                updated_df.loc[selected_request_index, "Assigned Date"] = datetime.today().strftime("%Y-%m-%d")
-
-                                updated_df = updated_df.applymap(
-                                    lambda x: x.strftime("%Y-%m-%d") if isinstance(x, (pd.Timestamp, datetime)) and not pd.isna(x) else x
-                                )
-                                updated_df = updated_df.fillna("") 
-                                spreadsheet1 = client.open('HRSA64_TA_Request')
-                                worksheet1 = spreadsheet1.worksheet('Main')
-
-                                # Push to Google Sheet
-                                worksheet1.update([updated_df.columns.values.tolist()] + updated_df.values.tolist())
-
-                                # Clear cache to refresh data
-                                st.cache_data.clear()
-                                
-                                st.success(f"Coach {selected_coach} assigned! Status updated to 'In Progress'.")
-
-                                # Send email to staff   
-                                # Find staff email by name
-                                staff_email = None
-                                for email, roles in USERS.items():
-                                    if "Assignee/Staff" in roles and roles["Assignee/Staff"]["name"] == selected_coach:
-                                        staff_email = email
-                                        break
-
-                                if staff_email:
-                                    staff_subject = f"You have been assigned a new TA request: {updated_df.loc[selected_request_index, 'Ticket ID']}"
-                                    staff_body = f"""
-                                    Hi {selected_coach},
-
-                                    You have been assigned as the coach for the following Technical Assistance request:
-
-                                    Ticket ID: {updated_df.loc[selected_request_index, 'Ticket ID']}
-                                    Jurisdiction: {updated_df.loc[selected_request_index, 'Jurisdiction']}
-                                    Organization: {updated_df.loc[selected_request_index, 'Organization']}
-                                    Name: {updated_df.loc[selected_request_index, 'Name']}
-                                    Description: {updated_df.loc[selected_request_index, 'TA Description']}
-                                    Priority: {updated_df.loc[selected_request_index, 'Priority']}
-                                    Targeted Due Date: {updated_df.loc[selected_request_index, 'Targeted Due Date']}
-                                    Attachments: {updated_df.loc[selected_request_index, 'Document'] or 'None'}
-
-                                    Please view and manage this request via the GU-TAP System: https://hrsagutap.streamlit.app/.
-                                    Please contact gutap@georgetown.edu for any questions or concerns.
-
-                                    Best,
-                                    GU-TAP System
-                                    """
-                                    try:
-                                        send_email_mailjet(
-                                            to_email=staff_email,
-                                            subject=staff_subject,
-                                            body=staff_body,
-                                        )
-                                    except Exception as e:
-                                        st.warning(f"⚠️ Failed to send assignment email to staff {selected_coach}: {e}")
-
-                                time.sleep(2)
-                                st.rerun()
-
-                            except Exception as e:
-                                st.error(f"Error updating Google Sheets: {str(e)}")
-
-                        # --- Submit button styling (CSS injection)
-                        st.markdown("""
-                            <style>
-                            .stButton > button {
-                                width: 100%;
-                                background-color: #cdb4db;
-                                color: black;
-                                font-weight: 600;
-                                border-radius: 8px;
-                                padding: 0.6em;
-                                margin-top: 1em;
-                            }
-                            </style>
-                        """, unsafe_allow_html=True)
-
-                    # --- Transfer TA Requests (Coordinator only)
-                    st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
-                    with st.expander("🔄 **TRANSFER TA REQUESTS**"):
-                        st.markdown("""
-                        <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 20px; box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3); padding: 2em 1.5em 1.5em 1.5em; margin-bottom: 2em; margin-top: 1em;'>
-                            <div style='color: white; font-family: "Segoe UI", "Arial", sans-serif; font-weight: 800; font-size: 1.6em; margin-bottom: 0.5em; text-align: center;'>
-                                🔄 TA Request Transfer Center
-                            </div>
-                            <div style='color: rgba(255,255,255,0.9); font-size: 1.1em; margin-bottom: 0.8em; text-align: center; line-height: 1.4;'>
-                                Reassign in-progress requests to different coaches when needed. Track transfer history and maintain clear communication throughout the process.
-                            </div>
-                        </div>
-                    """, unsafe_allow_html=True)
-
-                    inprogress_for_transfer = df[df['Status'] == 'In Progress'].copy()
-
-                    if inprogress_for_transfer.empty:
-                        st.info("No in-progress requests available to transfer.")
-                    else:
-                        # Selection of ticket to transfer
-                        transfer_indices = inprogress_for_transfer.index.tolist()
-                        selected_transfer_index = st.selectbox(
-                            "Select a request to transfer",
-                            options=transfer_indices,
-                            format_func=lambda idx: f"{df.at[idx, 'Ticket ID']} | {df.at[idx, 'Jurisdiction']} (Current: {df.at[idx, 'Assigned Coach']})",
-                        )
-
-                        current_coach = df.at[selected_transfer_index, 'Assigned Coach']
-                        # Exclude current coach from options
-                        available_new_coaches = [c for c in staff_list_sorted if c != current_coach]
-                        new_coach = st.selectbox(
-                            "Transfer to coach",
-                            options=available_new_coaches,
-                            index=None,
-                            placeholder="Select option..."
-                        )
-
-                        reason_transfer = st.text_area("Reason for transfer (optional)", placeholder="Enter text", height=100)
-
-                        st.markdown("""
-                            <style>
-                            .stButton > button {
-                                width: 100%;
-                                background-color: #cdb4db;
-                                color: black;
-                                font-weight: 600;
-                                border-radius: 8px;
-                                padding: 0.6em;
-                                margin-top: 1em;
-                            }
-                            </style>
-                        """, unsafe_allow_html=True)
-
-                        if st.button("✅ Confirm Transfer"):
-                            if not new_coach:
-                                st.warning("Please select a new coach to transfer to.")
-                            else:
+                            # Assign button
+                            if st.button("✅ Assign Coach and Start TA"):
                                 try:
                                     updated_df = df.copy()
-                                    old_coach = current_coach
+                                    # Update the selected row
+                                    updated_df.loc[selected_request_index, "Assigned Coach"] = selected_coach
+                                    updated_df.loc[selected_request_index, "Assigned Coordinator"] = coordinator_name
+                                    updated_df.loc[selected_request_index, "Status"] = "In Progress"
+                                    updated_df.loc[selected_request_index, "Assigned Date"] = datetime.today().strftime("%Y-%m-%d")
 
-                                    # Update transfer metadata
-                                    updated_df.loc[selected_transfer_index, "Last Transfer From"] = old_coach or ""
-                                    updated_df.loc[selected_transfer_index, "Last Transfer To"] = new_coach
-                                    updated_df.loc[selected_transfer_index, "Last Transfer Date"] = datetime.today().strftime("%Y-%m-%d")
-                                    updated_df.loc[selected_transfer_index, "Last Transfer By"] = coordinator_name
-                                    updated_df.loc[selected_transfer_index, "Reason for Transfer"] = reason_transfer or ""
-
-                                    # Update active assignment
-                                    updated_df.loc[selected_transfer_index, "Assigned Coach"] = new_coach
-
-                                    # Append transfer history
-                                    history_entry = f"{datetime.today().strftime('%Y-%m-%d')} | By: {coordinator_name} | From: {old_coach or 'N/A'} -> To: {new_coach}" + (f" | Reason: {reason_transfer.strip()}" if reason_transfer else "")
-                                    existing_history = str(updated_df.loc[selected_transfer_index, "Transfer History"]).strip()
-                                    if existing_history and existing_history.lower() != "nan":
-                                        updated_df.loc[selected_transfer_index, "Transfer History"] = existing_history + "\n" + history_entry
-                                    else:
-                                        updated_df.loc[selected_transfer_index, "Transfer History"] = history_entry
-
-                                    # Stringify dates for sheet
                                     updated_df = updated_df.applymap(
                                         lambda x: x.strftime("%Y-%m-%d") if isinstance(x, (pd.Timestamp, datetime)) and not pd.isna(x) else x
                                     )
-                                    updated_df = updated_df.fillna("")
-
+                                    updated_df = updated_df.fillna("") 
                                     spreadsheet1 = client.open('HRSA64_TA_Request')
                                     worksheet1 = spreadsheet1.worksheet('Main')
+
+                                    # Push to Google Sheet
                                     worksheet1.update([updated_df.columns.values.tolist()] + updated_df.values.tolist())
 
+                                    # Clear cache to refresh data
                                     st.cache_data.clear()
+                                    
+                                    st.success(f"Coach {selected_coach} assigned! Status updated to 'In Progress'.")
 
-                                    st.success(f"Request {updated_df.loc[selected_transfer_index, 'Ticket ID']} transferred from {old_coach or 'N/A'} to {new_coach}.")
-
-                                    # Email notification to new assignee
+                                    # Send email to staff   
+                                    # Find staff email by name
                                     staff_email = None
-                                    for _email, roles in USERS.items():
-                                        if "Assignee/Staff" in roles and roles["Assignee/Staff"]["name"] == new_coach:
-                                            staff_email = _email
+                                    for email, roles in USERS.items():
+                                        if "Assignee/Staff" in roles and roles["Assignee/Staff"]["name"] == selected_coach:
+                                            staff_email = email
                                             break
 
                                     if staff_email:
-                                        staff_subject = f"You have been transferred a TA request: {updated_df.loc[selected_transfer_index, 'Ticket ID']}"
+                                        staff_subject = f"You have been assigned a new TA request: {updated_df.loc[selected_request_index, 'Ticket ID']}"
                                         staff_body = f"""
-                                        Hi {new_coach},
+                                        Hi {selected_coach},
 
-                                        You have been assigned (via transfer) as the coach for the following Technical Assistance request:
+                                        You have been assigned as the coach for the following Technical Assistance request:
 
-                                        Ticket ID: {updated_df.loc[selected_transfer_index, 'Ticket ID']}
-                                        Jurisdiction: {updated_df.loc[selected_transfer_index, 'Jurisdiction']}
-                                        Organization: {updated_df.loc[selected_transfer_index, 'Organization']}
-                                        Previous Coach: {old_coach or 'N/A'}
-                                        Description: {updated_df.loc[selected_transfer_index, 'TA Description']}
-                                        Priority: {updated_df.loc[selected_transfer_index, 'Priority']}
-                                        Targeted Due Date: {updated_df.loc[selected_transfer_index, 'Targeted Due Date']}
-                                        Attachments: {updated_df.loc[selected_transfer_index, 'Document'] or 'None'}
-
-                                        Decision by: {coordinator_name}
-                                        {('Reason: ' + reason_transfer) if reason_transfer else ''}
+                                        Ticket ID: {updated_df.loc[selected_request_index, 'Ticket ID']}
+                                        Jurisdiction: {updated_df.loc[selected_request_index, 'Jurisdiction']}
+                                        Organization: {updated_df.loc[selected_request_index, 'Organization']}
+                                        Name: {updated_df.loc[selected_request_index, 'Name']}
+                                        Description: {updated_df.loc[selected_request_index, 'TA Description']}
+                                        Priority: {updated_df.loc[selected_request_index, 'Priority']}
+                                        Targeted Due Date: {updated_df.loc[selected_request_index, 'Targeted Due Date']}
+                                        Attachments: {updated_df.loc[selected_request_index, 'Document'] or 'None'}
 
                                         Please view and manage this request via the GU-TAP System: https://hrsagutap.streamlit.app/.
                                         Please contact gutap@georgetown.edu for any questions or concerns.
@@ -2616,581 +2461,736 @@ else:
                                                 body=staff_body,
                                             )
                                         except Exception as e:
-                                            st.warning(f"⚠️ Failed to send transfer email to staff {new_coach}: {e}")
+                                            st.warning(f"⚠️ Failed to send assignment email to staff {selected_coach}: {e}")
 
-                                    # Email notification to previous coach (if exists)
-                                    if old_coach and old_coach != new_coach:
-                                        previous_coach_email = None
+                                    time.sleep(2)
+                                    st.rerun()
+
+                                except Exception as e:
+                                    st.error(f"Error updating Google Sheets: {str(e)}")
+
+                            # --- Submit button styling (CSS injection)
+                            st.markdown("""
+                                <style>
+                                .stButton > button {
+                                    width: 100%;
+                                    background-color: #cdb4db;
+                                    color: black;
+                                    font-weight: 600;
+                                    border-radius: 8px;
+                                    padding: 0.6em;
+                                    margin-top: 1em;
+                                }
+                                </style>
+                            """, unsafe_allow_html=True)
+
+                    # --- Transfer TA Requests (Coordinator only)
+                    st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
+                    with st.expander("🔄 **TRANSFER TA REQUESTS**"):
+                        st.markdown("""
+                            <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 20px; box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3); padding: 2em 1.5em 1.5em 1.5em; margin-bottom: 2em; margin-top: 1em;'>
+                                <div style='color: white; font-family: "Segoe UI", "Arial", sans-serif; font-weight: 800; font-size: 1.6em; margin-bottom: 0.5em; text-align: center;'>
+                                    🔄 TA Request Transfer Center
+                                </div>
+                                <div style='color: rgba(255,255,255,0.9); font-size: 1.1em; margin-bottom: 0.8em; text-align: center; line-height: 1.4;'>
+                                    Reassign in-progress requests to different coaches when needed. Track transfer history and maintain clear communication throughout the process.
+                                </div>
+                            </div>
+                        """, unsafe_allow_html=True)
+
+                        inprogress_for_transfer = df[df['Status'] == 'In Progress'].copy()
+
+                        if inprogress_for_transfer.empty:
+                            st.info("No in-progress requests available to transfer.")
+                        else:
+                            # Selection of ticket to transfer
+                            transfer_indices = inprogress_for_transfer.index.tolist()
+                            selected_transfer_index = st.selectbox(
+                                "Select a request to transfer",
+                                options=transfer_indices,
+                                format_func=lambda idx: f"{df.at[idx, 'Ticket ID']} | {df.at[idx, 'Jurisdiction']} (Current: {df.at[idx, 'Assigned Coach']})",
+                            )
+
+                            current_coach = df.at[selected_transfer_index, 'Assigned Coach']
+                            # Exclude current coach from options
+                            available_new_coaches = [c for c in staff_list_sorted if c != current_coach]
+                            new_coach = st.selectbox(
+                                "Transfer to coach",
+                                options=available_new_coaches,
+                                index=None,
+                                placeholder="Select option..."
+                            )
+
+                            reason_transfer = st.text_area("Reason for transfer (optional)", placeholder="Enter text", height=100)
+
+                            st.markdown("""
+                                <style>
+                                .stButton > button {
+                                    width: 100%;
+                                    background-color: #cdb4db;
+                                    color: black;
+                                    font-weight: 600;
+                                    border-radius: 8px;
+                                    padding: 0.6em;
+                                    margin-top: 1em;
+                                }
+                                </style>
+                            """, unsafe_allow_html=True)
+
+                            if st.button("✅ Confirm Transfer"):
+                                if not new_coach:
+                                    st.warning("Please select a new coach to transfer to.")
+                                else:
+                                    try:
+                                        updated_df = df.copy()
+                                        old_coach = current_coach
+
+                                        # Update transfer metadata
+                                        updated_df.loc[selected_transfer_index, "Last Transfer From"] = old_coach or ""
+                                        updated_df.loc[selected_transfer_index, "Last Transfer To"] = new_coach
+                                        updated_df.loc[selected_transfer_index, "Last Transfer Date"] = datetime.today().strftime("%Y-%m-%d")
+                                        updated_df.loc[selected_transfer_index, "Last Transfer By"] = coordinator_name
+                                        updated_df.loc[selected_transfer_index, "Reason for Transfer"] = reason_transfer or ""
+
+                                        # Update active assignment
+                                        updated_df.loc[selected_transfer_index, "Assigned Coach"] = new_coach
+
+                                        # Append transfer history
+                                        history_entry = f"{datetime.today().strftime('%Y-%m-%d')} | By: {coordinator_name} | From: {old_coach or 'N/A'} -> To: {new_coach}" + (f" | Reason: {reason_transfer.strip()}" if reason_transfer else "")
+                                        existing_history = str(updated_df.loc[selected_transfer_index, "Transfer History"]).strip()
+                                        if existing_history and existing_history.lower() != "nan":
+                                            updated_df.loc[selected_transfer_index, "Transfer History"] = existing_history + "\n" + history_entry
+                                        else:
+                                            updated_df.loc[selected_transfer_index, "Transfer History"] = history_entry
+
+                                        # Stringify dates for sheet
+                                        updated_df = updated_df.applymap(
+                                            lambda x: x.strftime("%Y-%m-%d") if isinstance(x, (pd.Timestamp, datetime)) and not pd.isna(x) else x
+                                        )
+                                        updated_df = updated_df.fillna("")
+
+                                        spreadsheet1 = client.open('HRSA64_TA_Request')
+                                        worksheet1 = spreadsheet1.worksheet('Main')
+                                        worksheet1.update([updated_df.columns.values.tolist()] + updated_df.values.tolist())
+
+                                        st.cache_data.clear()
+
+                                        st.success(f"Request {updated_df.loc[selected_transfer_index, 'Ticket ID']} transferred from {old_coach or 'N/A'} to {new_coach}.")
+
+                                        # Email notification to new assignee
+                                        staff_email = None
                                         for _email, roles in USERS.items():
-                                            if "Assignee/Staff" in roles and roles["Assignee/Staff"]["name"] == old_coach:
-                                                previous_coach_email = _email
+                                            if "Assignee/Staff" in roles and roles["Assignee/Staff"]["name"] == new_coach:
+                                                staff_email = _email
                                                 break
 
-                                        if previous_coach_email:
-                                            previous_subject = f"TA Request Transferred: {updated_df.loc[selected_transfer_index, 'Ticket ID']}"
-                                            previous_body = f"""
-                                            Hi {old_coach},
+                                        if staff_email:
+                                            staff_subject = f"You have been transferred a TA request: {updated_df.loc[selected_transfer_index, 'Ticket ID']}"
+                                            staff_body = f"""
+                                            Hi {new_coach},
 
-                                            The following Technical Assistance request has been transferred from you to another coach:
+                                            You have been assigned (via transfer) as the coach for the following Technical Assistance request:
 
                                             Ticket ID: {updated_df.loc[selected_transfer_index, 'Ticket ID']}
                                             Jurisdiction: {updated_df.loc[selected_transfer_index, 'Jurisdiction']}
                                             Organization: {updated_df.loc[selected_transfer_index, 'Organization']}
-                                            New Coach: {new_coach}
+                                            Previous Coach: {old_coach or 'N/A'}
                                             Description: {updated_df.loc[selected_transfer_index, 'TA Description']}
                                             Priority: {updated_df.loc[selected_transfer_index, 'Priority']}
                                             Targeted Due Date: {updated_df.loc[selected_transfer_index, 'Targeted Due Date']}
+                                            Attachments: {updated_df.loc[selected_transfer_index, 'Document'] or 'None'}
 
                                             Decision by: {coordinator_name}
                                             {('Reason: ' + reason_transfer) if reason_transfer else ''}
 
-                                            You no longer need to work on this request. Please contact gutap@georgetown.edu for any questions or concerns.
+                                            Please view and manage this request via the GU-TAP System: https://hrsagutap.streamlit.app/.
+                                            Please contact gutap@georgetown.edu for any questions or concerns.
 
                                             Best,
                                             GU-TAP System
                                             """
                                             try:
                                                 send_email_mailjet(
-                                                    to_email=previous_coach_email,
-                                                    subject=previous_subject,
-                                                    body=previous_body,
+                                                    to_email=staff_email,
+                                                    subject=staff_subject,
+                                                    body=staff_body,
                                                 )
                                             except Exception as e:
-                                                st.warning(f"⚠️ Failed to send transfer notification to previous coach {old_coach}: {e}")
+                                                st.warning(f"⚠️ Failed to send transfer email to staff {new_coach}: {e}")
 
-                                    time.sleep(2)
-                                    st.rerun()
-                                except Exception as e:
-                                    st.error(f"Error updating Google Sheets: {str(e)}")
+                                        # Email notification to previous coach (if exists)
+                                        if old_coach and old_coach != new_coach:
+                                            previous_coach_email = None
+                                            for _email, roles in USERS.items():
+                                                if "Assignee/Staff" in roles and roles["Assignee/Staff"]["name"] == old_coach:
+                                                    previous_coach_email = _email
+                                                    break
+
+                                            if previous_coach_email:
+                                                previous_subject = f"TA Request Transferred: {updated_df.loc[selected_transfer_index, 'Ticket ID']}"
+                                                previous_body = f"""
+                                                Hi {old_coach},
+
+                                                The following Technical Assistance request has been transferred from you to another coach:
+
+                                                Ticket ID: {updated_df.loc[selected_transfer_index, 'Ticket ID']}
+                                                Jurisdiction: {updated_df.loc[selected_transfer_index, 'Jurisdiction']}
+                                                Organization: {updated_df.loc[selected_transfer_index, 'Organization']}
+                                                New Coach: {new_coach}
+                                                Description: {updated_df.loc[selected_transfer_index, 'TA Description']}
+                                                Priority: {updated_df.loc[selected_transfer_index, 'Priority']}
+                                                Targeted Due Date: {updated_df.loc[selected_transfer_index, 'Targeted Due Date']}
+
+                                                Decision by: {coordinator_name}
+                                                {('Reason: ' + reason_transfer) if reason_transfer else ''}
+
+                                                You no longer need to work on this request. Please contact gutap@georgetown.edu for any questions or concerns.
+
+                                                Best,
+                                                GU-TAP System
+                                                """
+                                                try:
+                                                    send_email_mailjet(
+                                                        to_email=previous_coach_email,
+                                                        subject=previous_subject,
+                                                        body=previous_body,
+                                                    )
+                                                except Exception as e:
+                                                    st.warning(f"⚠️ Failed to send transfer notification to previous coach {old_coach}: {e}")
+
+                                        time.sleep(2)
+                                        st.rerun()
+                                    except Exception as e:
+                                        st.error(f"Error updating Google Sheets: {str(e)}")
 
                     st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
                     with st.expander("👍 **DETAILS OF IN-PROGRESS & COMPLETED REQUESTS**"):
                         st.markdown("""
-                        <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 20px; box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3); padding: 2em 1.5em 1.5em 1.5em; margin-bottom: 2em; margin-top: 1em;'>
-                            <div style='color: white; font-family: "Segoe UI", "Arial", sans-serif; font-weight: 800; font-size: 1.6em; margin-bottom: 0.5em; text-align: center;'>
-                                👍 Request Management Center
-                            </div>
-                            <div style='color: rgba(255,255,255,0.9); font-size: 1.1em; margin-bottom: 0.8em; text-align: center; line-height: 1.4;'>
-                                Leave comments and updates for in-progress TA requests, and review the status and details of completed requests. Track progress and maintain clear communication.
-                            </div>
-                        </div>
-                    """, unsafe_allow_html=True)
-
-                    st.markdown("#### 🚧 In-progress Requests")
-
-
-                    # Filter "In Progress" requests
-                    in_progress_df = df[df["Status"] == "In Progress"].copy()
-
-                    if in_progress_df.empty:
-                        st.info("No requests currently in progress.")
-                    else:
-                        # Convert date columns
-                        in_progress_df["Assigned Date"] = pd.to_datetime(in_progress_df["Assigned Date"], errors="coerce")
-                        in_progress_df["Targeted Due Date"] = pd.to_datetime(in_progress_df["Targeted Due Date"], errors="coerce")
-                        in_progress_df['Expected Duration (Days)'] = (in_progress_df["Targeted Due Date"]-in_progress_df["Assigned Date"]).dt.days
-
-                        # Format dates
-                        in_progress_df["Assigned Date"] = in_progress_df["Assigned Date"].dt.strftime("%Y-%m-%d")
-                        in_progress_df["Targeted Due Date"] = in_progress_df["Targeted Due Date"].dt.strftime("%Y-%m-%d")
-
-
-                        # --- Filters
-                        st.markdown("##### 🔍 Filter Options")
-
-                        col1, col2, col3 = st.columns(3)
-                        with col1:
-                            priority_filter = st.multiselect(
-                                "Filter by Priority",
-                                options=in_progress_df["Priority"].unique(),
-                                default=in_progress_df["Priority"].unique(), key='in1'
-                            )
-
-                        with col2:
-                            ta_type_filter = st.multiselect(
-                                "Filter by TA Type",
-                                options=in_progress_df["TA Type"].unique(),
-                                default=in_progress_df["TA Type"].unique(), key='in2'
-                            )
-
-                        with col3:
-                            focus_area_filter = st.multiselect(
-                                "Filter by Focus Area",
-                                options=in_progress_df["Focus Area"].unique(),
-                                default=in_progress_df["Focus Area"].unique(), key='in3'
-                            )
-
-
-                        # Apply filters
-                        filtered_df = in_progress_df[
-                            (in_progress_df["Priority"].isin(priority_filter)) &
-                            (in_progress_df["TA Type"].isin(ta_type_filter)) &
-                            (in_progress_df["Focus Area"].isin(focus_area_filter))
-                        ]
-
-                        # Display filtered table
-                        st.dataframe(filtered_df[[
-                            "Ticket ID","Jurisdiction", "Organization", "Name", "Title/Position", "Email Address", "Phone Number",
-                            "Focus Area", "TA Type", "Assigned Date", "Targeted Due Date","Expected Duration (Days)","Priority",
-                            "Assigned Coach", "TA Description","Document","Coordinator Comment History"
-                        ]].sort_values(by="Expected Duration (Days)").reset_index(drop=True))
-
-                        # Select request by index (row number in submitted_requests)
-                        request_indices1 = filtered_df.index.tolist()
-                        selected_request_index1 = st.selectbox(
-                            "Select a request to comment",
-                            options=request_indices1,
-                            format_func=lambda idx: f"{filtered_df.at[idx, 'Ticket ID']} | {filtered_df.at[idx, 'Name']} | {filtered_df.at[idx, 'Jurisdiction']}",
-                        )
-
-                        # Input + submit comment
-                        comment_input = st.text_area("Comments", placeholder="Enter comments", height=150, key='comm')
-
-                        if st.button("✅ Submit Comments"):
-                            try:
-                                # Find the actual row index in the original df (map back using ID or index)
-                                selected_row_global_index = filtered_df.loc[selected_request_index1].name
-
-                                # Copy and update df
-                                updated_df = df.copy()
-                                # Keep latest comment in main field
-                                updated_df.loc[selected_row_global_index, "Coordinator Comment"] = comment_input
-                                # Append to history with timestamp and author
-                                ts = datetime.today().strftime("%Y-%m-%d %H:%M")
-                                author = coordinator_name
-                                entry = f"{ts} | {author}: {comment_input}" if comment_input else ""
-                                if entry:
-                                    existing = str(updated_df.loc[selected_row_global_index, "Coordinator Comment History"]).strip()
-                                    if existing and existing.lower() != "nan":
-                                        updated_df.loc[selected_row_global_index, "Coordinator Comment History"] = existing + "\n" + entry
-                                    else:
-                                        updated_df.loc[selected_row_global_index, "Coordinator Comment History"] = entry
-                                updated_df = updated_df.applymap(
-                                    lambda x: x.strftime("%Y-%m-%d") if isinstance(x, (pd.Timestamp, datetime)) and not pd.isna(x) else x
-                                )
-                                updated_df = updated_df.fillna("") 
-
-
-                                # Push to Google Sheets
-                                spreadsheet1 = client.open('HRSA64_TA_Request')
-                                worksheet1 = spreadsheet1.worksheet('Main')
-                                worksheet1.update([updated_df.columns.values.tolist()] + updated_df.values.tolist())
-
-                                # Clear cache to refresh data
-                                st.cache_data.clear()
-                                
-                                st.success("💬 Comment saved successfully!.")
-                                time.sleep(2)
-                                st.rerun()
-
-                            except Exception as e:
-                                st.error(f"Error updating Google Sheets: {str(e)}")
-
-                    st.markdown("#### ✅ Completed Requests")
-
-
-                    # Filter "Completed" requests
-                    complete_df = df[df["Status"] == "Completed"].copy()
-
-                    if complete_df.empty:
-                        st.info("No requests currently completed.")
-                    else:
-                        # Convert date columns
-                        complete_df["Assigned Date"] = pd.to_datetime(complete_df["Assigned Date"], errors="coerce")
-                        complete_df["Close Date"] = pd.to_datetime(complete_df["Close Date"], errors="coerce")
-                        complete_df["Targeted Due Date"] = pd.to_datetime(complete_df["Targeted Due Date"], errors="coerce")
-                        complete_df['Expected Duration (Days)'] = (complete_df["Targeted Due Date"]-complete_df["Assigned Date"]).dt.days
-                        complete_df['Actual Duration (Days)'] = (complete_df["Close Date"]-complete_df["Assigned Date"]).dt.days
-
-                        # Format dates
-                        complete_df["Assigned Date"] = complete_df["Assigned Date"].dt.strftime("%Y-%m-%d")
-                        complete_df["Targeted Due Date"] = complete_df["Targeted Due Date"].dt.strftime("%Y-%m-%d")
-                        complete_df["Close Date"] = complete_df["Close Date"].dt.strftime("%Y-%m-%d")
-
-                        # --- Filters
-                        st.markdown("##### 🔍 Filter Options")
-
-                        col1, col2, col3 = st.columns(3)
-                        with col1:
-                            priority_filter1 = st.multiselect(
-                                "Filter by Priority",
-                                options=complete_df["Priority"].unique(),
-                                default=complete_df["Priority"].unique(), key='com1'
-                            )
-
-                        with col2:
-                            ta_type_filter1 = st.multiselect(
-                                "Filter by TA Type",
-                                options=complete_df["TA Type"].unique(),
-                                default=complete_df["TA Type"].unique(), key='com2'
-                            )
-
-                        with col3:
-                            focus_area_filter1 = st.multiselect(
-                                "Filter by Focus Area",
-                                options=complete_df["Focus Area"].unique(),
-                                default=complete_df["Focus Area"].unique(), key='com3'
-                            )
-
-                        # Apply filters
-                        filtered_df1 = complete_df[
-                            (complete_df["Priority"].isin(priority_filter1)) &
-                            (complete_df["TA Type"].isin(ta_type_filter1)) &
-                            (complete_df["Focus Area"].isin(focus_area_filter1))
-                        ]
-
-                        # Display filtered table
-                        st.dataframe(filtered_df1[[
-                            "Ticket ID","Jurisdiction", "Organization", "Name", "Title/Position", "Email Address", "Phone Number",
-                            "Focus Area", "TA Type", "Priority", "Assigned Coach", "TA Description","Document","Assigned Date",
-                            "Targeted Due Date", "Close Date", "Expected Duration (Days)",
-                            'Actual Duration (Days)', "Coordinator Comment History", "Staff Comment History", "Transfer History"
-                        ]].reset_index(drop=True))
-
-                    st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
-                    with st.expander("🗒️ **CHECK & SUBMIT INTERACTION LOG**"):
-                        st.markdown("""
-                        <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 20px; box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3); padding: 2em 1.5em 1.5em 1.5em; margin-bottom: 2em; margin-top: 1em;'>
-                            <div style='color: white; font-family: "Segoe UI", "Arial", sans-serif; font-weight: 800; font-size: 1.6em; margin-bottom: 0.5em; text-align: center;'>
-                                🗒️ Interaction Management Center
-                            </div>
-                            <div style='color: rgba(255,255,255,0.9); font-size: 1.1em; margin-bottom: 0.8em; text-align: center; line-height: 1.4;'>
-                                Review your previous interactions and submit new ones. Track all your communications with jurisdictions and TA requests.
-                            </div>
-                        </div>
-                    """, unsafe_allow_html=True)
-
-                    # Upper section: Previous Interactions
-                    st.markdown("""
-                        <div style='background: #f8f9fa; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); padding: 1.5em; margin-bottom: 2em;'>
-                            <h3 style='color: #1a237e; font-family: "Segoe UI", sans-serif; font-weight: 700; margin-bottom: 1em; text-align: center;'>
-                                📊 Your Previous Interactions
-                            </h3>
-                        </div>
-                    """, unsafe_allow_html=True)
-                    
-                    # Get interaction data properly
-                    df_int_coord = df_int[df_int["Submitted By"] == coordinator_name].copy()
-                    if not df_int_coord.empty:
-                        # Remove columns we don't want to display
-                        display_cols = [col for col in df_int_coord.columns if col not in ['Submitted By', 'Submission Date']]
-                        df_int_coord_display = df_int_coord[display_cols].copy()
-                        
-                        # Sort by Date of Interaction (most recent first)
-                        df_int_coord_display["Date of Interaction"] = pd.to_datetime(df_int_coord_display["Date of Interaction"], errors="coerce")
-                        df_int_coord_display = df_int_coord_display.sort_values("Date of Interaction", ascending=True)
-                        df_int_coord_display["Date of Interaction"] = df_int_coord_display["Date of Interaction"].dt.strftime("%Y-%m-%d")
-                        
-                        # Add summary stats
-                        total_interactions = len(df_int_coord_display)
-                        recent_interactions = len(df_int_coord_display[df_int_coord_display["Date of Interaction"] >= (datetime.now() - timedelta(days=30)).strftime("%Y-%m-%d")])
-                        
-                        st.markdown(f"""
-                            <div style='background: #e3f2fd; border-radius: 10px; padding: 1em; margin-bottom: 1em; text-align: center;'>
-                                <div style='display: flex; justify-content: space-around;'>
-                                    <div>
-                                        <div style='font-size: 1.5em; font-weight: bold; color: #1976d2;'>{total_interactions}</div>
-                                        <div style='font-size: 0.9em; color: #666;'>Total Interactions</div>
-                                    </div>
-                                    <div>
-                                        <div style='font-size: 1.5em; font-weight: bold; color: #388e3c;'>{recent_interactions}</div>
-                                        <div style='font-size: 0.9em; color: #666;'>Last 30 Days</div>
-                                    </div>
+                            <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 20px; box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3); padding: 2em 1.5em 1.5em 1.5em; margin-bottom: 2em; margin-top: 1em;'>
+                                <div style='color: white; font-family: "Segoe UI", "Arial", sans-serif; font-weight: 800; font-size: 1.6em; margin-bottom: 0.5em; text-align: center;'>
+                                    👍 Request Management Center
+                                </div>
+                                <div style='color: rgba(255,255,255,0.9); font-size: 1.1em; margin-bottom: 0.8em; text-align: center; line-height: 1.4;'>
+                                    Leave comments and updates for in-progress TA requests, and review the status and details of completed requests. Track progress and maintain clear communication.
                                 </div>
                             </div>
                         """, unsafe_allow_html=True)
 
-                        st.dataframe(df_int_coord_display.reset_index(drop=True), use_container_width=True)
-                        
-                    else:
+                        st.markdown("#### 🚧 In-progress Requests")
+
+
+                        # Filter "In Progress" requests
+                        in_progress_df = df[df["Status"] == "In Progress"].copy()
+
+                        if in_progress_df.empty:
+                            st.info("No requests currently in progress.")
+                        else:
+                            # Convert date columns
+                            in_progress_df["Assigned Date"] = pd.to_datetime(in_progress_df["Assigned Date"], errors="coerce")
+                            in_progress_df["Targeted Due Date"] = pd.to_datetime(in_progress_df["Targeted Due Date"], errors="coerce")
+                            in_progress_df['Expected Duration (Days)'] = (in_progress_df["Targeted Due Date"]-in_progress_df["Assigned Date"]).dt.days
+
+                            # Format dates
+                            in_progress_df["Assigned Date"] = in_progress_df["Assigned Date"].dt.strftime("%Y-%m-%d")
+                            in_progress_df["Targeted Due Date"] = in_progress_df["Targeted Due Date"].dt.strftime("%Y-%m-%d")
+
+
+                            # --- Filters
+                            st.markdown("##### 🔍 Filter Options")
+
+                            col1, col2, col3 = st.columns(3)
+                            with col1:
+                                priority_filter = st.multiselect(
+                                    "Filter by Priority",
+                                    options=in_progress_df["Priority"].unique(),
+                                    default=in_progress_df["Priority"].unique(), key='in1'
+                                )
+
+                            with col2:
+                                ta_type_filter = st.multiselect(
+                                    "Filter by TA Type",
+                                    options=in_progress_df["TA Type"].unique(),
+                                    default=in_progress_df["TA Type"].unique(), key='in2'
+                                )
+
+                            with col3:
+                                focus_area_filter = st.multiselect(
+                                    "Filter by Focus Area",
+                                    options=in_progress_df["Focus Area"].unique(),
+                                    default=in_progress_df["Focus Area"].unique(), key='in3'
+                                )
+
+
+                            # Apply filters
+                            filtered_df = in_progress_df[
+                                (in_progress_df["Priority"].isin(priority_filter)) &
+                                (in_progress_df["TA Type"].isin(ta_type_filter)) &
+                                (in_progress_df["Focus Area"].isin(focus_area_filter))
+                            ]
+
+                            # Display filtered table
+                            st.dataframe(filtered_df[[
+                                "Ticket ID","Jurisdiction", "Organization", "Name", "Title/Position", "Email Address", "Phone Number",
+                                "Focus Area", "TA Type", "Assigned Date", "Targeted Due Date","Expected Duration (Days)","Priority",
+                                "Assigned Coach", "TA Description","Document","Coordinator Comment History"
+                            ]].sort_values(by="Expected Duration (Days)").reset_index(drop=True))
+
+                            # Select request by index (row number in submitted_requests)
+                            request_indices1 = filtered_df.index.tolist()
+                            selected_request_index1 = st.selectbox(
+                                "Select a request to comment",
+                                options=request_indices1,
+                                format_func=lambda idx: f"{filtered_df.at[idx, 'Ticket ID']} | {filtered_df.at[idx, 'Name']} | {filtered_df.at[idx, 'Jurisdiction']}",
+                            )
+
+                            # Input + submit comment
+                            comment_input = st.text_area("Comments", placeholder="Enter comments", height=150, key='comm')
+
+                            if st.button("✅ Submit Comments"):
+                                try:
+                                    # Find the actual row index in the original df (map back using ID or index)
+                                    selected_row_global_index = filtered_df.loc[selected_request_index1].name
+
+                                    # Copy and update df
+                                    updated_df = df.copy()
+                                    # Keep latest comment in main field
+                                    updated_df.loc[selected_row_global_index, "Coordinator Comment"] = comment_input
+                                    # Append to history with timestamp and author
+                                    ts = datetime.today().strftime("%Y-%m-%d %H:%M")
+                                    author = coordinator_name
+                                    entry = f"{ts} | {author}: {comment_input}" if comment_input else ""
+                                    if entry:
+                                        existing = str(updated_df.loc[selected_row_global_index, "Coordinator Comment History"]).strip()
+                                        if existing and existing.lower() != "nan":
+                                            updated_df.loc[selected_row_global_index, "Coordinator Comment History"] = existing + "\n" + entry
+                                        else:
+                                            updated_df.loc[selected_row_global_index, "Coordinator Comment History"] = entry
+                                    updated_df = updated_df.applymap(
+                                        lambda x: x.strftime("%Y-%m-%d") if isinstance(x, (pd.Timestamp, datetime)) and not pd.isna(x) else x
+                                    )
+                                    updated_df = updated_df.fillna("") 
+
+
+                                    # Push to Google Sheets
+                                    spreadsheet1 = client.open('HRSA64_TA_Request')
+                                    worksheet1 = spreadsheet1.worksheet('Main')
+                                    worksheet1.update([updated_df.columns.values.tolist()] + updated_df.values.tolist())
+
+                                    # Clear cache to refresh data
+                                    st.cache_data.clear()
+                                    
+                                    st.success("💬 Comment saved successfully!.")
+                                    time.sleep(2)
+                                    st.rerun()
+
+                                except Exception as e:
+                                    st.error(f"Error updating Google Sheets: {str(e)}")
+
+                        st.markdown("#### ✅ Completed Requests")
+
+
+                        # Filter "Completed" requests
+                        complete_df = df[df["Status"] == "Completed"].copy()
+
+                        if complete_df.empty:
+                            st.info("No requests currently completed.")
+                        else:
+                            # Convert date columns
+                            complete_df["Assigned Date"] = pd.to_datetime(complete_df["Assigned Date"], errors="coerce")
+                            complete_df["Close Date"] = pd.to_datetime(complete_df["Close Date"], errors="coerce")
+                            complete_df["Targeted Due Date"] = pd.to_datetime(complete_df["Targeted Due Date"], errors="coerce")
+                            complete_df['Expected Duration (Days)'] = (complete_df["Targeted Due Date"]-complete_df["Assigned Date"]).dt.days
+                            complete_df['Actual Duration (Days)'] = (complete_df["Close Date"]-complete_df["Assigned Date"]).dt.days
+
+                            # Format dates
+                            complete_df["Assigned Date"] = complete_df["Assigned Date"].dt.strftime("%Y-%m-%d")
+                            complete_df["Targeted Due Date"] = complete_df["Targeted Due Date"].dt.strftime("%Y-%m-%d")
+                            complete_df["Close Date"] = complete_df["Close Date"].dt.strftime("%Y-%m-%d")
+
+                            # --- Filters
+                            st.markdown("##### 🔍 Filter Options")
+
+                            col1, col2, col3 = st.columns(3)
+                            with col1:
+                                priority_filter1 = st.multiselect(
+                                    "Filter by Priority",
+                                    options=complete_df["Priority"].unique(),
+                                    default=complete_df["Priority"].unique(), key='com1'
+                                )
+
+                            with col2:
+                                ta_type_filter1 = st.multiselect(
+                                    "Filter by TA Type",
+                                    options=complete_df["TA Type"].unique(),
+                                    default=complete_df["TA Type"].unique(), key='com2'
+                                )
+
+                            with col3:
+                                focus_area_filter1 = st.multiselect(
+                                    "Filter by Focus Area",
+                                    options=complete_df["Focus Area"].unique(),
+                                    default=complete_df["Focus Area"].unique(), key='com3'
+                                )
+
+                            # Apply filters
+                            filtered_df1 = complete_df[
+                                (complete_df["Priority"].isin(priority_filter1)) &
+                                (complete_df["TA Type"].isin(ta_type_filter1)) &
+                                (complete_df["Focus Area"].isin(focus_area_filter1))
+                            ]
+
+                            # Display filtered table
+                            st.dataframe(filtered_df1[[
+                                "Ticket ID","Jurisdiction", "Organization", "Name", "Title/Position", "Email Address", "Phone Number",
+                                "Focus Area", "TA Type", "Priority", "Assigned Coach", "TA Description","Document","Assigned Date",
+                                "Targeted Due Date", "Close Date", "Expected Duration (Days)",
+                                'Actual Duration (Days)', "Coordinator Comment History", "Staff Comment History", "Transfer History"
+                            ]].reset_index(drop=True))
+
+                    st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
+                    with st.expander("🗒️ **CHECK & SUBMIT INTERACTION LOG**"):
                         st.markdown("""
-                            <div style='background: #fff3e0; border-radius: 15px; padding: 2em; text-align: center; border: 2px dashed #ff9800;'>
-                                <div style='font-size: 3em; margin-bottom: 0.5em;'>📝</div>
-                                <h4 style='color: #e65100; margin-bottom: 0.5em;'>No Previous Interactions</h4>
-                                <p style='color: #666; margin: 0;'>You haven't logged any interactions yet. Start by submitting your first interaction below!</p>
+                            <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 20px; box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3); padding: 2em 1.5em 1.5em 1.5em; margin-bottom: 2em; margin-top: 1em;'>
+                                <div style='color: white; font-family: "Segoe UI", "Arial", sans-serif; font-weight: 800; font-size: 1.6em; margin-bottom: 0.5em; text-align: center;'>
+                                    🗒️ Interaction Management Center
+                                </div>
+                                <div style='color: rgba(255,255,255,0.9); font-size: 1.1em; margin-bottom: 0.8em; text-align: center; line-height: 1.4;'>
+                                    Review your previous interactions and submit new ones. Track all your communications with jurisdictions and TA requests.
+                                </div>
                             </div>
                         """, unsafe_allow_html=True)
 
-                    # Lower section: Submit New Interaction
-                    st.markdown("""
-                        <div style='background: #f8f9fa; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); padding: 1.5em; margin-bottom: 1em;'>
-                            <h3 style='color: #1a237e; font-family: "Segoe UI", sans-serif; font-weight: 700; margin-bottom: 1em; text-align: center;'>
-                                ✍️ Submit New Interaction
-                            </h3>
-                        </div>
-                    """, unsafe_allow_html=True)
-                    lis_ticket = ["No Ticket ID"] + sorted([tid for tid in df["Ticket ID"].dropna().astype(str).unique().tolist()])
+                        # Upper section: Previous Interactions
+                        st.markdown("""
+                            <div style='background: #f8f9fa; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); padding: 1.5em; margin-bottom: 2em;'>
+                                <h3 style='color: #1a237e; font-family: "Segoe UI", sans-serif; font-weight: 700; margin-bottom: 1em; text-align: center;'>
+                                    📊 Your Previous Interactions
+                                </h3>
+                            </div>
+                        """, unsafe_allow_html=True)
+                        
+                        # Get interaction data properly
+                        df_int_coord = df_int[df_int["Submitted By"] == coordinator_name].copy()
+                        if not df_int_coord.empty:
+                            # Remove columns we don't want to display
+                            display_cols = [col for col in df_int_coord.columns if col not in ['Submitted By', 'Submission Date']]
+                            df_int_coord_display = df_int_coord[display_cols].copy()
+                            
+                            # Sort by Date of Interaction (most recent first)
+                            df_int_coord_display["Date of Interaction"] = pd.to_datetime(df_int_coord_display["Date of Interaction"], errors="coerce")
+                            df_int_coord_display = df_int_coord_display.sort_values("Date of Interaction", ascending=True)
+                            df_int_coord_display["Date of Interaction"] = df_int_coord_display["Date of Interaction"].dt.strftime("%Y-%m-%d")
+                            
+                            # Add summary stats
+                            total_interactions = len(df_int_coord_display)
+                            recent_interactions = len(df_int_coord_display[df_int_coord_display["Date of Interaction"] >= (datetime.now() - timedelta(days=30)).strftime("%Y-%m-%d")])
+                            
+                            st.markdown(f"""
+                                <div style='background: #e3f2fd; border-radius: 10px; padding: 1em; margin-bottom: 1em; text-align: center;'>
+                                    <div style='display: flex; justify-content: space-around;'>
+                                        <div>
+                                            <div style='font-size: 1.5em; font-weight: bold; color: #1976d2;'>{total_interactions}</div>
+                                            <div style='font-size: 0.9em; color: #666;'>Total Interactions</div>
+                                        </div>
+                                        <div>
+                                            <div style='font-size: 1.5em; font-weight: bold; color: #388e3c;'>{recent_interactions}</div>
+                                            <div style='font-size: 0.9em; color: #666;'>Last 30 Days</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            """, unsafe_allow_html=True)
 
-                    # Interaction Log form
-                    col1, col2 = st.columns(2)
-                    with col1:
-                        ticket_id_int = st.selectbox("Ticket ID *", lis_ticket, index=None,
-                            placeholder="Select option...", key='interaction_coord')
-                    with col2:
-                        date_int = st.date_input("Date of Interaction *", value=datetime.today().date())
+                            st.dataframe(df_int_coord_display.reset_index(drop=True), use_container_width=True)
+                            
+                        else:
+                            st.markdown("""
+                                <div style='background: #fff3e0; border-radius: 15px; padding: 2em; text-align: center; border: 2px dashed #ff9800;'>
+                                    <div style='font-size: 3em; margin-bottom: 0.5em;'>📝</div>
+                                    <h4 style='color: #e65100; margin-bottom: 0.5em;'>No Previous Interactions</h4>
+                                    <p style='color: #666; margin: 0;'>You haven't logged any interactions yet. Start by submitting your first interaction below!</p>
+                                </div>
+                            """, unsafe_allow_html=True)
 
-                    # If No Ticket ID, ask for Jurisdiction
-                    jurisdiction_for_no_ticket = None
-                    if ticket_id_int == "No Ticket ID":
-                        jurisdiction_for_no_ticket = st.selectbox(
-                            "Jurisdiction *",
-                            lis_location,
+                        # Lower section: Submit New Interaction
+                        st.markdown("""
+                            <div style='background: #f8f9fa; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); padding: 1.5em; margin-bottom: 1em;'>
+                                <h3 style='color: #1a237e; font-family: "Segoe UI", sans-serif; font-weight: 700; margin-bottom: 1em; text-align: center;'>
+                                    ✍️ Submit New Interaction
+                                </h3>
+                            </div>
+                        """, unsafe_allow_html=True)
+                        lis_ticket = ["No Ticket ID"] + sorted([tid for tid in df["Ticket ID"].dropna().astype(str).unique().tolist()])
+
+                        # Interaction Log form
+                        col1, col2 = st.columns(2)
+                        with col1:
+                            ticket_id_int = st.selectbox("Ticket ID *", lis_ticket, index=None,
+                                placeholder="Select option...", key='interaction_coord')
+                        with col2:
+                            date_int = st.date_input("Date of Interaction *", value=datetime.today().date())
+
+                        # If No Ticket ID, ask for Jurisdiction
+                        jurisdiction_for_no_ticket = None
+                        if ticket_id_int == "No Ticket ID":
+                            jurisdiction_for_no_ticket = st.selectbox(
+                                "Jurisdiction *",
+                                lis_location,
+                                index=None,
+                                placeholder="Select option...",
+                                key='juris_interaction_coord'
+                            )
+
+                        list_interaction = [
+                            "Email", "Phone Call", "In-Person Meeting", "Online Meeting", "Other"
+                        ]
+
+                        type_interaction = st.selectbox(
+                            "Type of Interaction *",
+                            list_interaction,
                             index=None,
-                            placeholder="Select option...",
-                            key='juris_interaction_coord'
+                            placeholder="Select option..."
                         )
 
-                    list_interaction = [
-                        "Email", "Phone Call", "In-Person Meeting", "Online Meeting", "Other"
-                    ]
+                        # If "Other" is selected, show a text input for custom value
+                        if type_interaction == "Other":
+                            type_interaction_other = st.text_input("Please specify the Type of Interaction *")
+                            if type_interaction_other:
+                                type_interaction = type_interaction_other 
+                        
+                        interaction_description = st.text_area("Short Summary *", placeholder='Enter text', height=150, key='interaction_description_coord') 
 
-                    type_interaction = st.selectbox(
-                        "Type of Interaction *",
-                        list_interaction,
-                        index=None,
-                        placeholder="Select option..."
-                    )
+                        document_int = st.file_uploader(
+                            "Upload any files or attachments that are relevant to this interaction.", 
+                            accept_multiple_files=True
+                        )
 
-                    # If "Other" is selected, show a text input for custom value
-                    if type_interaction == "Other":
-                        type_interaction_other = st.text_input("Please specify the Type of Interaction *")
-                        if type_interaction_other:
-                            type_interaction = type_interaction_other 
-                    
-                    interaction_description = st.text_area("Short Summary *", placeholder='Enter text', height=150, key='interaction_description_coord') 
-
-                    document_int = st.file_uploader(
-                        "Upload any files or attachments that are relevant to this interaction.", 
-                        accept_multiple_files=True
-                    )
-
-                    # Submit button
-                    st.markdown("""
-                        <style>
-                        .stButton > button {
-                            width: 100%;
-                            background-color: #cdb4db;
-                            color: black;
-                            font-family: Arial, "Segoe UI", sans-serif;
-                            font-weight: 600;
-                            border-radius: 8px;
-                            padding: 0.6em;
-                            margin-top: 1em;
-                        }
-                        </style>
-                    """, unsafe_allow_html=True)
-
-                    # Submit logic
-                    if st.button("Submit",key='interaction_submit_coord'):
-                        errors = []
-                        drive_links_int = ""  # Initialize here
-                        # Required field checks
-                        if not ticket_id_int: errors.append("Ticket ID is required.")
-                        if ticket_id_int == "No Ticket ID" and not jurisdiction_for_no_ticket:
-                            errors.append("Jurisdiction is required when Ticket ID is not provided.")
-                        if not date_int: errors.append("Date of interaction is required.")
-                        if not type_interaction: errors.append("Type of interaction is required.")
-                        if not interaction_description: errors.append("Short summary is required.")
-
-                        # Show warnings or success
-                        if errors:
-                            for error in errors:
-                                st.warning(error)
-                        else:
-                            # Only upload files if all validation passes
-                            if document_int:
-                                try:
-                                    folder_id_int = "19-Sm8W151tg1zyDN0Nh14DUvOVUieqq7" 
-                                    links_int = []
-                                    upload_count = 0
-                                    for file in document_int:
-                                        # Rename file as: GU0001_filename.pdf
-                                        renamed_filename = f"{ticket_id_int}_{file.name}"
-                                        link = upload_file_to_drive(
-                                            file=file,
-                                            filename=renamed_filename,
-                                            folder_id=folder_id_int,
-                                            creds_dict=st.secrets["gcp_service_account"]
-                                        )
-                                        links_int.append(link)
-                                        upload_count += 1
-                                        st.success(f"✅ Successfully uploaded: {file.name}")
-                                    drive_links_int = ", ".join(links_int)
-                                    if upload_count > 0:
-                                        st.success(f"✅ All {upload_count} file(s) uploaded successfully to Google Drive!")    
-                                except Exception as e:
-                                    st.error(f"❌ Error uploading file(s) to Google Drive: {str(e)}")
-
-                            new_row_int = {
-                                'Ticket ID': ticket_id_int,
-                                "Date of Interaction": date_int.strftime("%Y-%m-%d"),
-                                "Type of Interaction": type_interaction,
-                                "Short Summary": interaction_description,
-                                "Document": drive_links_int,
-                                "Jurisdiction": (lambda: (
-                                    # If a Ticket ID is provided, extract jurisdiction from Main sheet
-                                    str(df.loc[df["Ticket ID"].astype(str) == str(ticket_id_int), "Jurisdiction"].iloc[0])
-                                    if ticket_id_int != "No Ticket ID" and not df.loc[df["Ticket ID"].astype(str) == str(ticket_id_int), "Jurisdiction"].empty
-                                    else (jurisdiction_for_no_ticket or "")
-                                ))(),
-                                "Submitted By": coordinator_name,
-                                "Submission Date": datetime.today().strftime("%Y-%m-%d %H:%M")
+                        # Submit button
+                        st.markdown("""
+                            <style>
+                            .stButton > button {
+                                width: 100%;
+                                background-color: #cdb4db;
+                                color: black;
+                                font-family: Arial, "Segoe UI", sans-serif;
+                                font-weight: 600;
+                                border-radius: 8px;
+                                padding: 0.6em;
+                                margin-top: 1em;
                             }
-                            new_data_int = pd.DataFrame([new_row_int])
+                            </style>
+                        """, unsafe_allow_html=True)
 
-                            try:
-                                # Append new data to Google Sheet
-                                updated_sheet1 = pd.concat([df_int, new_data_int], ignore_index=True)
-                                updated_sheet1= updated_sheet1.applymap(
-                                    lambda x: x.strftime("%Y-%m-%d") if isinstance(x, (datetime, pd.Timestamp)) else x
-                                )
-                                # Replace NaN with empty strings to ensure JSON compatibility
-                                updated_sheet1 = updated_sheet1.fillna("")
-                                spreadsheet2 = client.open('HRSA64_TA_Request')
-                                worksheet2 = spreadsheet2.worksheet('Interaction')
-                                worksheet2.update([updated_sheet1.columns.values.tolist()] + updated_sheet1.values.tolist())
+                        # Submit logic
+                        if st.button("Submit",key='interaction_submit_coord'):
+                            errors = []
+                            drive_links_int = ""  # Initialize here
+                            # Required field checks
+                            if not ticket_id_int: errors.append("Ticket ID is required.")
+                            if ticket_id_int == "No Ticket ID" and not jurisdiction_for_no_ticket:
+                                errors.append("Jurisdiction is required when Ticket ID is not provided.")
+                            if not date_int: errors.append("Date of interaction is required.")
+                            if not type_interaction: errors.append("Type of interaction is required.")
+                            if not interaction_description: errors.append("Short summary is required.")
 
-                                # Clear cache to refresh data
-                                st.cache_data.clear()
-                                
-                                st.success("✅ Submission successful!")
-                                time.sleep(2)
-                                st.rerun()
+                            # Show warnings or success
+                            if errors:
+                                for error in errors:
+                                    st.warning(error)
+                            else:
+                                # Only upload files if all validation passes
+                                if document_int:
+                                    try:
+                                        folder_id_int = "19-Sm8W151tg1zyDN0Nh14DUvOVUieqq7" 
+                                        links_int = []
+                                        upload_count = 0
+                                        for file in document_int:
+                                            # Rename file as: GU0001_filename.pdf
+                                            renamed_filename = f"{ticket_id_int}_{file.name}"
+                                            link = upload_file_to_drive(
+                                                file=file,
+                                                filename=renamed_filename,
+                                                folder_id=folder_id_int,
+                                                creds_dict=st.secrets["gcp_service_account"]
+                                            )
+                                            links_int.append(link)
+                                            upload_count += 1
+                                            st.success(f"✅ Successfully uploaded: {file.name}")
+                                        drive_links_int = ", ".join(links_int)
+                                        if upload_count > 0:
+                                            st.success(f"✅ All {upload_count} file(s) uploaded successfully to Google Drive!")    
+                                    except Exception as e:
+                                        st.error(f"❌ Error uploading file(s) to Google Drive: {str(e)}")
 
-                            except Exception as e:
-                                st.error(f"Error updating Google Sheets: {str(e)}")
+                                new_row_int = {
+                                    'Ticket ID': ticket_id_int,
+                                    "Date of Interaction": date_int.strftime("%Y-%m-%d"),
+                                    "Type of Interaction": type_interaction,
+                                    "Short Summary": interaction_description,
+                                    "Document": drive_links_int,
+                                    "Jurisdiction": (lambda: (
+                                        # If a Ticket ID is provided, extract jurisdiction from Main sheet
+                                        str(df.loc[df["Ticket ID"].astype(str) == str(ticket_id_int), "Jurisdiction"].iloc[0])
+                                        if ticket_id_int != "No Ticket ID" and not df.loc[df["Ticket ID"].astype(str) == str(ticket_id_int), "Jurisdiction"].empty
+                                        else (jurisdiction_for_no_ticket or "")
+                                    ))(),
+                                    "Submitted By": coordinator_name,
+                                    "Submission Date": datetime.today().strftime("%Y-%m-%d %H:%M")
+                                }
+                                new_data_int = pd.DataFrame([new_row_int])
+
+                                try:
+                                    # Append new data to Google Sheet
+                                    updated_sheet1 = pd.concat([df_int, new_data_int], ignore_index=True)
+                                    updated_sheet1= updated_sheet1.applymap(
+                                        lambda x: x.strftime("%Y-%m-%d") if isinstance(x, (datetime, pd.Timestamp)) else x
+                                    )
+                                    # Replace NaN with empty strings to ensure JSON compatibility
+                                    updated_sheet1 = updated_sheet1.fillna("")
+                                    spreadsheet2 = client.open('HRSA64_TA_Request')
+                                    worksheet2 = spreadsheet2.worksheet('Interaction')
+                                    worksheet2.update([updated_sheet1.columns.values.tolist()] + updated_sheet1.values.tolist())
+
+                                    # Clear cache to refresh data
+                                    st.cache_data.clear()
+                                    
+                                    st.success("✅ Submission successful!")
+                                    time.sleep(2)
+                                    st.rerun()
+
+                                except Exception as e:
+                                    st.error(f"Error updating Google Sheets: {str(e)}")
 
                     st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
 
                     with st.expander("📦 **SUBMIT DELIVERY FORM**"):
                         st.markdown("""
-                        <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 20px; box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3); padding: 2em 1.5em 1.5em 1.5em; margin-bottom: 2em; margin-top: 1em;'>
-                            <div style='color: white; font-family: "Segoe UI", "Arial", sans-serif; font-weight: 800; font-size: 1.6em; margin-bottom: 0.5em; text-align: center;'>
-                                📦 Delivery Management Center
+                            <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 20px; box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3); padding: 2em 1.5em 1.5em 1.5em; margin-bottom: 2em; margin-top: 1em;'>
+                                <div style='color: white; font-family: "Segoe UI", "Arial", sans-serif; font-weight: 800; font-size: 1.6em; margin-bottom: 0.5em; text-align: center;'>
+                                    📦 Delivery Management Center
+                                </div>
+                                <div style='color: rgba(255,255,255,0.9); font-size: 1.1em; margin-bottom: 0.8em; text-align: center; line-height: 1.4;'>
+                                    Record new deliveries including reports, dashboards, and data. Upload files and provide comprehensive summaries of completed work.
+                                </div>
                             </div>
-                            <div style='color: rgba(255,255,255,0.9); font-size: 1.1em; margin-bottom: 0.8em; text-align: center; line-height: 1.4;'>
-                                Record new deliveries including reports, dashboards, and data. Upload files and provide comprehensive summaries of completed work.
-                            </div>
-                        </div>
-                    """, unsafe_allow_html=True)
-                    lis_ticket1 = df["Ticket ID"].unique().tolist()
+                        """, unsafe_allow_html=True)
+                        lis_ticket1 = df["Ticket ID"].unique().tolist()
 
-                    # Interaction Log form
-                    col1, col2 = st.columns(2)
-                    with col1:
-                        ticket_id_del = st.selectbox("Ticket ID *",lis_ticket1, index=None,
-                            placeholder="Select option...",key='delivery')
-                    with col2:
-                        date_del = st.date_input("Date of Delivery *",value=datetime.today().date())
+                        # Interaction Log form
+                        col1, col2 = st.columns(2)
+                        with col1:
+                            ticket_id_del = st.selectbox("Ticket ID *",lis_ticket1, index=None,
+                                placeholder="Select option...",key='delivery')
+                        with col2:
+                            date_del = st.date_input("Date of Delivery *",value=datetime.today().date())
 
-                    list_delivery = [
-                        "Report", "Email Reply", "Dashboard", "New Data Points", "Peer Learning Facilitation", "TA Meeting", "Other"
-                    ]
+                        list_delivery = [
+                            "Report", "Email Reply", "Dashboard", "New Data Points", "Peer Learning Facilitation", "TA Meeting", "Other"
+                        ]
 
-                    type_delivery = st.selectbox(
-                        "Type of Delivery *",
-                        list_delivery,
-                        index=None,
-                        placeholder="Select option..."
-                    )
+                        type_delivery = st.selectbox(
+                            "Type of Delivery *",
+                            list_delivery,
+                            index=None,
+                            placeholder="Select option..."
+                        )
 
-                    # If "Other" is selected, show a text input for custom value
-                    if type_delivery == "Other":
-                        type_delivery_other = st.text_input("Please specify the Type of Delivery *")
-                        if type_delivery_other:
-                            type_delivery = type_delivery_other 
-                    delivery_description = st.text_area("Short Summary *", placeholder='Enter text', height=150,key='delivery_description') 
-                    document_del = st.file_uploader(
-                        "Upload any files or attachments that are relevant to this delivery.",accept_multiple_files=True
-                    )
+                        # If "Other" is selected, show a text input for custom value
+                        if type_delivery == "Other":
+                            type_delivery_other = st.text_input("Please specify the Type of Delivery *")
+                            if type_delivery_other:
+                                type_delivery = type_delivery_other 
+                        delivery_description = st.text_area("Short Summary *", placeholder='Enter text', height=150,key='delivery_description') 
+                        document_del = st.file_uploader(
+                            "Upload any files or attachments that are relevant to this delivery.",accept_multiple_files=True
+                        )
 
-                    # Submit button
-                    st.markdown("""
-                        <style>
-                        .stButton > button {
-                            width: 100%;
-                            background-color: #cdb4db;
-                            color: black;
-                            font-family: Arial, "Segoe UI", sans-serif;
-                            font-weight: 600;
-                            border-radius: 8px;
-                            padding: 0.6em;
-                            margin-top: 1em;
-                        }
-                        </style>
-                    """, unsafe_allow_html=True)
-
-                    # Submit logic
-                    if st.button("Submit",key='delivery_submit'):
-                        errors = []
-                        drive_links_del = ""
-                        # Required field checks
-                        if not ticket_id_del: errors.append("Ticket ID is required.")
-                        if not date_del: errors.append("Date of delivery is required.")
-                        if not type_delivery: errors.append("Type of delivery is required.")
-                        if not delivery_description: errors.append("Short summary is required.")
-
-                        # Show warnings or success
-                        if errors:
-                            for error in errors:
-                                st.warning(error)
-                        else:
-                            # Only upload files if all validation passes
-                            if document_del:
-                                try:
-                                    folder_id_del = "1gXfWxys2cxd67YDk8zKPmG_mLGID4qL2" 
-                                    links_del = []
-                                    upload_count = 0
-                                    for file in document_del:
-                                        # Rename file as: GU0001_filename.pdf
-                                        renamed_filename = f"{ticket_id_del}_{file.name}"
-                                        link = upload_file_to_drive(
-                                            file=file,
-                                            filename=renamed_filename,
-                                            folder_id=folder_id_del,
-                                            creds_dict=st.secrets["gcp_service_account"]
-                                        )
-                                        links_del.append(link)
-                                        upload_count += 1
-                                        st.success(f"✅ Successfully uploaded: {file.name}")
-                                    drive_links_del = ", ".join(links_del)
-                                    if upload_count > 0:
-                                        st.success(f"✅ All {upload_count} file(s) uploaded successfully to Google Drive!")    
-                                except Exception as e:
-                                    st.error(f"❌ Error uploading file(s) to Google Drive: {str(e)}")
-
-                            new_row_del = {
-                                'Ticket ID': ticket_id_del,
-                                "Date of Delivery": date_del.strftime("%Y-%m-%d"),  # Convert to string
-                                "Type of Delivery": type_delivery,
-                                "Short Summary": delivery_description,
-                                "Document": drive_links_del,
-                                "Submitted By": coordinator_name,
-                                "Submission Date": datetime.today().strftime("%Y-%m-%d %H:%M")
+                        # Submit button
+                        st.markdown("""
+                            <style>
+                            .stButton > button {
+                                width: 100%;
+                                background-color: #cdb4db;
+                                color: black;
+                                font-family: Arial, "Segoe UI", sans-serif;
+                                font-weight: 600;
+                                border-radius: 8px;
+                                padding: 0.6em;
+                                margin-top: 1em;
                             }
-                            new_data_del = pd.DataFrame([new_row_del])
+                            </style>
+                        """, unsafe_allow_html=True)
 
-                            try:
-                                # Append new data to Google Sheet
-                                updated_sheet2 = pd.concat([df_del, new_data_del], ignore_index=True)
-                                updated_sheet2= updated_sheet2.applymap(
-                                    lambda x: x.strftime("%Y-%m-%d") if isinstance(x, (datetime, pd.Timestamp)) else x
-                                )
-                                # Replace NaN with empty strings to ensure JSON compatibility
-                                updated_sheet2 = updated_sheet2.fillna("")
-                                spreadsheet3 = client.open('HRSA64_TA_Request')
-                                worksheet3 = spreadsheet3.worksheet('Delivery')
-                                worksheet3.update([updated_sheet2.columns.values.tolist()] + updated_sheet2.values.tolist())
+                        # Submit logic
+                        if st.button("Submit",key='delivery_submit'):
+                            errors = []
+                            drive_links_del = ""
+                            # Required field checks
+                            if not ticket_id_del: errors.append("Ticket ID is required.")
+                            if not date_del: errors.append("Date of delivery is required.")
+                            if not type_delivery: errors.append("Type of delivery is required.")
+                            if not delivery_description: errors.append("Short summary is required.")
 
-                                # Clear cache to refresh data
-                                st.cache_data.clear()
-                                
-                                st.success("✅ Submission successful!")
-                                time.sleep(2)
-                                st.rerun()
+                            # Show warnings or success
+                            if errors:
+                                for error in errors:
+                                    st.warning(error)
+                            else:
+                                # Only upload files if all validation passes
+                                if document_del:
+                                    try:
+                                        folder_id_del = "1gXfWxys2cxd67YDk8zKPmG_mLGID4qL2" 
+                                        links_del = []
+                                        upload_count = 0
+                                        for file in document_del:
+                                            # Rename file as: GU0001_filename.pdf
+                                            renamed_filename = f"{ticket_id_del}_{file.name}"
+                                            link = upload_file_to_drive(
+                                                file=file,
+                                                filename=renamed_filename,
+                                                folder_id=folder_id_del,
+                                                creds_dict=st.secrets["gcp_service_account"]
+                                            )
+                                            links_del.append(link)
+                                            upload_count += 1
+                                            st.success(f"✅ Successfully uploaded: {file.name}")
+                                        drive_links_del = ", ".join(links_del)
+                                        if upload_count > 0:
+                                            st.success(f"✅ All {upload_count} file(s) uploaded successfully to Google Drive!")    
+                                    except Exception as e:
+                                        st.error(f"❌ Error uploading file(s) to Google Drive: {str(e)}")
 
-                            except Exception as e:
-                                st.error(f"Error updating Google Sheets: {str(e)}")
+                                new_row_del = {
+                                    'Ticket ID': ticket_id_del,
+                                    "Date of Delivery": date_del.strftime("%Y-%m-%d"),  # Convert to string
+                                    "Type of Delivery": type_delivery,
+                                    "Short Summary": delivery_description,
+                                    "Document": drive_links_del,
+                                    "Submitted By": coordinator_name,
+                                    "Submission Date": datetime.today().strftime("%Y-%m-%d %H:%M")
+                                }
+                                new_data_del = pd.DataFrame([new_row_del])
+
+                                try:
+                                    # Append new data to Google Sheet
+                                    updated_sheet2 = pd.concat([df_del, new_data_del], ignore_index=True)
+                                    updated_sheet2= updated_sheet2.applymap(
+                                        lambda x: x.strftime("%Y-%m-%d") if isinstance(x, (datetime, pd.Timestamp)) else x
+                                    )
+                                    # Replace NaN with empty strings to ensure JSON compatibility
+                                    updated_sheet2 = updated_sheet2.fillna("")
+                                    spreadsheet3 = client.open('HRSA64_TA_Request')
+                                    worksheet3 = spreadsheet3.worksheet('Delivery')
+                                    worksheet3.update([updated_sheet2.columns.values.tolist()] + updated_sheet2.values.tolist())
+
+                                    # Clear cache to refresh data
+                                    st.cache_data.clear()
+                                    
+                                    st.success("✅ Submission successful!")
+                                    time.sleep(2)
+                                    st.rerun()
+
+                                except Exception as e:
+                                    st.error(f"Error updating Google Sheets: {str(e)}")
 
                 # Travel Authorization Review Center - visible to Jen, Kemisha, Lauren, Jiaqin, and Mabintou
                 # (Close the if not is_mabintou_coordinator block here)
@@ -3948,92 +3948,92 @@ GU-TAP System
 
                     with st.expander("📦 **CHECK INTERACTION & DELIVERY PATTERNS**"):
                         st.markdown("""
-                        <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 20px; box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3); padding: 2em 1.5em 1.5em 1.5em; margin-bottom: 2em; margin-top: 1em;'>
-                            <div style='color: white; font-family: "Segoe UI", "Arial", sans-serif; font-weight: 800; font-size: 1.6em; margin-bottom: 0.5em; text-align: center;'>
-                                📦 Activity Analytics Center
+                            <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 20px; box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3); padding: 2em 1.5em 1.5em 1.5em; margin-bottom: 2em; margin-top: 1em;'>
+                                <div style='color: white; font-family: "Segoe UI", "Arial", sans-serif; font-weight: 800; font-size: 1.6em; margin-bottom: 0.5em; text-align: center;'>
+                                    📦 Activity Analytics Center
+                                </div>
+                                <div style='color: rgba(255,255,255,0.9); font-size: 1.1em; margin-bottom: 0.8em; text-align: center; line-height: 1.4;'>
+                                    Visualize and analyze communication and delivery patterns for all Technical Assistance requests. Use charts and filters to spot trends and monitor engagement.
+                                </div>
                             </div>
-                            <div style='color: rgba(255,255,255,0.9); font-size: 1.1em; margin-bottom: 0.8em; text-align: center; line-height: 1.4;'>
-                                Visualize and analyze communication and delivery patterns for all Technical Assistance requests. Use charts and filters to spot trends and monitor engagement.
-                            </div>
-                        </div>
-                    """, unsafe_allow_html=True)
-                    # Fetch data from Google Sheets     
-                    try:
-                        df = load_main_sheet()  # Use cached function
-                    except Exception as e:
-                        st.error(f"Error fetching data from Google Sheets: {str(e)}")
+                        """, unsafe_allow_html=True)
+                        # Fetch data from Google Sheets     
+                        try:
+                            df = load_main_sheet()  # Use cached function
+                        except Exception as e:
+                            st.error(f"Error fetching data from Google Sheets: {str(e)}")
 
-                    try:
-                        df_int = load_interaction_sheet()  # Use cached function
-                    except Exception as e:
-                        st.error(f"Error fetching data from Google Sheets: {str(e)}")
+                        try:
+                            df_int = load_interaction_sheet()  # Use cached function
+                        except Exception as e:
+                            st.error(f"Error fetching data from Google Sheets: {str(e)}")
 
-                    try:
-                        df_del = load_delivery_sheet()  # Use cached function
-                    except Exception as e:
-                        st.error(f"Error fetching data from Google Sheets: {str(e)}")
-                    
-                    num_interaction = df_int.shape[0]
-                    num_delivery = df_del.shape[0]
+                        try:
+                            df_del = load_delivery_sheet()  # Use cached function
+                        except Exception as e:
+                            st.error(f"Error fetching data from Google Sheets: {str(e)}")
+                        
+                        num_interaction = df_int.shape[0]
+                        num_delivery = df_del.shape[0]
 
-                    col1, col2 = st.columns(2)
-                    col1.metric("🟡 # of Interactions", num_interaction)
-                    col2.metric("🟡 # of Deliveries", num_delivery)
+                        col1, col2 = st.columns(2)
+                        col1.metric("🟡 # of Interactions", num_interaction)
+                        col2.metric("🟡 # of Deliveries", num_delivery)
 
-                    # Group by Ticket ID and Type of Interaction, count occurrences
-                    interaction_counts = df_int.groupby(['Ticket ID', 'Type of Interaction']).size().reset_index(name='Count')
-                    delivery_counts = df_del.groupby(['Ticket ID', 'Type of Delivery']).size().reset_index(name='Count')
+                        # Group by Ticket ID and Type of Interaction, count occurrences
+                        interaction_counts = df_int.groupby(['Ticket ID', 'Type of Interaction']).size().reset_index(name='Count')
+                        delivery_counts = df_del.groupby(['Ticket ID', 'Type of Delivery']).size().reset_index(name='Count')
 
 
-                    st.markdown("##### 🟡 Top 10 with most Interactions by Interaction Type")
-                    if not interaction_counts.empty:
-                        pie1 = alt.Chart(interaction_counts).mark_bar().encode(
-                            y=alt.Y('Ticket ID:N', sort='-x', title='Ticket ID'),
-                            x=alt.X('Count:Q', title='Number of Interactions'),
-                            color=alt.Color('Type of Interaction:N', title='Interaction Type'),
-                            tooltip=['Ticket ID', 'Type of Interaction', 'Count']
-                        ).properties(
-                            width=600,
-                            height=400
-                        )
-                        st.altair_chart(pie1, use_container_width=True)
-                    else:
-                        st.info("No any interaction to show.")
+                        st.markdown("##### 🟡 Top 10 with most Interactions by Interaction Type")
+                        if not interaction_counts.empty:
+                            pie1 = alt.Chart(interaction_counts).mark_bar().encode(
+                                y=alt.Y('Ticket ID:N', sort='-x', title='Ticket ID'),
+                                x=alt.X('Count:Q', title='Number of Interactions'),
+                                color=alt.Color('Type of Interaction:N', title='Interaction Type'),
+                                tooltip=['Ticket ID', 'Type of Interaction', 'Count']
+                            ).properties(
+                                width=600,
+                                height=400
+                            )
+                            st.altair_chart(pie1, use_container_width=True)
+                        else:
+                            st.info("No any interaction to show.")
 
-                    st.markdown("##### 🟡 Top 10 with most Deliveries by Delivery Type")
-                    if not delivery_counts.empty:
-                        pie1 = alt.Chart(delivery_counts).mark_bar().encode(
-                            y=alt.Y('Ticket ID:N', sort='-x', title='Ticket ID'),
-                            x=alt.X('Count:Q', title='Number of Deliveries'),
-                            color=alt.Color('Type of Delivery:N', title='Delivery Type'),
-                            tooltip=['Ticket ID', 'Type of Delivery', 'Count']
-                        ).properties(
-                            width=600,
-                            height=400
-                        )
-                        st.altair_chart(pie1, use_container_width=True)
-                    else:
-                        st.info("No any delivery to show.")
+                        st.markdown("##### 🟡 Top 10 with most Deliveries by Delivery Type")
+                        if not delivery_counts.empty:
+                            pie1 = alt.Chart(delivery_counts).mark_bar().encode(
+                                y=alt.Y('Ticket ID:N', sort='-x', title='Ticket ID'),
+                                x=alt.X('Count:Q', title='Number of Deliveries'),
+                                color=alt.Color('Type of Delivery:N', title='Delivery Type'),
+                                tooltip=['Ticket ID', 'Type of Delivery', 'Count']
+                            ).properties(
+                                width=600,
+                                height=400
+                            )
+                            st.altair_chart(pie1, use_container_width=True)
+                        else:
+                            st.info("No any delivery to show.")
 
 
-                    unique_id = sorted(set(df_int["Ticket ID"].unique().tolist() + df_del["Ticket ID"].unique().tolist()))
-                    selected_ticket_id = st.selectbox("Select a Ticket ID", unique_id, placeholder="Select option...")
-                    # Filter records
-                    interactions_for_ticket = df_int[df_int["Ticket ID"] == selected_ticket_id]
-                    deliveries_for_ticket = df_del[df_del["Ticket ID"] == selected_ticket_id]
-                    num_interaction_ticket = interactions_for_ticket.shape[0]
-                    num_delivery_ticket = deliveries_for_ticket.shape[0]
-                    st.markdown(f"##### 🟡 Ticket ID: {selected_ticket_id}")
-                    st.markdown(f"🟡 # of Interactions: {num_interaction_ticket if num_interaction_ticket > 0 else 0}")
-                    if num_interaction_ticket > 0:
-                        st.dataframe(interactions_for_ticket)
-                    else:
-                        st.info("No interaction records found for this Ticket ID.")
-                    st.markdown(f"🟡 # of Deliveries: {num_delivery_ticket if num_delivery_ticket > 0 else 0}")
-                    if num_delivery_ticket > 0:
-                        st.dataframe(deliveries_for_ticket)
-                    else:
-                        st.info("No delivery records found for this Ticket ID.")
+                        unique_id = sorted(set(df_int["Ticket ID"].unique().tolist() + df_del["Ticket ID"].unique().tolist()))
+                        selected_ticket_id = st.selectbox("Select a Ticket ID", unique_id, placeholder="Select option...")
+                        # Filter records
+                        interactions_for_ticket = df_int[df_int["Ticket ID"] == selected_ticket_id]
+                        deliveries_for_ticket = df_del[df_del["Ticket ID"] == selected_ticket_id]
+                        num_interaction_ticket = interactions_for_ticket.shape[0]
+                        num_delivery_ticket = deliveries_for_ticket.shape[0]
+                        st.markdown(f"##### 🟡 Ticket ID: {selected_ticket_id}")
+                        st.markdown(f"🟡 # of Interactions: {num_interaction_ticket if num_interaction_ticket > 0 else 0}")
+                        if num_interaction_ticket > 0:
+                            st.dataframe(interactions_for_ticket)
+                        else:
+                            st.info("No interaction records found for this Ticket ID.")
+                        st.markdown(f"🟡 # of Deliveries: {num_delivery_ticket if num_delivery_ticket > 0 else 0}")
+                        if num_delivery_ticket > 0:
+                            st.dataframe(deliveries_for_ticket)
+                        else:
+                            st.info("No delivery records found for this Ticket ID.")
                   
 
 
