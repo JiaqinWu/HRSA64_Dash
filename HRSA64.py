@@ -2151,6 +2151,8 @@ else:
             if st.session_state.role == "Coordinator":
                 user_info = USERS.get(st.session_state.user_email)
                 coordinator_name = user_info["Coordinator"]["name"]
+                # Check if current coordinator is Mabintou (only sees Travel Authorization Review Center)
+                is_mabintou_coordinator = st.session_state.user_email == "mo887@georgetown.edu"
                 st.markdown(
                     """
                     <div style='
@@ -2222,8 +2224,10 @@ else:
                 col3.metric(label="# of Requests from past month", value= millify(pastmonth_request, precision=2))
                 style_metric_cards(border_left_color="#DBF227")
                 
-                with st.expander("🔎 **MONITOR IN-PROGRESS REQUESTS**"):
-                    st.markdown("""
+                # Hide all expanders for Mabintou except Travel Authorization Review Center
+                if not is_mabintou_coordinator:
+                    with st.expander("🔎 **MONITOR IN-PROGRESS REQUESTS**"):
+                        st.markdown("""
                         <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 20px; box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3); padding: 2em 1.5em 1.5em 1.5em; margin-bottom: 2em; margin-top: 1em;'>
                             <div style='color: white; font-family: "Segoe UI", "Arial", sans-serif; font-weight: 800; font-size: 1.6em; margin-bottom: 0.5em; text-align: center;'>
                                 🔎 In-Progress Requests Monitor
@@ -2331,9 +2335,9 @@ else:
 
                     st.dataframe(staff_dfff[display_cols].reset_index(drop=True))
 
-                st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
-                with st.expander("📝 **ASSIGN TA REQUESTS**"):
-                    st.markdown("""
+                    st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
+                    with st.expander("📝 **ASSIGN TA REQUESTS**"):
+                        st.markdown("""
                         <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 20px; box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3); padding: 2em 1.5em 1.5em 1.5em; margin-bottom: 2em; margin-top: 1em;'>
                             <div style='color: white; font-family: "Segoe UI", "Arial", sans-serif; font-weight: 800; font-size: 1.6em; margin-bottom: 0.5em; text-align: center;'>
                                 📝 TA Request Assignment Center
@@ -2478,10 +2482,10 @@ else:
                             </style>
                         """, unsafe_allow_html=True)
 
-                # --- Transfer TA Requests (Coordinator only)
-                st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
-                with st.expander("🔄 **TRANSFER TA REQUESTS**"):
-                    st.markdown("""
+                    # --- Transfer TA Requests (Coordinator only)
+                    st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
+                    with st.expander("🔄 **TRANSFER TA REQUESTS**"):
+                        st.markdown("""
                         <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 20px; box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3); padding: 2em 1.5em 1.5em 1.5em; margin-bottom: 2em; margin-top: 1em;'>
                             <div style='color: white; font-family: "Segoe UI", "Arial", sans-serif; font-weight: 800; font-size: 1.6em; margin-bottom: 0.5em; text-align: center;'>
                                 🔄 TA Request Transfer Center
@@ -2657,9 +2661,9 @@ else:
                                 except Exception as e:
                                     st.error(f"Error updating Google Sheets: {str(e)}")
 
-                st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
-                with st.expander("👍 **DETAILS OF IN-PROGRESS & COMPLETED REQUESTS**"):
-                    st.markdown("""
+                    st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
+                    with st.expander("👍 **DETAILS OF IN-PROGRESS & COMPLETED REQUESTS**"):
+                        st.markdown("""
                         <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 20px; box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3); padding: 2em 1.5em 1.5em 1.5em; margin-bottom: 2em; margin-top: 1em;'>
                             <div style='color: white; font-family: "Segoe UI", "Arial", sans-serif; font-weight: 800; font-size: 1.6em; margin-bottom: 0.5em; text-align: center;'>
                                 👍 Request Management Center
@@ -2841,9 +2845,9 @@ else:
                             'Actual Duration (Days)', "Coordinator Comment History", "Staff Comment History", "Transfer History"
                         ]].reset_index(drop=True))
 
-                st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
-                with st.expander("🗒️ **CHECK & SUBMIT INTERACTION LOG**"):
-                    st.markdown("""
+                    st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
+                    with st.expander("🗒️ **CHECK & SUBMIT INTERACTION LOG**"):
+                        st.markdown("""
                         <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 20px; box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3); padding: 2em 1.5em 1.5em 1.5em; margin-bottom: 2em; margin-top: 1em;'>
                             <div style='color: white; font-family: "Segoe UI", "Arial", sans-serif; font-weight: 800; font-size: 1.6em; margin-bottom: 0.5em; text-align: center;'>
                                 🗒️ Interaction Management Center
@@ -3054,10 +3058,10 @@ else:
                             except Exception as e:
                                 st.error(f"Error updating Google Sheets: {str(e)}")
 
-                st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
+                    st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
 
-                with st.expander("📦 **SUBMIT DELIVERY FORM**"):
-                    st.markdown("""
+                    with st.expander("📦 **SUBMIT DELIVERY FORM**"):
+                        st.markdown("""
                         <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 20px; box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3); padding: 2em 1.5em 1.5em 1.5em; margin-bottom: 2em; margin-top: 1em;'>
                             <div style='color: white; font-family: "Segoe UI", "Arial", sans-serif; font-weight: 800; font-size: 1.6em; margin-bottom: 0.5em; text-align: center;'>
                                 📦 Delivery Management Center
@@ -3186,20 +3190,24 @@ else:
                             except Exception as e:
                                 st.error(f"Error updating Google Sheets: {str(e)}")
 
-                # Travel Authorization Review Center - visible only to Jen, Kemisha, Lauren, Jiaqin, and Mabintou
-                current_coordinator_email = st.session_state.user_email
-                is_kemisha = current_coordinator_email == "kd802@georgetown.edu"
-                is_mabintou = current_coordinator_email == "mo887@georgetown.edu"
-                is_jen = current_coordinator_email == "Jenevieve.Opoku@georgetown.edu"
-                is_lauren = current_coordinator_email == "lm1353@georgetown.edu"
-                is_jiaqin = current_coordinator_email == "jw2104@georgetown.edu"
-                
-                can_view_travel_review = is_kemisha or is_mabintou or is_jen or is_lauren or is_jiaqin
-                
-                if can_view_travel_review:
-                    st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
+                # Travel Authorization Review Center - visible to Jen, Kemisha, Lauren, Jiaqin, and Mabintou
+                # (Close the if not is_mabintou_coordinator block here)
+                st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
 
-                    with st.expander("✈️ **REVIEW & APPROVE TRAVEL AUTHORIZATION FORMS**"):
+                with st.expander("✈️ **REVIEW & APPROVE TRAVEL AUTHORIZATION FORMS**"):
+                    # Check access control
+                    current_coordinator_email = st.session_state.user_email
+                    is_kemisha = current_coordinator_email == "kd802@georgetown.edu"
+                    is_mabintou = current_coordinator_email == "mo887@georgetown.edu"
+                    is_jen = current_coordinator_email == "Jenevieve.Opoku@georgetown.edu"
+                    is_lauren = current_coordinator_email == "lm1353@georgetown.edu"
+                    is_jiaqin = current_coordinator_email == "jw2104@georgetown.edu"
+                    
+                    can_view_travel_review = is_kemisha or is_mabintou or is_jen or is_lauren or is_jiaqin
+                    
+                    if not can_view_travel_review:
+                        st.info("This section is only available for Kemisha Denny, Jenevieve Opoku, Lauren Mathae, Jiaqin Wu, and Mabintou Ouattara.")
+                    else:
                         st.markdown("""
                         <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 20px; box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3); padding: 2em 1.5em 1.5em 1.5em; margin-bottom: 2em; margin-top: 1em;'>
                             <div style='color: white; font-family: "Segoe UI", "Arial", sans-serif; font-weight: 800; font-size: 1.6em; margin-bottom: 0.5em; text-align: center;'>
@@ -3211,64 +3219,52 @@ else:
                         </div>
                     """, unsafe_allow_html=True)
                     
-                    # Load travel sheet data
-                    try:
-                        df_travel_review = load_travel_sheet()
-                        
-                        # Determine which coordinator is logged in
-                        current_coordinator_email = st.session_state.user_email
-                        is_kemisha = current_coordinator_email == "kd802@georgetown.edu"
-                        is_mabintou = current_coordinator_email == "mo887@georgetown.edu"
-                        is_jen = current_coordinator_email == "Jenevieve.Opoku@georgetown.edu"
-                        is_lauren = current_coordinator_email == "lm1353@georgetown.edu"
-                        is_jiaqin = current_coordinator_email == "jw2104@georgetown.edu"
-                        
-                        # Access control: Mabintou can only view travel form generator (staff page), not review section
-                        # Jen, Kemisha, Lauren, Jiaqin can view all functions including review
-                        # Other coordinators can view all except review section
-                        if is_mabintou:
-                            st.info("This section is not available for Mabintou. Please use the travel form generator in the staff page.")
-                        elif not (is_kemisha or is_jen or is_lauren or is_jiaqin):
-                            st.info("This section is only available for Kemisha Denny, Jenevieve Opoku, Lauren Mathae, and Jiaqin Wu.")
-                        else:
-                            # Determine status column based on coordinator
-                            # Note: Approval routing is dynamic based on traveler:
-                            # - Kemisha's requests → Mabintou + Jen
-                            # - Mabintou's requests → Lauren + Kemisha
-                            # - Others → Mabintou + Kemisha (or alternatives)
-                            if is_kemisha:
-                                status_col = 'Kemisha Approval Status'
-                                approval_date_col = 'Kemisha Approval Date'
-                                signature_col = 'Kemisha Signature'
-                                note_col = 'Kemisha Note'
-                                coordinator_display_name = "Kemisha Denny"
-                            elif is_jen:
-                                status_col = 'Jen Approval Status'
-                                approval_date_col = 'Jen Approval Date'
-                                signature_col = 'Jen Signature'
-                                note_col = 'Jen Note'
-                                coordinator_display_name = "Jenevieve Opoku"
-                            elif is_lauren:
-                                status_col = 'Lauren Approval Status'
-                                approval_date_col = 'Lauren Approval Date'
-                                signature_col = 'Lauren Signature'
-                                note_col = 'Lauren Note'
-                                coordinator_display_name = "Lauren Mathae"
-                            elif is_jiaqin:
-                                # Jiaqin can view but needs to determine which column based on form routing
-                                # For now, default to Kemisha column, but will be filtered by actual routing
-                                status_col = 'Kemisha Approval Status'
-                                approval_date_col = 'Kemisha Approval Date'
-                                signature_col = 'Kemisha Signature'
-                                note_col = 'Kemisha Note'
-                                coordinator_display_name = "Jiaqin Wu"
+                        # Load travel sheet data
+                        try:
+                            df_travel_review = load_travel_sheet()
+                            
+                            # Access control: Only Jen, Kemisha, Lauren, Jiaqin, and Mabintou can view this section
+                            if not (is_kemisha or is_jen or is_lauren or is_jiaqin or is_mabintou):
+                                st.info("This section is only available for Kemisha Denny, Jenevieve Opoku, Lauren Mathae, Jiaqin Wu, and Mabintou Ouattara.")
                             else:
-                                # Fallback (shouldn't reach here due to access control)
-                                status_col = 'Mabintou Approval Status'
-                                approval_date_col = 'Mabintou Approval Date'
-                                signature_col = 'Mabintou Signature'
-                                note_col = 'Mabintou Note'
-                                coordinator_display_name = "Mabintou Ouattara"
+                                # Determine status column based on coordinator
+                                # Note: Approval routing is dynamic based on traveler:
+                                # - Kemisha's requests → Mabintou + Jen
+                                # - Mabintou's requests → Lauren + Kemisha
+                                # - Others → Mabintou + Kemisha (or alternatives)
+                                if is_kemisha:
+                                    status_col = 'Kemisha Approval Status'
+                                    approval_date_col = 'Kemisha Approval Date'
+                                    signature_col = 'Kemisha Signature'
+                                    note_col = 'Kemisha Note'
+                                    coordinator_display_name = "Kemisha Denny"
+                                elif is_jen:
+                                    status_col = 'Jen Approval Status'
+                                    approval_date_col = 'Jen Approval Date'
+                                    signature_col = 'Jen Signature'
+                                    note_col = 'Jen Note'
+                                    coordinator_display_name = "Jenevieve Opoku"
+                                elif is_lauren:
+                                    status_col = 'Lauren Approval Status'
+                                    approval_date_col = 'Lauren Approval Date'
+                                    signature_col = 'Lauren Signature'
+                                    note_col = 'Lauren Note'
+                                    coordinator_display_name = "Lauren Mathae"
+                                elif is_jiaqin:
+                                    # Jiaqin can view but needs to determine which column based on form routing
+                                    # For now, default to Kemisha column, but will be filtered by actual routing
+                                    status_col = 'Kemisha Approval Status'
+                                    approval_date_col = 'Kemisha Approval Date'
+                                    signature_col = 'Kemisha Signature'
+                                    note_col = 'Kemisha Note'
+                                    coordinator_display_name = "Jiaqin Wu"
+                                else:
+                                    # Fallback (shouldn't reach here due to access control)
+                                    status_col = 'Mabintou Approval Status'
+                                    approval_date_col = 'Mabintou Approval Date'
+                                    signature_col = 'Mabintou Signature'
+                                    note_col = 'Mabintou Note'
+                                    coordinator_display_name = "Mabintou Ouattara"
                             
                             # Filter for forms pending this coordinator's approval
                             # First, determine which forms are routed to this coordinator based on traveler
@@ -3941,13 +3937,15 @@ GU-TAP System
                             else:
                                 st.info("No fully approved forms yet.")
                     
-                    except Exception as e:
-                        st.error(f"Error loading travel forms: {str(e)}")
+                        except Exception as e:
+                            st.error(f"Error loading travel forms: {str(e)}")
 
-                st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
+                # Hide Check Interaction & Delivery Patterns for Mabintou
+                if not is_mabintou_coordinator:
+                    st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
 
-                with st.expander("📦 **CHECK INTERACTION & DELIVERY PATTERNS**"):
-                    st.markdown("""
+                    with st.expander("📦 **CHECK INTERACTION & DELIVERY PATTERNS**"):
+                        st.markdown("""
                         <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 20px; box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3); padding: 2em 1.5em 1.5em 1.5em; margin-bottom: 2em; margin-top: 1em;'>
                             <div style='color: white; font-family: "Segoe UI", "Arial", sans-serif; font-weight: 800; font-size: 1.6em; margin-bottom: 0.5em; text-align: center;'>
                                 📦 Activity Analytics Center
