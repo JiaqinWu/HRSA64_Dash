@@ -3208,7 +3208,7 @@ else:
                     can_view_travel_review = is_kemisha or is_mabintou or is_jen or is_lauren or is_jiaqin
                     
                     if not can_view_travel_review:
-                        st.info("This section is only available for Kemisha Denny, Jenevieve Opoku, Lauren Mathae, Jiaqin Wu, and Mabintou Ouattara.")
+                        st.info("This section is not available to you.")
                     else:
                         st.markdown("""
                         <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 20px; box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3); padding: 2em 1.5em 1.5em 1.5em; margin-bottom: 2em; margin-top: 1em;'>
