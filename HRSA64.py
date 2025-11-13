@@ -2201,28 +2201,31 @@ else:
                         </span>
                     </div>
                     """, unsafe_allow_html=True)
-                col1, col2, col3 = st.columns(3)
-                total_request = df['Ticket ID'].nunique()
-                inprogress_request = df[df['Status'] == 'In Progress']['Ticket ID'].nunique()
-                completed_request = df[df['Status'] == 'Completed']['Ticket ID'].nunique()
+                
+                # Dashboard Overview Metrics - visible to all coordinators
+                with st.expander("📊 **DASHBOARD OVERVIEW**", expanded=True):
+                    col1, col2, col3 = st.columns(3)
+                    total_request = df['Ticket ID'].nunique()
+                    inprogress_request = df[df['Status'] == 'In Progress']['Ticket ID'].nunique()
+                    completed_request = df[df['Status'] == 'Completed']['Ticket ID'].nunique()
 
-                col1.metric(label="# of Total Requests", value= millify(total_request, precision=2))
-                col2.metric(label="# of In-Progress Requests", value= millify(inprogress_request, precision=2))
-                col3.metric(label="# of Completed Requests", value= millify(completed_request, precision=2))
-                style_metric_cards(border_left_color="#DBF227")
+                    col1.metric(label="# of Total Requests", value= millify(total_request, precision=2))
+                    col2.metric(label="# of In-Progress Requests", value= millify(inprogress_request, precision=2))
+                    col3.metric(label="# of Completed Requests", value= millify(completed_request, precision=2))
+                    style_metric_cards(border_left_color="#DBF227")
 
-                col1, col2, col3 = st.columns(3)
-                # create column span
-                today = datetime.today()
-                last_week = today - timedelta(days=7)
-                last_month = today - timedelta(days=30)
-                undone_request = df[df['Status'] == 'Submitted']['Ticket ID'].nunique()
-                pastweek_request = df[df['Submit Date'] >= last_week]['Ticket ID'].nunique()
-                pastmonth_request = df[df['Submit Date'] >= last_month]['Ticket ID'].nunique()
-                col1.metric(label="# of Unassigned Requests", value= millify(undone_request, precision=2))
-                col2.metric(label="# of Requests from past week", value= millify(pastweek_request, precision=2))
-                col3.metric(label="# of Requests from past month", value= millify(pastmonth_request, precision=2))
-                style_metric_cards(border_left_color="#DBF227")
+                    col1, col2, col3 = st.columns(3)
+                    # create column span
+                    today = datetime.today()
+                    last_week = today - timedelta(days=7)
+                    last_month = today - timedelta(days=30)
+                    undone_request = df[df['Status'] == 'Submitted']['Ticket ID'].nunique()
+                    pastweek_request = df[df['Submit Date'] >= last_week]['Ticket ID'].nunique()
+                    pastmonth_request = df[df['Submit Date'] >= last_month]['Ticket ID'].nunique()
+                    col1.metric(label="# of Unassigned Requests", value= millify(undone_request, precision=2))
+                    col2.metric(label="# of Requests from past week", value= millify(pastweek_request, precision=2))
+                    col3.metric(label="# of Requests from past month", value= millify(pastmonth_request, precision=2))
+                    style_metric_cards(border_left_color="#DBF227")
                 
                 # Hide all expanders for Mabintou except Travel Authorization Review Center
                 if not is_mabintou_coordinator:
