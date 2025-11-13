@@ -2151,6 +2151,8 @@ else:
             if st.session_state.role == "Coordinator":
                 user_info = USERS.get(st.session_state.user_email)
                 coordinator_name = user_info["Coordinator"]["name"]
+                # Check if current coordinator is Mabintou (only sees Travel Authorization Review Center)
+                is_mabintou_coordinator = st.session_state.user_email == "mo887@georgetown.edu"
                 st.markdown(
                     """
                     <div style='
@@ -2221,8 +2223,11 @@ else:
                 col2.metric(label="# of Requests from past week", value= millify(pastweek_request, precision=2))
                 col3.metric(label="# of Requests from past month", value= millify(pastmonth_request, precision=2))
                 style_metric_cards(border_left_color="#DBF227")
-                with st.expander("🔎 **MONITOR IN-PROGRESS REQUESTS**"):
-                    st.markdown("""
+                
+                # Hide all expanders for Mabintou except Travel Authorization Review Center
+                if not is_mabintou_coordinator:
+                    with st.expander("🔎 **MONITOR IN-PROGRESS REQUESTS**"):
+                        st.markdown("""
                         <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 20px; box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3); padding: 2em 1.5em 1.5em 1.5em; margin-bottom: 2em; margin-top: 1em;'>
                             <div style='color: white; font-family: "Segoe UI", "Arial", sans-serif; font-weight: 800; font-size: 1.6em; margin-bottom: 0.5em; text-align: center;'>
                                 🔎 In-Progress Requests Monitor
@@ -2333,9 +2338,9 @@ else:
                     # Filter submitted requests
                     submitted_requests = df[df["Status"] == "Submitted"].copy()
 
-                st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
-                with st.expander("📝 **ASSIGN TA REQUESTS**"):
-                    st.markdown("""
+                    st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
+                    with st.expander("📝 **ASSIGN TA REQUESTS**"):
+                        st.markdown("""
                         <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 20px; box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3); padding: 2em 1.5em 1.5em 1.5em; margin-bottom: 2em; margin-top: 1em;'>
                             <div style='color: white; font-family: "Segoe UI", "Arial", sans-serif; font-weight: 800; font-size: 1.6em; margin-bottom: 0.5em; text-align: center;'>
                                 📝 TA Request Assignment Center
@@ -2477,10 +2482,10 @@ else:
                             </style>
                         """, unsafe_allow_html=True)
 
-                # --- Transfer TA Requests (Coordinator only)
-                st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
-                with st.expander("🔄 **TRANSFER TA REQUESTS**"):
-                    st.markdown("""
+                    # --- Transfer TA Requests (Coordinator only)
+                    st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
+                    with st.expander("🔄 **TRANSFER TA REQUESTS**"):
+                        st.markdown("""
                         <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 20px; box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3); padding: 2em 1.5em 1.5em 1.5em; margin-bottom: 2em; margin-top: 1em;'>
                             <div style='color: white; font-family: "Segoe UI", "Arial", sans-serif; font-weight: 800; font-size: 1.6em; margin-bottom: 0.5em; text-align: center;'>
                                 🔄 TA Request Transfer Center
@@ -2656,9 +2661,9 @@ else:
                                 except Exception as e:
                                     st.error(f"Error updating Google Sheets: {str(e)}")
 
-                st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
-                with st.expander("👍 **DETAILS OF IN-PROGRESS & COMPLETED REQUESTS**"):
-                    st.markdown("""
+                    st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
+                    with st.expander("👍 **DETAILS OF IN-PROGRESS & COMPLETED REQUESTS**"):
+                        st.markdown("""
                         <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 20px; box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3); padding: 2em 1.5em 1.5em 1.5em; margin-bottom: 2em; margin-top: 1em;'>
                             <div style='color: white; font-family: "Segoe UI", "Arial", sans-serif; font-weight: 800; font-size: 1.6em; margin-bottom: 0.5em; text-align: center;'>
                                 👍 Request Management Center
@@ -2840,9 +2845,9 @@ else:
                             'Actual Duration (Days)', "Coordinator Comment History", "Staff Comment History", "Transfer History"
                         ]].reset_index(drop=True))
 
-                st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
-                with st.expander("🗒️ **CHECK & SUBMIT INTERACTION LOG**"):
-                    st.markdown("""
+                    st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
+                    with st.expander("🗒️ **CHECK & SUBMIT INTERACTION LOG**"):
+                        st.markdown("""
                         <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 20px; box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3); padding: 2em 1.5em 1.5em 1.5em; margin-bottom: 2em; margin-top: 1em;'>
                             <div style='color: white; font-family: "Segoe UI", "Arial", sans-serif; font-weight: 800; font-size: 1.6em; margin-bottom: 0.5em; text-align: center;'>
                                 🗒️ Interaction Management Center
@@ -3053,10 +3058,10 @@ else:
                             except Exception as e:
                                 st.error(f"Error updating Google Sheets: {str(e)}")
 
-                st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
+                    st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
 
-                with st.expander("📦 **SUBMIT DELIVERY FORM**"):
-                    st.markdown("""
+                    with st.expander("📦 **SUBMIT DELIVERY FORM**"):
+                        st.markdown("""
                         <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 20px; box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3); padding: 2em 1.5em 1.5em 1.5em; margin-bottom: 2em; margin-top: 1em;'>
                             <div style='color: white; font-family: "Segoe UI", "Arial", sans-serif; font-weight: 800; font-size: 1.6em; margin-bottom: 0.5em; text-align: center;'>
                                 📦 Delivery Management Center
@@ -3185,6 +3190,8 @@ else:
                             except Exception as e:
                                 st.error(f"Error updating Google Sheets: {str(e)}")
 
+                # Travel Authorization Review Center - visible to all coordinators including Mabintou
+                # (Close the if not is_mabintou_coordinator block here)
                 st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
 
                 with st.expander("✈️ **REVIEW & APPROVE TRAVEL AUTHORIZATION FORMS**"):
@@ -3932,10 +3939,12 @@ GU-TAP System
                     except Exception as e:
                         st.error(f"Error loading travel forms: {str(e)}")
 
-                st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
+                # Hide Check Interaction & Delivery Patterns for Mabintou
+                if not is_mabintou_coordinator:
+                    st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
 
-                with st.expander("📦 **CHECK INTERACTION & DELIVERY PATTERNS**"):
-                    st.markdown("""
+                    with st.expander("📦 **CHECK INTERACTION & DELIVERY PATTERNS**"):
+                        st.markdown("""
                         <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 20px; box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3); padding: 2em 1.5em 1.5em 1.5em; margin-bottom: 2em; margin-top: 1em;'>
                             <div style='color: white; font-family: "Segoe UI", "Arial", sans-serif; font-weight: 800; font-size: 1.6em; margin-bottom: 0.5em; text-align: center;'>
                                 📦 Activity Analytics Center
