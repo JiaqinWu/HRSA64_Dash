@@ -2151,8 +2151,6 @@ else:
             if st.session_state.role == "Coordinator":
                 user_info = USERS.get(st.session_state.user_email)
                 coordinator_name = user_info["Coordinator"]["name"]
-                # Check if current coordinator is Mabintou (only sees Travel Authorization Review Center)
-                is_mabintou_coordinator = st.session_state.user_email == "mo887@georgetown.edu"
                 st.markdown(
                     """
                     <div style='
@@ -2224,10 +2222,8 @@ else:
                 col3.metric(label="# of Requests from past month", value= millify(pastmonth_request, precision=2))
                 style_metric_cards(border_left_color="#DBF227")
                 
-                # Hide all expanders for Mabintou except Travel Authorization Review Center
-                if not is_mabintou_coordinator:
-                    with st.expander("🔎 **MONITOR IN-PROGRESS REQUESTS**"):
-                        st.markdown("""
+                with st.expander("🔎 **MONITOR IN-PROGRESS REQUESTS**"):
+                    st.markdown("""
                         <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 20px; box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3); padding: 2em 1.5em 1.5em 1.5em; margin-bottom: 2em; margin-top: 1em;'>
                             <div style='color: white; font-family: "Segoe UI", "Arial", sans-serif; font-weight: 800; font-size: 1.6em; margin-bottom: 0.5em; text-align: center;'>
                                 🔎 In-Progress Requests Monitor
@@ -2335,9 +2331,9 @@ else:
 
                     st.dataframe(staff_dfff[display_cols].reset_index(drop=True))
 
-                    st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
-                    with st.expander("📝 **ASSIGN TA REQUESTS**"):
-                        st.markdown("""
+                st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
+                with st.expander("📝 **ASSIGN TA REQUESTS**"):
+                    st.markdown("""
                         <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 20px; box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3); padding: 2em 1.5em 1.5em 1.5em; margin-bottom: 2em; margin-top: 1em;'>
                             <div style='color: white; font-family: "Segoe UI", "Arial", sans-serif; font-weight: 800; font-size: 1.6em; margin-bottom: 0.5em; text-align: center;'>
                                 📝 TA Request Assignment Center
@@ -2347,125 +2343,125 @@ else:
                             </div>
                         </div>
                     """, unsafe_allow_html=True)
-                        st.markdown("#### 📋 Unassigned Requests")
+                    st.markdown("#### 📋 Unassigned Requests")
 
-                        # Filter submitted requests
-                        submitted_requests = df[df["Status"] == "Submitted"].copy()
+                    # Filter submitted requests
+                    submitted_requests = df[df["Status"] == "Submitted"].copy()
 
-                        if submitted_requests.empty:
-                            st.info("No submitted requests at the moment.")
-                        else:
-                            # Define custom priority order
-                            priority_order = {"Critical": 1, "High": 2, "Normal": 3, "Low": 4}
+                    if submitted_requests.empty:
+                        st.info("No submitted requests at the moment.")
+                    else:
+                        # Define custom priority order
+                        priority_order = {"Critical": 1, "High": 2, "Normal": 3, "Low": 4}
 
-                            # Create a temporary column for sort priority
-                            submitted_requests["PriorityOrder"] = submitted_requests["Priority"].map(priority_order)
+                        # Create a temporary column for sort priority
+                        submitted_requests["PriorityOrder"] = submitted_requests["Priority"].map(priority_order)
 
-                            # Convert date columns if needed
-                            submitted_requests["Submit Date"] = pd.to_datetime(submitted_requests["Submit Date"], errors='coerce')
-                            submitted_requests["Targeted Due Date"] = pd.to_datetime(submitted_requests["Targeted Due Date"], errors='coerce')
+                        # Convert date columns if needed
+                        submitted_requests["Submit Date"] = pd.to_datetime(submitted_requests["Submit Date"], errors='coerce')
+                        submitted_requests["Targeted Due Date"] = pd.to_datetime(submitted_requests["Targeted Due Date"], errors='coerce')
 
-                            # Format dates to "YYYY-MM-DD" for display
-                            submitted_requests["Submit Date"] = submitted_requests["Submit Date"].dt.strftime("%Y-%m-%d")
-                            submitted_requests["Targeted Due Date"] = submitted_requests["Targeted Due Date"].dt.strftime("%Y-%m-%d")
+                        # Format dates to "YYYY-MM-DD" for display
+                        submitted_requests["Submit Date"] = submitted_requests["Submit Date"].dt.strftime("%Y-%m-%d")
+                        submitted_requests["Targeted Due Date"] = submitted_requests["Targeted Due Date"].dt.strftime("%Y-%m-%d")
 
-                            # Sort by custom priority, then submit date, then due date
-                            submitted_requests_sorted = submitted_requests.sort_values(
-                                by=["PriorityOrder", "Submit Date", "Targeted Due Date"],
-                                ascending=[True, True, True]
-                            )
+                        # Sort by custom priority, then submit date, then due date
+                        submitted_requests_sorted = submitted_requests.sort_values(
+                            by=["PriorityOrder", "Submit Date", "Targeted Due Date"],
+                            ascending=[True, True, True]
+                        )
 
-                            # Display clean table (exclude PriorityOrder column)
-                            st.dataframe(submitted_requests_sorted[[
-                                "Ticket ID","Jurisdiction", "Organization", "Name", "Title/Position", "Email Address", "Phone Number",
-                                "Focus Area", "TA Type", "Submit Date", "Targeted Due Date", "Priority", "TA Description","Document"
-                            ]].reset_index(drop=True))
+                        # Display clean table (exclude PriorityOrder column)
+                        st.dataframe(submitted_requests_sorted[[
+                            "Ticket ID","Jurisdiction", "Organization", "Name", "Title/Position", "Email Address", "Phone Number",
+                            "Focus Area", "TA Type", "Submit Date", "Targeted Due Date", "Priority", "TA Description","Document"
+                        ]].reset_index(drop=True))
 
-                            # Select request by index 
-                            request_indices = submitted_requests_sorted.index.tolist()
-                            selected_request_index = st.selectbox(
-                                "Select a request to assign",
-                                options=request_indices,
-                                format_func=lambda idx: f"{submitted_requests_sorted.at[idx, 'Ticket ID']} | {submitted_requests_sorted.at[idx, 'Name']} | {submitted_requests_sorted.at[idx, 'Jurisdiction']}",
-                            )
+                        # Select request by index 
+                        request_indices = submitted_requests_sorted.index.tolist()
+                        selected_request_index = st.selectbox(
+                            "Select a request to assign",
+                            options=request_indices,
+                            format_func=lambda idx: f"{submitted_requests_sorted.at[idx, 'Ticket ID']} | {submitted_requests_sorted.at[idx, 'Name']} | {submitted_requests_sorted.at[idx, 'Jurisdiction']}",
+                        )
 
-                            # Select coach
-                            selected_coach = st.selectbox(
-                                "Assign a coach",
-                                options=staff_list_sorted,
-                                index=None,
-                                placeholder="Select option..."
-                            )
+                        # Select coach
+                        selected_coach = st.selectbox(
+                            "Assign a coach",
+                            options=staff_list_sorted,
+                            index=None,
+                            placeholder="Select option..."
+                        )
 
-                            # Assign button
-                            if st.button("✅ Assign Coach and Start TA"):
-                                try:
-                                    updated_df = df.copy()
-                                    # Update the selected row
-                                    updated_df.loc[selected_request_index, "Assigned Coach"] = selected_coach
-                                    updated_df.loc[selected_request_index, "Assigned Coordinator"] = coordinator_name
-                                    updated_df.loc[selected_request_index, "Status"] = "In Progress"
-                                    updated_df.loc[selected_request_index, "Assigned Date"] = datetime.today().strftime("%Y-%m-%d")
+                        # Assign button
+                        if st.button("✅ Assign Coach and Start TA"):
+                            try:
+                                updated_df = df.copy()
+                                # Update the selected row
+                                updated_df.loc[selected_request_index, "Assigned Coach"] = selected_coach
+                                updated_df.loc[selected_request_index, "Assigned Coordinator"] = coordinator_name
+                                updated_df.loc[selected_request_index, "Status"] = "In Progress"
+                                updated_df.loc[selected_request_index, "Assigned Date"] = datetime.today().strftime("%Y-%m-%d")
 
-                                    updated_df = updated_df.applymap(
-                                        lambda x: x.strftime("%Y-%m-%d") if isinstance(x, (pd.Timestamp, datetime)) and not pd.isna(x) else x
-                                    )
-                                    updated_df = updated_df.fillna("") 
-                                    spreadsheet1 = client.open('HRSA64_TA_Request')
-                                    worksheet1 = spreadsheet1.worksheet('Main')
+                                updated_df = updated_df.applymap(
+                                    lambda x: x.strftime("%Y-%m-%d") if isinstance(x, (pd.Timestamp, datetime)) and not pd.isna(x) else x
+                                )
+                                updated_df = updated_df.fillna("") 
+                                spreadsheet1 = client.open('HRSA64_TA_Request')
+                                worksheet1 = spreadsheet1.worksheet('Main')
 
-                                    # Push to Google Sheet
-                                    worksheet1.update([updated_df.columns.values.tolist()] + updated_df.values.tolist())
+                                # Push to Google Sheet
+                                worksheet1.update([updated_df.columns.values.tolist()] + updated_df.values.tolist())
 
-                                    # Clear cache to refresh data
-                                    st.cache_data.clear()
-                                    
-                                    st.success(f"Coach {selected_coach} assigned! Status updated to 'In Progress'.")
+                                # Clear cache to refresh data
+                                st.cache_data.clear()
+                                
+                                st.success(f"Coach {selected_coach} assigned! Status updated to 'In Progress'.")
 
-                                    # Send email to staff   
-                                    # Find staff email by name
-                                    staff_email = None
-                                    for email, roles in USERS.items():
-                                        if "Assignee/Staff" in roles and roles["Assignee/Staff"]["name"] == selected_coach:
-                                            staff_email = email
-                                            break
+                                # Send email to staff   
+                                # Find staff email by name
+                                staff_email = None
+                                for email, roles in USERS.items():
+                                    if "Assignee/Staff" in roles and roles["Assignee/Staff"]["name"] == selected_coach:
+                                        staff_email = email
+                                        break
 
-                                    if staff_email:
-                                        staff_subject = f"You have been assigned a new TA request: {updated_df.loc[selected_request_index, 'Ticket ID']}"
-                                        staff_body = f"""
-                                        Hi {selected_coach},
+                                if staff_email:
+                                    staff_subject = f"You have been assigned a new TA request: {updated_df.loc[selected_request_index, 'Ticket ID']}"
+                                    staff_body = f"""
+                                    Hi {selected_coach},
 
-                                        You have been assigned as the coach for the following Technical Assistance request:
+                                    You have been assigned as the coach for the following Technical Assistance request:
 
-                                        Ticket ID: {updated_df.loc[selected_request_index, 'Ticket ID']}
-                                        Jurisdiction: {updated_df.loc[selected_request_index, 'Jurisdiction']}
-                                        Organization: {updated_df.loc[selected_request_index, 'Organization']}
-                                        Name: {updated_df.loc[selected_request_index, 'Name']}
-                                        Description: {updated_df.loc[selected_request_index, 'TA Description']}
-                                        Priority: {updated_df.loc[selected_request_index, 'Priority']}
-                                        Targeted Due Date: {updated_df.loc[selected_request_index, 'Targeted Due Date']}
-                                        Attachments: {updated_df.loc[selected_request_index, 'Document'] or 'None'}
+                                    Ticket ID: {updated_df.loc[selected_request_index, 'Ticket ID']}
+                                    Jurisdiction: {updated_df.loc[selected_request_index, 'Jurisdiction']}
+                                    Organization: {updated_df.loc[selected_request_index, 'Organization']}
+                                    Name: {updated_df.loc[selected_request_index, 'Name']}
+                                    Description: {updated_df.loc[selected_request_index, 'TA Description']}
+                                    Priority: {updated_df.loc[selected_request_index, 'Priority']}
+                                    Targeted Due Date: {updated_df.loc[selected_request_index, 'Targeted Due Date']}
+                                    Attachments: {updated_df.loc[selected_request_index, 'Document'] or 'None'}
 
-                                        Please view and manage this request via the GU-TAP System: https://hrsagutap.streamlit.app/.
-                                        Please contact gutap@georgetown.edu for any questions or concerns.
+                                    Please view and manage this request via the GU-TAP System: https://hrsagutap.streamlit.app/.
+                                    Please contact gutap@georgetown.edu for any questions or concerns.
 
-                                        Best,
-                                        GU-TAP System
-                                        """
-                                        try:
-                                            send_email_mailjet(
-                                                to_email=staff_email,
-                                                subject=staff_subject,
-                                                body=staff_body,
-                                            )
-                                        except Exception as e:
-                                            st.warning(f"⚠️ Failed to send assignment email to staff {selected_coach}: {e}")
+                                    Best,
+                                    GU-TAP System
+                                    """
+                                    try:
+                                        send_email_mailjet(
+                                            to_email=staff_email,
+                                            subject=staff_subject,
+                                            body=staff_body,
+                                        )
+                                    except Exception as e:
+                                        st.warning(f"⚠️ Failed to send assignment email to staff {selected_coach}: {e}")
 
-                                    time.sleep(2)
-                                    st.rerun()
+                                time.sleep(2)
+                                st.rerun()
 
-                                except Exception as e:
-                                    st.error(f"Error updating Google Sheets: {str(e)}")
+                            except Exception as e:
+                                st.error(f"Error updating Google Sheets: {str(e)}")
 
                         # --- Submit button styling (CSS injection)
                         st.markdown("""
@@ -2482,10 +2478,10 @@ else:
                             </style>
                         """, unsafe_allow_html=True)
 
-                    # --- Transfer TA Requests (Coordinator only)
-                    st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
-                    with st.expander("🔄 **TRANSFER TA REQUESTS**"):
-                        st.markdown("""
+                # --- Transfer TA Requests (Coordinator only)
+                st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
+                with st.expander("🔄 **TRANSFER TA REQUESTS**"):
+                    st.markdown("""
                         <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 20px; box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3); padding: 2em 1.5em 1.5em 1.5em; margin-bottom: 2em; margin-top: 1em;'>
                             <div style='color: white; font-family: "Segoe UI", "Arial", sans-serif; font-weight: 800; font-size: 1.6em; margin-bottom: 0.5em; text-align: center;'>
                                 🔄 TA Request Transfer Center
@@ -2661,9 +2657,9 @@ else:
                                 except Exception as e:
                                     st.error(f"Error updating Google Sheets: {str(e)}")
 
-                    st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
-                    with st.expander("👍 **DETAILS OF IN-PROGRESS & COMPLETED REQUESTS**"):
-                        st.markdown("""
+                st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
+                with st.expander("👍 **DETAILS OF IN-PROGRESS & COMPLETED REQUESTS**"):
+                    st.markdown("""
                         <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 20px; box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3); padding: 2em 1.5em 1.5em 1.5em; margin-bottom: 2em; margin-top: 1em;'>
                             <div style='color: white; font-family: "Segoe UI", "Arial", sans-serif; font-weight: 800; font-size: 1.6em; margin-bottom: 0.5em; text-align: center;'>
                                 👍 Request Management Center
@@ -2845,9 +2841,9 @@ else:
                             'Actual Duration (Days)', "Coordinator Comment History", "Staff Comment History", "Transfer History"
                         ]].reset_index(drop=True))
 
-                    st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
-                    with st.expander("🗒️ **CHECK & SUBMIT INTERACTION LOG**"):
-                        st.markdown("""
+                st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
+                with st.expander("🗒️ **CHECK & SUBMIT INTERACTION LOG**"):
+                    st.markdown("""
                         <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 20px; box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3); padding: 2em 1.5em 1.5em 1.5em; margin-bottom: 2em; margin-top: 1em;'>
                             <div style='color: white; font-family: "Segoe UI", "Arial", sans-serif; font-weight: 800; font-size: 1.6em; margin-bottom: 0.5em; text-align: center;'>
                                 🗒️ Interaction Management Center
@@ -3058,10 +3054,10 @@ else:
                             except Exception as e:
                                 st.error(f"Error updating Google Sheets: {str(e)}")
 
-                    st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
+                st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
 
-                    with st.expander("📦 **SUBMIT DELIVERY FORM**"):
-                        st.markdown("""
+                with st.expander("📦 **SUBMIT DELIVERY FORM**"):
+                    st.markdown("""
                         <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 20px; box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3); padding: 2em 1.5em 1.5em 1.5em; margin-bottom: 2em; margin-top: 1em;'>
                             <div style='color: white; font-family: "Segoe UI", "Arial", sans-serif; font-weight: 800; font-size: 1.6em; margin-bottom: 0.5em; text-align: center;'>
                                 📦 Delivery Management Center
@@ -3190,12 +3186,21 @@ else:
                             except Exception as e:
                                 st.error(f"Error updating Google Sheets: {str(e)}")
 
-                # Travel Authorization Review Center - visible to all coordinators including Mabintou
-                # (Close the if not is_mabintou_coordinator block here)
-                st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
+                # Travel Authorization Review Center - visible only to Jen, Kemisha, Lauren, Jiaqin, and Mabintou
+                current_coordinator_email = st.session_state.user_email
+                is_kemisha = current_coordinator_email == "kd802@georgetown.edu"
+                is_mabintou = current_coordinator_email == "mo887@georgetown.edu"
+                is_jen = current_coordinator_email == "Jenevieve.Opoku@georgetown.edu"
+                is_lauren = current_coordinator_email == "lm1353@georgetown.edu"
+                is_jiaqin = current_coordinator_email == "jw2104@georgetown.edu"
+                
+                can_view_travel_review = is_kemisha or is_mabintou or is_jen or is_lauren or is_jiaqin
+                
+                if can_view_travel_review:
+                    st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
 
-                with st.expander("✈️ **REVIEW & APPROVE TRAVEL AUTHORIZATION FORMS**"):
-                    st.markdown("""
+                    with st.expander("✈️ **REVIEW & APPROVE TRAVEL AUTHORIZATION FORMS**"):
+                        st.markdown("""
                         <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 20px; box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3); padding: 2em 1.5em 1.5em 1.5em; margin-bottom: 2em; margin-top: 1em;'>
                             <div style='color: white; font-family: "Segoe UI", "Arial", sans-serif; font-weight: 800; font-size: 1.6em; margin-bottom: 0.5em; text-align: center;'>
                                 ✈️ Travel Authorization Review Center
@@ -3939,12 +3944,10 @@ GU-TAP System
                     except Exception as e:
                         st.error(f"Error loading travel forms: {str(e)}")
 
-                # Hide Check Interaction & Delivery Patterns for Mabintou
-                if not is_mabintou_coordinator:
-                    st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
+                st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
 
-                    with st.expander("📦 **CHECK INTERACTION & DELIVERY PATTERNS**"):
-                        st.markdown("""
+                with st.expander("📦 **CHECK INTERACTION & DELIVERY PATTERNS**"):
+                    st.markdown("""
                         <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 20px; box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3); padding: 2em 1.5em 1.5em 1.5em; margin-bottom: 2em; margin-top: 1em;'>
                             <div style='color: white; font-family: "Segoe UI", "Arial", sans-serif; font-weight: 800; font-size: 1.6em; margin-bottom: 0.5em; text-align: center;'>
                                 📦 Activity Analytics Center
