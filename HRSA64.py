@@ -1865,7 +1865,9 @@ else:
         with col7:
             focus_area_options = [
                 "Housing", "Prevention", "Substance Abuse", "Rapid Start",
-                "Telehealth/Telemedicine", "Data Sharing", "Other"
+                "Telehealth/Telemedicine", "Data Sharing","Evaluation","Implementation Science",
+                "Continuous Quality Improvement", "Sustainability", "Sub-recipient Monitoring",
+                "Procurement", "Work Plan and Budget", "Other"
             ]
 
             focus_area = st.selectbox(
