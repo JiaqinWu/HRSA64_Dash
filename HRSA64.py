@@ -999,7 +999,7 @@ def create_pdf(form_data, ws):
     
     # Meals and Incidentals Section
     story.append(Paragraph("<b>Meals and Incidentals Per Diem</b>", styles['Heading3']))
-    story.append(Paragraph("Federal Guidelines: On the first and last travel day, travelers are only eligible for 75 percent of the total M&IE rate.", styles['Normal']))
+    story.append(Paragraph("Federal Guidelines: On the first and last travel day, travelers are only eligible for 75 percent of the total M&amp;IE rate.", styles['Normal']))
     story.append(Spacer(1, 0.1*inch))
     
     per_diem_dates = form_data.get('per_diem_dates', [])
@@ -1114,7 +1114,7 @@ def create_pdf(form_data, ws):
         per_diem_data = [
             ['Date (MM/DD/YY)'] + [d if d and str(d).strip() else '' for d in pd] + [''],
             ['Per Diem Allowance'] + [f"${int(x)}" if (x and pd[j]) else '' for j, x in enumerate(amounts)] + [''],
-            ['ADJUSTED PER DIEM', 'If meals were provided by Georgetown University (Place "x" in box)', '', '', '', '', '', ''],
+            ['ADJUSTED PER DIEM', 'If meals were provided (Place "x" in box)', '', '', '', '', '', ''],
             [b_lbl] + ['X' if (bchk[j] and pd[j]) else '' for j in range(7)] + [''],
             [l_lbl] + ['X' if (lchk[j] and pd[j]) else '' for j in range(7)] + [''],
             [d_lbl] + ['X' if (dchk[j] and pd[j]) else '' for j in range(7)] + [''],
@@ -4757,7 +4757,7 @@ GU-TAP System
 
                                 Federal Guidelines stipulate that on the first and last travel day, travelers are only eligible for 75 percent of the total M&IE rate.
 
-                                The cost of any meals provided at meetings and conferences will not be reimbursed by Georgetown University. For meals that have been provided by Georgetown University, please place an "x" in the appropriate box on the reimbursement form.
+                                The cost of any meals provided at meetings and conferences will not be reimbursed by Georgetown University. For meals that have been provided, please place an "x" in the appropriate box on the reimbursement form.
                             """)
                             st.markdown("</div>", unsafe_allow_html=True)
                         
@@ -4924,7 +4924,7 @@ GU-TAP System
                             breakfast_checks = []
                             lunch_checks = []
                             dinner_checks = []
-                            st.markdown("**Check boxes if meals were provided by Georgetown University**")
+                            st.markdown("**Check boxes if meals were provided**")
                             # Render per diem inputs in chunks of 7 days per row
                             for chunk_start in range(0, total_days, 7):
                                 chunk_len = min(7, total_days - chunk_start)
@@ -6058,7 +6058,7 @@ GU-TAP System
 
                         st.markdown("#### 📋 My Active Requests")
                         st.dataframe(my_requests[[
-                            "Date", "Time request needed", "Request description", "Anticipated Deliverable", 
+                            "Request Type","Date", "Time request needed", "Time Commitment", "Anticipated Deadline", "Request description", "Anticipated Deliverable", 
                             "TAP Name", "TAP email", "Request status"
                         ]].sort_values(by="Date", ascending=True).reset_index(drop=True))
 
@@ -6201,6 +6201,191 @@ GU-TAP System
 
                                 except Exception as e:
                                     st.error(f"Error updating Google Sheets: {str(e)}")
+
+                # --- Section: Re-assign Support
+                st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
+                with st.expander("🔄 **RE-ASSIGN SUPPORT**"):
+                    st.markdown("""
+                        <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 20px; box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3); padding: 2em 1.5em 1.5em 1.5em; margin-bottom: 2em; margin-top: 1em;'>
+                            <div style='color: white; font-family: "Segoe UI", "Arial", sans-serif; font-weight: 800; font-size: 1.6em; margin-bottom: 0.5em; text-align: center;'>
+                                🔄 Re-assign Support Center
+                            </div>
+                            <div style='color: rgba(255,255,255,0.9); font-size: 1.1em; margin-bottom: 0.8em; text-align: center; line-height: 1.4;'>
+                                If you are unable to complete an assigned support request, you can re-assign it. The request will become unassigned and notifications will be sent to all available students.
+                            </div>
+                        </div>
+                    """, unsafe_allow_html=True)
+
+                    # Get my assigned requests (Not Started or In Progress)
+                    my_assigned_for_reassign = df_support[
+                        (df_support["Student assigned"] == ga_support_name) & 
+                        (df_support["Request status"].isin(["Not Started", "In Progress"]))
+                    ].copy()
+
+                    if my_assigned_for_reassign.empty:
+                        st.info("You have no assigned requests that can be re-assigned.")
+                    else:
+                        # Convert date column
+                        my_assigned_for_reassign["Date"] = pd.to_datetime(my_assigned_for_reassign["Date"], errors="coerce")
+                        my_assigned_for_reassign["Date"] = my_assigned_for_reassign["Date"].dt.strftime("%Y-%m-%d")
+
+                        st.markdown("#### 📋 My Assigned Requests (Can be Re-assigned)")
+                        st.dataframe(my_assigned_for_reassign[[
+                            "Request Type","Date", "Time request needed", "Time Commitment", "Anticipated Deadline", "Request description", "Anticipated Deliverable", 
+                            "TAP Name", "TAP email", "Request status"
+                        ]].sort_values(by="Date", ascending=True).reset_index(drop=True))
+
+                        # Select request to re-assign
+                        reassign_indices = my_assigned_for_reassign.index.tolist()
+                        selected_reassign_idx = st.selectbox(
+                            "Select a request to re-assign",
+                            options=reassign_indices,
+                            format_func=lambda idx: f"{my_assigned_for_reassign.at[idx, 'Date']} | {my_assigned_for_reassign.at[idx, 'TAP Name']} | Status: {my_assigned_for_reassign.at[idx, 'Request status']}",
+                            key='reassign_requests'
+                        )
+
+                        st.warning("⚠️ **Warning:** Re-assigning this request will remove your assignment and send notifications to all available students. This action cannot be undone.")
+
+                        if st.button("🔄 Re-assign Support Request", key='reassign_support'):
+                            try:
+                                updated_df_support = df_support.copy()
+                                
+                                # Get request details before clearing assignment
+                                request_type = updated_df_support.loc[selected_reassign_idx, "Request Type"]
+                                request_date = updated_df_support.loc[selected_reassign_idx, "Date"]
+                                request_time = updated_df_support.loc[selected_reassign_idx, "Time request needed"]
+                                request_time_commitment = updated_df_support.loc[selected_reassign_idx, "Time Commitment"]
+                                request_anticipated_deadline = updated_df_support.loc[selected_reassign_idx, "Anticipated Deadline"]
+                                request_description = updated_df_support.loc[selected_reassign_idx, "Request description"]
+                                anticipated_delivery = updated_df_support.loc[selected_reassign_idx, "Anticipated Deliverable"]
+                                tap_name = updated_df_support.loc[selected_reassign_idx, "TAP Name"]
+                                tap_email = updated_df_support.loc[selected_reassign_idx, "TAP email"]
+                                
+                                # Clear assignment fields
+                                updated_df_support.loc[selected_reassign_idx, "Student assigned"] = ""
+                                updated_df_support.loc[selected_reassign_idx, "Student email"] = ""
+                                # Reset status to empty/unassigned state since no one is assigned
+                                updated_df_support.loc[selected_reassign_idx, "Request status"] = ""
+                                
+                                # Update Google Sheet
+                                updated_df_support = updated_df_support.fillna("")
+                                spreadsheet_support = client.open('HRSA64_TA_Request')
+                                worksheet_support = spreadsheet_support.worksheet('GA_Support')
+                                worksheet_support.update([updated_df_support.columns.values.tolist()] + updated_df_support.values.tolist())
+
+                                st.cache_data.clear()
+                                st.success("✅ Request has been re-assigned! The supporter field has been cleared.")
+                                
+                                # Send notifications to ALL Research Assistants
+                                st.markdown("**📧 Sending notifications to all Research Assistants...**")
+                                
+                                # Format date for display
+                                if isinstance(request_date, str):
+                                    try:
+                                        date_obj = pd.to_datetime(request_date)
+                                        date_str_display = date_obj.strftime("%Y-%m-%d")
+                                    except:
+                                        date_str_display = request_date
+                                else:
+                                    date_str_display = pd.to_datetime(request_date).strftime("%Y-%m-%d")
+                                
+                                # Send notifications to ALL Research Assistants
+                                subject = f"Support Request Available for Re-assignment - {date_str_display}"
+                                student_list = list(STUDENT_SCHEDULE.items())
+                                success_count = 0
+                                total_count = len(student_list)
+                                
+                                for i, (student_name, student_info) in enumerate(student_list, 1):
+                                    body = f"""
+Dear {student_name},
+
+A support request has been re-assigned and is now available for assignment.
+
+Request Details:
+- Date: {date_str_display if request_date else 'N/A'}
+- Time: {request_time if request_time else 'N/A'}
+- TAP Name: {tap_name}
+- TAP Email: {tap_email}
+- Request Description: {request_description}
+- Anticipated Deliverable: {anticipated_delivery}
+{f"- Time Commitment: {request_time_commitment}" if request_time_commitment and str(request_time_commitment).strip() != "nan" else ""}
+{f"- Anticipated Deadline: {request_anticipated_deadline}" if request_anticipated_deadline and str(request_anticipated_deadline).strip() != "nan" else ""}
+
+This request was previously assigned but has been made available again. If you are interested in taking this request, please log into the GU-TAP System and assign it to yourself.
+
+GU-TAP System: https://hrsagutap.streamlit.app/
+
+Best regards,
+GU-TAP System
+                                    """
+                                    
+                                    try:
+                                        status = send_email_mailjet(
+                                            to_email=student_info['email'],
+                                            subject=subject,
+                                            body=body.strip()
+                                        )
+                                        if status:
+                                            success_count += 1
+                                            st.success(f"📧 ({i}/{total_count}) Sent to {student_name} ({student_info['email']})")
+                                        
+                                        # Add delay between emails to avoid rate limiting (except after the last email)
+                                        if i < total_count:
+                                            time.sleep(0.8)  # 0.8 second delay between emails
+                                            
+                                    except Exception as e:
+                                        st.warning(f"⚠️ Failed to send notification to {student_name}: {e}")
+                                
+                                if success_count == total_count:
+                                    st.success(f"✅ All {total_count} Research Assistant(s) have been notified!")
+                                elif success_count > 0:
+                                    st.warning(f"⚠️ Sent {success_count}/{total_count} notifications successfully")
+                                else:
+                                    st.error("❌ Failed to send notifications to Research Assistants")
+                                
+                                # Send notification to TAP about re-assignment
+                                if tap_email and tap_email.strip():
+                                    tap_subject = f"Support Request Re-assigned - {date_str_display} at {request_time if request_time else 'N/A'}"
+                                    tap_body = f"""
+Dear {tap_name},
+
+Your support request has been re-assigned by the previously assigned research assistant.
+
+Request Details:
+- Request Type: {request_type}
+- Date: {date_str_display}
+- Time: {request_time if request_time else 'N/A'}
+- Time Commitment: {request_time_commitment}
+- Anticipated Deadline: {request_anticipated_deadline}
+- Request Description: {request_description}
+- Anticipated Deliverable: {anticipated_delivery}
+
+Previous Research Assistant: {ga_support_name}
+Email: {st.session_state.user_email}
+
+The request is now unassigned and notifications have been sent to all Research Assistants. A new research assistant will be able to assign themselves to this request.
+
+GU-TAP System: https://hrsagutap.streamlit.app/
+
+Best regards,
+GU-TAP System
+                                    """
+                                    
+                                    try:
+                                        send_email_mailjet(
+                                            to_email=tap_email,
+                                            subject=tap_subject,
+                                            body=tap_body.strip()
+                                        )
+                                        st.success(f"📧 Re-assignment notification sent to TAP: {tap_name}")
+                                    except Exception as e:
+                                        st.warning(f"⚠️ Failed to send re-assignment notification to TAP {tap_name}: {e}")
+                                
+                                time.sleep(3)
+                                st.rerun()
+
+                            except Exception as e:
+                                st.error(f"Error updating Google Sheets: {str(e)}")
 
                 # --- Section: View Completed Requests
                 st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
