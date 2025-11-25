@@ -5590,20 +5590,82 @@ GU-TAP System
                 st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
 
 
-                with st.expander("📦 **SUBMIT DELIVERY FORM**"):
+                with st.expander("📦 **CHECK & SUBMIT DELIVERY LOG**"):
                     st.markdown("""
                         <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 20px; box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3); padding: 2em 1.5em 1.5em 1.5em; margin-bottom: 2em; margin-top: 1em;'>
                             <div style='color: white; font-family: "Segoe UI", "Arial", sans-serif; font-weight: 800; font-size: 1.6em; margin-bottom: 0.5em; text-align: center;'>
                                 📦 Delivery Management Center
                             </div>
                             <div style='color: rgba(255,255,255,0.9); font-size: 1.1em; margin-bottom: 0.8em; text-align: center; line-height: 1.4;'>
-                                Record new deliveries including reports, dashboards, and data. Upload files and provide comprehensive summaries of completed work.
+                                Review your previous deliveries and submit new ones. Track all your completed work including reports, dashboards, and data.
                             </div>
                         </div>
                     """, unsafe_allow_html=True)
+
+                    # Upper section: Previous Deliveries
+                    st.markdown("""
+                        <div style='background: #f8f9fa; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); padding: 1.5em; margin-bottom: 2em;'>
+                            <h3 style='color: #1a237e; font-family: "Segoe UI", sans-serif; font-weight: 700; margin-bottom: 1em; text-align: center;'>
+                                📊 Your Previous Deliveries
+                            </h3>
+                        </div>
+                    """, unsafe_allow_html=True)
+                    
+                    # Get delivery data properly
+                    df_del_staff = df_del[df_del["Submitted By"] == staff_name].copy()
+                    if not df_del_staff.empty:
+                        # Remove columns we don't want to display
+                        display_cols = [col for col in df_del_staff.columns if col not in ['Submitted By', 'Submission Date']]
+                        df_del_staff_display = df_del_staff[display_cols].copy()
+                        
+                        # Sort by Date of Delivery (most recent first)
+                        df_del_staff_display["Date of Delivery"] = pd.to_datetime(df_del_staff_display["Date of Delivery"], errors="coerce")
+                        df_del_staff_display = df_del_staff_display.sort_values("Date of Delivery", ascending=True)
+                        df_del_staff_display["Date of Delivery"] = df_del_staff_display["Date of Delivery"].dt.strftime("%Y-%m-%d")
+                        
+                        # Add summary stats
+                        total_deliveries = len(df_del_staff_display)
+                        recent_deliveries = len(df_del_staff_display[df_del_staff_display["Date of Delivery"] >= (datetime.now() - timedelta(days=30)).strftime("%Y-%m-%d")])
+                        
+                        st.markdown(f"""
+                            <div style='background: #e3f2fd; border-radius: 10px; padding: 1em; margin-top: 1em; text-align: center;'>
+                                <div style='display: flex; justify-content: space-around;'>
+                                    <div>
+                                        <div style='font-size: 1.5em; font-weight: bold; color: #1976d2;'>{total_deliveries}</div>
+                                        <div style='font-size: 0.9em; color: #666;'>Total Deliveries</div>
+                                    </div>
+                                    <div>
+                                        <div style='font-size: 1.5em; font-weight: bold; color: #388e3c;'>{recent_deliveries}</div>
+                                        <div style='font-size: 0.9em; color: #666;'>Last 30 Days</div>
+                                    </div>
+                                </div>
+                            </div>
+                        """, unsafe_allow_html=True)
+
+                        st.dataframe(df_del_staff_display.reset_index(drop=True), use_container_width=True)
+                        
+
+                    else:
+                        st.markdown("""
+                            <div style='background: #fff3e0; border-radius: 15px; padding: 2em; text-align: center; border: 2px dashed #ff9800;'>
+                                <div style='font-size: 3em; margin-bottom: 0.5em;'>📦</div>
+                                <h4 style='color: #e65100; margin-bottom: 0.5em;'>No Previous Deliveries</h4>
+                                <p style='color: #666; margin: 0;'>You haven't logged any deliveries yet. Start by submitting your first delivery below!</p>
+                            </div>
+                        """, unsafe_allow_html=True)
+
+                    # Lower section: Submit New Delivery
+                    st.markdown("""
+                        <div style='background: #f8f9fa; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); padding: 1.5em; margin-bottom: 1em;'>
+                            <h3 style='color: #1a237e; font-family: "Segoe UI", sans-serif; font-weight: 700; margin-bottom: 1em; text-align: center;'>
+                                ✍️ Submit New Delivery
+                            </h3>
+                        </div>
+                    """, unsafe_allow_html=True)
+                    
                     lis_ticket1 = df["Ticket ID"].unique().tolist()
 
-                    # Interaction Log form
+                    # Delivery Log form
                     col1, col2 = st.columns(2)
                     with col1:
                         ticket_id_del = st.selectbox("Ticket ID *",lis_ticket1, index=None,
