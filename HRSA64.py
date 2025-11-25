@@ -4708,7 +4708,7 @@ GU-TAP System
 
                 st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
 
-                with st.expander("🧳 **Generate Domestic Travel Authorization Form**"):
+                with st.expander("🧳 **GENERATE DOMESTIC TRAVEL AUTHORIZATION FORM**"):
                     st.markdown("""
                         <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 20px; box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3); padding: 2em 1.5em 1.5em 1.5em; margin-bottom: 2em; margin-top: 1em;'>
                             <div style='color: white; font-family: "Segoe UI", "Arial", sans-serif; font-weight: 800; font-size: 1.6em; margin-bottom: 0.5em; text-align: center;'>
