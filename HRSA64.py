@@ -892,9 +892,23 @@ def create_pdf(form_data, ws):
     misc_desc1_val = form_data.get('misc_desc1', '').strip() if form_data.get('misc_desc1', '') else ''
     misc_desc2_val = form_data.get('misc_desc2', '').strip() if form_data.get('misc_desc2', '') else ''
     
+    # Create Paragraph style for misc labels that allows text wrapping
+    # Column width is 1.3*inch, so set width slightly less to account for padding
+    misc_label_style = ParagraphStyle(
+        'MiscLabelStyle',
+        parent=styles['Normal'],
+        fontSize=8,
+        fontName='Helvetica',
+        alignment=0,  # LEFT
+        leading=10,  # Line spacing
+        leftIndent=0,
+        rightIndent=0,
+    )
+    
+    # Convert misc labels to Paragraph objects for text wrapping
     # Only show misc rows that have actual descriptions
-    misc_label1 = misc_desc1_val if misc_desc1_val else None
-    misc_label2 = misc_desc2_val if misc_desc2_val else None
+    misc_label1 = Paragraph(misc_desc1_val, misc_label_style) if misc_desc1_val else None
+    misc_label2 = Paragraph(misc_desc2_val, misc_label_style) if misc_desc2_val else None
     
     # Grand totals across all days
     grand_af = sum(x for x in airfare if x)
