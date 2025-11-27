@@ -3344,6 +3344,53 @@ else:
                                     (pending_forms[status_col].astype(str) == '') |
                                     (pending_forms[status_col].astype(str) == 'nan')
                                 ].copy()
+                                
+                                # Filter out forms where the other approver has rejected
+                                # Determine the other approver's status column based on routing
+                                def get_other_approver_status_col(row):
+                                    traveler_name_check = str(row.get('Name', '')).lower()
+                                    traveler_email_check = str(row.get('Email', '')).lower()
+                                    
+                                    is_kemisha_traveler = (traveler_email_check == 'kd802@georgetown.edu' or 
+                                                          'kemisha' in traveler_name_check)
+                                    is_mabintou_traveler = (traveler_email_check == 'mo887@georgetown.edu' or 
+                                                           'mabintou' in traveler_name_check)
+                                    
+                                    if is_kemisha_traveler:
+                                        # Kemisha's requests → Mabintou + Jen
+                                        if status_col == 'Mabintou Approval Status':
+                                            return 'Jen Approval Status'
+                                        elif status_col == 'Jen Approval Status':
+                                            return 'Mabintou Approval Status'
+                                    elif is_mabintou_traveler:
+                                        # Mabintou's requests → Lauren + Kemisha
+                                        if status_col == 'Lauren Approval Status':
+                                            return 'Kemisha Approval Status'
+                                        elif status_col == 'Kemisha Approval Status':
+                                            return 'Lauren Approval Status'
+                                    else:
+                                        # Others → Mabintou + Kemisha (or alternatives)
+                                        if status_col == 'Mabintou Approval Status':
+                                            return 'Kemisha Approval Status'
+                                        elif status_col == 'Kemisha Approval Status':
+                                            return 'Mabintou Approval Status'
+                                        elif status_col == 'Jen Approval Status':
+                                            return 'Mabintou Approval Status'
+                                        elif status_col == 'Lauren Approval Status':
+                                            return 'Mabintou Approval Status'
+                                    return None
+                                
+                                # Filter out forms where other approver has rejected
+                                if len(pending_forms) > 0:
+                                    def not_rejected_by_other(row):
+                                        other_status_col = get_other_approver_status_col(row)
+                                        if other_status_col and other_status_col in pending_forms.columns:
+                                            other_status = str(row.get(other_status_col, '')).lower()
+                                            return other_status != 'reject'
+                                        return True
+                                    
+                                    pending_forms = pending_forms[pending_forms.apply(not_rejected_by_other, axis=1)].copy()
+                                
                             elif status_col not in pending_forms.columns:
                                 # If column doesn't exist, no forms pending
                                 pending_forms = pd.DataFrame()
@@ -3837,6 +3884,54 @@ GU-TAP System
                                                     updated_df_travel.loc[selected_form_idx, status_col] = 'reject'
                                                     updated_df_travel.loc[selected_form_idx, approval_date_col] = approval_date.strftime('%Y-%m-%d')
                                                     updated_df_travel.loc[selected_form_idx, note_col] = reject_note
+                                                    
+                                                    # Determine the other approver's status column and clear it
+                                                    # Check traveler to determine routing
+                                                    traveler_name_check = selected_form.get('Name', '').lower()
+                                                    traveler_email_check = selected_form.get('Email', '').lower()
+                                                    
+                                                    is_kemisha_traveler_check = (traveler_email_check == 'kd802@georgetown.edu' or 
+                                                                                'kemisha' in traveler_name_check)
+                                                    is_mabintou_traveler_check = (traveler_email_check == 'mo887@georgetown.edu' or 
+                                                                                 'mabintou' in traveler_name_check)
+                                                    
+                                                    # Determine the other approver's status column based on routing
+                                                    other_status_col = None
+                                                    if is_kemisha_traveler_check:
+                                                        # Kemisha's requests → Mabintou + Jen
+                                                        if status_col == 'Mabintou Approval Status':
+                                                            other_status_col = 'Jen Approval Status'
+                                                        elif status_col == 'Jen Approval Status':
+                                                            other_status_col = 'Mabintou Approval Status'
+                                                    elif is_mabintou_traveler_check:
+                                                        # Mabintou's requests → Lauren + Kemisha
+                                                        if status_col == 'Lauren Approval Status':
+                                                            other_status_col = 'Kemisha Approval Status'
+                                                        elif status_col == 'Kemisha Approval Status':
+                                                            other_status_col = 'Lauren Approval Status'
+                                                    else:
+                                                        # Others → Mabintou + Kemisha (or alternatives)
+                                                        if status_col == 'Mabintou Approval Status':
+                                                            other_status_col = 'Kemisha Approval Status'
+                                                        elif status_col == 'Kemisha Approval Status':
+                                                            other_status_col = 'Mabintou Approval Status'
+                                                        elif status_col == 'Jen Approval Status':
+                                                            # If Jen is alternative, clear Mabintou or Kemisha
+                                                            other_status_col = 'Mabintou Approval Status'
+                                                        elif status_col == 'Lauren Approval Status':
+                                                            # If Lauren is alternative, clear Mabintou or Kemisha
+                                                            other_status_col = 'Mabintou Approval Status'
+                                                    
+                                                    # Clear the other approver's status (set to blank)
+                                                    if other_status_col and other_status_col in updated_df_travel.columns:
+                                                        updated_df_travel.loc[selected_form_idx, other_status_col] = ''
+                                                        # Also clear related columns
+                                                        other_date_col = other_status_col.replace('Status', 'Date')
+                                                        other_sig_col = other_status_col.replace('Approval Status', 'Signature')
+                                                        if other_date_col in updated_df_travel.columns:
+                                                            updated_df_travel.loc[selected_form_idx, other_date_col] = ''
+                                                        if other_sig_col in updated_df_travel.columns:
+                                                            updated_df_travel.loc[selected_form_idx, other_sig_col] = ''
                                                     
                                                     updated_df_travel = updated_df_travel.fillna("")
                                                     spreadsheet_travel = client.open('HRSA64_TA_Request')
