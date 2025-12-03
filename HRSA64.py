@@ -4686,6 +4686,16 @@ GU-TAP System
                         date_support = None
                         time_support = None 
 
+                    # Preferred RA Selection
+                    st.markdown("**👤 Preferred Research Assistant Assignment (Optional)**")
+                    ra_list = ["No preference"] + sorted([name for name in STUDENT_SCHEDULE.keys()])
+                    preferred_ra = st.selectbox(
+                        "Select a preferred Research Assistant to assign (or leave as 'No preference' to notify all available RAs)",
+                        options=ra_list,
+                        index=0,
+                        key='preferred_ra_selection'
+                    )
+
                     # Submit button
                     st.markdown("""
                         <style>
@@ -4730,6 +4740,11 @@ GU-TAP System
                                 st.warning(error)
                         else:
                             # Prepare data for Google Sheets
+                            # Check if preferred RA is selected
+                            has_preferred_ra = preferred_ra and preferred_ra != "No preference"
+                            preferred_ra_name = preferred_ra if has_preferred_ra else ""
+                            preferred_ra_email = STUDENT_SCHEDULE[preferred_ra]["email"] if has_preferred_ra else ""
+                            
                             new_row_support = {
                                 "Date": date_support.strftime("%Y-%m-%d") if date_support else "",
                                 "Time request needed": time_support if time_support else "",
@@ -4739,7 +4754,10 @@ GU-TAP System
                                 "TAP email": user_email,
                                 "Time Commitment": time_commitment if anticipated_delivery != "Meeting notes" else "",
                                 "Anticipated Deadline": anticipated_deadline.strftime("%Y-%m-%d") if anticipated_delivery != "Meeting notes" and anticipated_deadline else "",
-                                "Request Type": "Meeting" if anticipated_delivery == "Meeting notes" else "Project"
+                                "Request Type": "Meeting" if anticipated_delivery == "Meeting notes" else "Project",
+                                "Student assigned": preferred_ra_name,
+                                "Student email": preferred_ra_email,
+                                "Request status": "Not Started" if has_preferred_ra else ""
                             }
                             new_data_support = pd.DataFrame([new_row_support])
 
@@ -4760,43 +4778,100 @@ GU-TAP System
                                 
                                 st.success("✅ Submission successful!")
                                 
-                                # Send notifications based on request type
-                                st.markdown("---")
-                                st.markdown("**📧 Sending notifications to research assistants...**")
-                                
-                                notification_sent = False
-                                if anticipated_delivery == "Meeting notes":
-                                    # Send to available students only
-                                    notification_sent = send_support_request_notifications(
-                                        date_str=date_support.strftime("%Y-%m-%d"),
-                                        time_str=time_support,
-                                        request_description=request_description,
-                                        anticipated_delivery=anticipated_delivery,
-                                        tap_name=staff_name,
-                                        tap_email=user_email
-                                    )
+                                # Handle notifications based on preferred RA selection
+                                if has_preferred_ra:
+                                    # Send direct assignment email to preferred RA
+                                    st.markdown("---")
+                                    st.markdown(f"**📧 Sending assignment notification to {preferred_ra}...**")
+                                    
+                                    # Format date for email
+                                    if date_support:
+                                        date_str_email = date_support.strftime("%Y-%m-%d")
+                                    elif anticipated_deadline and anticipated_delivery != "Meeting notes":
+                                        date_str_email = anticipated_deadline.strftime("%Y-%m-%d")
+                                    else:
+                                        date_str_email = ""
+                                    
+                                    ra_subject = f"You have been assigned a support request - {date_str_email if date_str_email else anticipated_delivery}"
+                                    ra_body = f"""
+Dear {preferred_ra},
+
+You have been assigned to a support request by {staff_name}.
+
+Request Details:
+- Date: {date_str_email if date_str_email else 'N/A'}
+- Time: {time_support if time_support else 'N/A'}
+- TAP Name: {staff_name}
+- TAP Email: {user_email}
+- Request Description: {request_description}
+- Anticipated Deliverable: {anticipated_delivery}
+{f"- Time Commitment: {time_commitment}" if time_commitment else ""}
+{f"- Anticipated Deadline: {anticipated_deadline.strftime('%Y-%m-%d')}" if anticipated_deadline and anticipated_delivery != "Meeting notes" else ""}
+
+Status: Not Started
+
+Please log into the GU-TAP System to view the request details and update the status as you progress.
+
+GU-TAP System: https://hrsagutap.streamlit.app/
+
+Best regards,
+GU-TAP System
+                                    """
+                                    
+                                    try:
+                                        ra_notification_sent = send_email_mailjet(
+                                            to_email=preferred_ra_email,
+                                            subject=ra_subject,
+                                            body=ra_body.strip()
+                                        )
+                                        if ra_notification_sent:
+                                            st.success(f"✅ Assignment notification sent to {preferred_ra} ({preferred_ra_email})")
+                                        else:
+                                            st.warning(f"⚠️ Failed to send assignment notification to {preferred_ra}")
+                                    except Exception as e:
+                                        st.warning(f"⚠️ Failed to send assignment notification to {preferred_ra}: {e}")
+                                    
+                                    time.sleep(2)
+                                    st.rerun()
+                                    
                                 else:
-                                    # Send to all students for non-meeting requests
-                                    notification_sent = send_project_request_notifications(
-                                        request_description=request_description,
-                                        anticipated_delivery=anticipated_delivery,
-                                        time_commitment=time_commitment,
-                                        anticipated_deadline=anticipated_deadline.strftime("%Y-%m-%d"),
-                                        tap_name=staff_name,
-                                        tap_email=user_email
-                                    )
-                                
-                                # Wait a moment to show completion status
-                                time.sleep(1)
-                                
-                                # Show final status and rerun
-                                if notification_sent:
-                                    st.success("✅ All notifications sent successfully!")
-                                else:
-                                    st.warning("⚠️ Some notifications may have failed. Please check the logs above.")
-                                
-                                time.sleep(2)
-                                st.rerun()
+                                    # Default behavior: Send notifications based on request type
+                                    st.markdown("---")
+                                    st.markdown("**📧 Sending notifications to research assistants...**")
+                                    
+                                    notification_sent = False
+                                    if anticipated_delivery == "Meeting notes":
+                                        # Send to available students only
+                                        notification_sent = send_support_request_notifications(
+                                            date_str=date_support.strftime("%Y-%m-%d"),
+                                            time_str=time_support,
+                                            request_description=request_description,
+                                            anticipated_delivery=anticipated_delivery,
+                                            tap_name=staff_name,
+                                            tap_email=user_email
+                                        )
+                                    else:
+                                        # Send to all students for non-meeting requests
+                                        notification_sent = send_project_request_notifications(
+                                            request_description=request_description,
+                                            anticipated_delivery=anticipated_delivery,
+                                            time_commitment=time_commitment,
+                                            anticipated_deadline=anticipated_deadline.strftime("%Y-%m-%d"),
+                                            tap_name=staff_name,
+                                            tap_email=user_email
+                                        )
+                                    
+                                    # Wait a moment to show completion status
+                                    time.sleep(1)
+                                    
+                                    # Show final status and rerun
+                                    if notification_sent:
+                                        st.success("✅ All notifications sent successfully!")
+                                    else:
+                                        st.warning("⚠️ Some notifications may have failed. Please check the logs above.")
+                                    
+                                    time.sleep(2)
+                                    st.rerun()
 
                             except Exception as e:
                                 st.error(f"Error updating Google Sheets: {str(e)}")
