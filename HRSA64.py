@@ -1700,7 +1700,7 @@ lis_organization = ["Maricopa County Public Health Department","Alameda County P
     "County of San Diego Health and Human Services Agency","San Francisco Department of Public Health","Broward County, Florida",\
     "Duval County, Florida","Hillsborough County, Florida","Miami-Dade County, Florida",\
     "Orange County, Florida","Palm Beach County, Florida","Pinellas County, Florida",\
-    "Cobb and Douglas Public Health","Dekalb Public Health","Fulton County Board of Health","Gwinnett County Board of Health","Cook County Health",\
+    "Cobb and Douglas Public Health","Dekalb Public Health","Fulton County Government","Gwinnett County Board of Health","Cook County Health",\
     "Marion County Public Health Department","East Baton Rouge Parish Health Unit","New Orleans Health Department","Baltimore City Health Department",\
     "Montgomery County Health Department","Prince George's County Health Department","Boston Public Health Commission","Wayne County Health, Human and Veterans Services",\
     "Southern Nevada Health District","Essex County Department of Health","Hudson Regional Health Commission","New York City Department of Health and Mental Hygiene",\
