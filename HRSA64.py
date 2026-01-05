@@ -2153,12 +2153,14 @@ else:
             login = st.button("Login")
 
             if login:
-                user_roles = USERS.get(email)
+                # Normalize email to lowercase for case-insensitive lookup
+                email_normalized = email.strip().lower() if email else ""
+                user_roles = USERS.get(email_normalized)
                 if user_roles and st.session_state.role in user_roles:
                     user = user_roles[st.session_state.role]
                     if user["password"] == password:
                         st.session_state.authenticated = True
-                        st.session_state.user_email = email
+                        st.session_state.user_email = email_normalized
                         st.success("Login successful!")
                         st.rerun()
                     else:
