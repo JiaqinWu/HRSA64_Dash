@@ -1687,6 +1687,9 @@ USERS = {
     'ssb120@georgetown.edu':{
         "Research Assistant": {"password": "Saara123!", "name": "Saara Bidiwala"}
     },
+    'sco47@georgetown.edu':{
+        "Research Assistant": {"password": "Shedrack123!", "name": "Shedrack Osuji"}
+    }
 }
 
 lis_location = ["Maricopa Co. - Arizona", "Alameda Co. - California", "Los Angeles Co. - California", "Orange Co. - California", "Riverside Co. - California",\
