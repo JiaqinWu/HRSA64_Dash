@@ -110,11 +110,11 @@ STUDENT_SCHEDULE = {
     "Hang Nguyen": {
         "email": "htn16@georgetown.edu",
         "schedule": {
-            "Monday": "10am - 1pm",
-            "Tuesday": "10am - 4pm",
-            "Wednesday": "10am - 4pm", 
-            "Thursday": "9am - 5pm",
-            "Friday": "9am - 5pm"
+            "Monday": "9am - 4pm",
+            "Tuesday": "9am - 4pm",
+            "Wednesday": "9am - 4pm", 
+            "Thursday": "9am - 4pm",
+            "Friday": "9am - 4pm"
         }
     },
     "Olayinka Adedeji": {
