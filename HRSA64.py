@@ -101,10 +101,10 @@ STUDENT_SCHEDULE = {
         "email": "ap2349@georgetown.edu",
         "schedule": {
             "Monday": "9am - 5pm",
-            "Tuesday": "9am - 5pm", 
+            "Tuesday": "9am - 12pm", 
             "Wednesday": "9am - 5pm",
             "Thursday": "9am - 5pm",
-            "Friday": "9am - 5pm"
+            "Friday": ""
         }
     },
     "Hang Nguyen": {
@@ -120,11 +120,11 @@ STUDENT_SCHEDULE = {
     "Olayinka Adedeji": {
         "email": "ooa36@georgetown.edu",
         "schedule": {
-            "Monday": "9am - 12pm, 2pm - 5pm",
-            "Tuesday": "11am - 4pm",
-            "Wednesday": "9am - 5pm",
-            "Thursday": "",
-            "Friday": "9am - 4pm"
+            "Monday": "1pm - 5pm",
+            "Tuesday": "9am - 5pm",
+            "Wednesday": "9am - 11am, 3pm - 5pm",
+            "Thursday": "9am - 4pm",
+            "Friday": ""
         }
     },
     "Saara Bidiwala": {
@@ -140,11 +140,11 @@ STUDENT_SCHEDULE = {
     "Ziqiao Shan": {
         "email": "zs352@georgetown.edu",
         "schedule": {
-            "Monday": "",
-            "Tuesday": "10am - 4pm",
-            "Wednesday": "1pm - 5pm",
-            "Thursday": "10am - 12pm",
-            "Friday": ""
+            "Monday": "1pm - 5pm",
+            "Tuesday": "10am - 12pm",
+            "Wednesday": "10am - 5pm",
+            "Thursday": "10am - 5pm",
+            "Friday": "10am - 5pm"
         }
     },
     "Yannis Ying": {
@@ -154,6 +154,16 @@ STUDENT_SCHEDULE = {
             "Tuesday": "",
             "Wednesday": "9am - 4pm",
             "Thursday": "9am - 5pm",
+            "Friday": "9am - 5pm"
+        }
+    },
+    "Shedrack Osuji": {
+        "email": "sco47@georgetown.edu",
+        "schedule": {
+            "Monday": "11am - 5pm",
+            "Tuesday": "",
+            "Wednesday": "11am - 5pm",
+            "Thursday": "",
             "Friday": "9am - 5pm"
         }
     }
