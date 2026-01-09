@@ -1723,7 +1723,7 @@ lis_organization = ["Maricopa County Public Health Department","Alameda County P
     "Marion County Public Health Department","East Baton Rouge Parish Health Unit","New Orleans Health Department","Baltimore City Health Department",\
     "Montgomery County Health Department","Prince George's County Health Department","Boston Public Health Commission","Wayne County Health, Human and Veterans Services",\
     "Southern Nevada Health District","Essex County Department of Health","Hudson Regional Health Commission","New York City Department of Health and Mental Hygiene",\
-    "Mecklenburg County Public Health","Cuyahoga County Board of Health","Franklin County Public Health","Hamilton County Public Health","Philadelphia Department of Public Health",\
+    "Mecklenburg County Public Health","Cuyahoga County Board of Health","Franklin County Public Health","Ohio Department of Health","Philadelphia Department of Public Health",\
     "Shelby County Health Department","Bexar County Health and Human Services","Dallas County Health and Human Services","Harris County Public Health","Tarrant County Public Health",\
     "Travis County Health and Human Services","King Couty Public Health","San Juan Municipality Department of Health","Alabama Department of Public Health","Arkansas Department of Public Health",\
     "Kentucky Department for Public Health","Mississippi State Department of Health","Missouri Department of Health and Senior Services","Oklahoma State Department of Health","South Carolina Department of Public Health"]
