@@ -2948,6 +2948,53 @@ else:
                                 </div>
                             """, unsafe_allow_html=True)
 
+                        # Middle section: View Interactions by Ticket ID
+                        st.markdown("""
+                            <div style='background: #f8f9fa; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); padding: 1.5em; margin-bottom: 2em; margin-top: 2em;'>
+                                <h3 style='color: #1a237e; font-family: "Segoe UI", sans-serif; font-weight: 700; margin-bottom: 1em; text-align: center;'>
+                                    🔍 View Interactions by Ticket ID
+                                </h3>
+                            </div>
+                        """, unsafe_allow_html=True)
+                        
+                        # Get ticket IDs assigned to this coordinator
+                        assigned_tickets = df[df["Assigned Coordinator"] == coordinator_name]["Ticket ID"].dropna().astype(str).unique().tolist()
+                        assigned_tickets_sorted = sorted(assigned_tickets)
+                        
+                        if assigned_tickets_sorted:
+                            selected_ticket_view = st.selectbox(
+                                "Select a Ticket ID to view all interactions",
+                                options=[""] + assigned_tickets_sorted,
+                                index=0,
+                                key='view_interactions_ticket_coord',
+                                help="Select a ticket ID from your assigned requests to view all interactions for that ticket"
+                            )
+                            
+                            if selected_ticket_view:
+                                # Get all interactions for this ticket ID (regardless of who submitted)
+                                # Handle NaN values properly
+                                df_ticket_int = df_int[
+                                    (df_int["Ticket ID"].notna()) & 
+                                    (df_int["Ticket ID"].astype(str) == selected_ticket_view)
+                                ].copy()
+                                
+                                if not df_ticket_int.empty:
+                                    # Remove columns we don't want to display
+                                    display_cols_ticket = [col for col in df_ticket_int.columns if col not in ['Submission Date']]
+                                    df_ticket_int_display = df_ticket_int[display_cols_ticket].copy()
+                                    
+                                    # Sort by Date of Interaction (most recent first)
+                                    df_ticket_int_display["Date of Interaction"] = pd.to_datetime(df_ticket_int_display["Date of Interaction"], errors="coerce")
+                                    df_ticket_int_display = df_ticket_int_display.sort_values("Date of Interaction", ascending=True)
+                                    df_ticket_int_display["Date of Interaction"] = df_ticket_int_display["Date of Interaction"].dt.strftime("%Y-%m-%d")
+                                    
+                                    st.markdown(f"**All interactions for Ticket ID: {selected_ticket_view}**")
+                                    st.dataframe(df_ticket_int_display.reset_index(drop=True), use_container_width=True)
+                                else:
+                                    st.info(f"No interactions found for Ticket ID: {selected_ticket_view}")
+                        else:
+                            st.info("No assigned ticket IDs available to view interactions.")
+
                         # Lower section: Submit New Interaction
                         st.markdown("""
                             <div style='background: #f8f9fa; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); padding: 1.5em; margin-bottom: 1em;'>
@@ -4440,6 +4487,53 @@ GU-TAP System
                             </div>
                         """, unsafe_allow_html=True)
 
+                    # Middle section: View Interactions by Ticket ID
+                    st.markdown("""
+                        <div style='background: #f8f9fa; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); padding: 1.5em; margin-bottom: 2em; margin-top: 2em;'>
+                            <h3 style='color: #1a237e; font-family: "Segoe UI", sans-serif; font-weight: 700; margin-bottom: 1em; text-align: center;'>
+                                🔍 View Interactions by Ticket ID
+                            </h3>
+                        </div>
+                    """, unsafe_allow_html=True)
+                    
+                    # Get ticket IDs assigned to this staff member
+                    assigned_tickets_staff = df[df["Assigned Coach"] == staff_name]["Ticket ID"].dropna().astype(str).unique().tolist()
+                    assigned_tickets_staff_sorted = sorted(assigned_tickets_staff)
+                    
+                    if assigned_tickets_staff_sorted:
+                        selected_ticket_view_staff = st.selectbox(
+                            "Select a Ticket ID to view all interactions",
+                            options=[""] + assigned_tickets_staff_sorted,
+                            index=0,
+                            key='view_interactions_ticket_staff',
+                            help="Select a ticket ID from your assigned requests to view all interactions for that ticket"
+                        )
+                        
+                        if selected_ticket_view_staff:
+                            # Get all interactions for this ticket ID (regardless of who submitted)
+                            # Handle NaN values properly
+                            df_ticket_int_staff = df_int[
+                                (df_int["Ticket ID"].notna()) & 
+                                (df_int["Ticket ID"].astype(str) == selected_ticket_view_staff)
+                            ].copy()
+                            
+                            if not df_ticket_int_staff.empty:
+                                # Remove columns we don't want to display
+                                display_cols_ticket_staff = [col for col in df_ticket_int_staff.columns if col not in ['Submission Date']]
+                                df_ticket_int_staff_display = df_ticket_int_staff[display_cols_ticket_staff].copy()
+                                
+                                # Sort by Date of Interaction (most recent first)
+                                df_ticket_int_staff_display["Date of Interaction"] = pd.to_datetime(df_ticket_int_staff_display["Date of Interaction"], errors="coerce")
+                                df_ticket_int_staff_display = df_ticket_int_staff_display.sort_values("Date of Interaction", ascending=True)
+                                df_ticket_int_staff_display["Date of Interaction"] = df_ticket_int_staff_display["Date of Interaction"].dt.strftime("%Y-%m-%d")
+                                
+                                st.markdown(f"**All interactions for Ticket ID: {selected_ticket_view_staff}**")
+                                st.dataframe(df_ticket_int_staff_display.reset_index(drop=True), use_container_width=True)
+                            else:
+                                st.info(f"No interactions found for Ticket ID: {selected_ticket_view_staff}")
+                    else:
+                        st.info("No assigned ticket IDs available to view interactions.")
+
                     # Lower section: Submit New Interaction
                     st.markdown("""
                         <div style='background: #f8f9fa; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); padding: 1.5em; margin-bottom: 1em;'>
@@ -5844,6 +5938,53 @@ GU-TAP System
                                 <p style='color: #666; margin: 0;'>You haven't logged any deliveries yet. Start by submitting your first delivery below!</p>
                             </div>
                         """, unsafe_allow_html=True)
+
+                    # Middle section: View Deliveries by Ticket ID
+                    st.markdown("""
+                        <div style='background: #f8f9fa; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); padding: 1.5em; margin-bottom: 2em; margin-top: 2em;'>
+                            <h3 style='color: #1a237e; font-family: "Segoe UI", sans-serif; font-weight: 700; margin-bottom: 1em; text-align: center;'>
+                                🔍 View Deliveries by Ticket ID
+                            </h3>
+                        </div>
+                    """, unsafe_allow_html=True)
+                    
+                    # Get ticket IDs assigned to this staff member
+                    assigned_tickets_del = df[df["Assigned Coach"] == staff_name]["Ticket ID"].dropna().astype(str).unique().tolist()
+                    assigned_tickets_del_sorted = sorted(assigned_tickets_del)
+                    
+                    if assigned_tickets_del_sorted:
+                        selected_ticket_view_del = st.selectbox(
+                            "Select a Ticket ID to view all deliveries",
+                            options=[""] + assigned_tickets_del_sorted,
+                            index=0,
+                            key='view_deliveries_ticket_staff',
+                            help="Select a ticket ID from your assigned requests to view all deliveries for that ticket"
+                        )
+                        
+                        if selected_ticket_view_del:
+                            # Get all deliveries for this ticket ID (regardless of who submitted)
+                            # Handle NaN values properly
+                            df_ticket_del = df_del[
+                                (df_del["Ticket ID"].notna()) & 
+                                (df_del["Ticket ID"].astype(str) == selected_ticket_view_del)
+                            ].copy()
+                            
+                            if not df_ticket_del.empty:
+                                # Remove columns we don't want to display
+                                display_cols_ticket_del = [col for col in df_ticket_del.columns if col not in ['Submission Date']]
+                                df_ticket_del_display = df_ticket_del[display_cols_ticket_del].copy()
+                                
+                                # Sort by Date of Delivery (most recent first)
+                                df_ticket_del_display["Date of Delivery"] = pd.to_datetime(df_ticket_del_display["Date of Delivery"], errors="coerce")
+                                df_ticket_del_display = df_ticket_del_display.sort_values("Date of Delivery", ascending=True)
+                                df_ticket_del_display["Date of Delivery"] = df_ticket_del_display["Date of Delivery"].dt.strftime("%Y-%m-%d")
+                                
+                                st.markdown(f"**All deliveries for Ticket ID: {selected_ticket_view_del}**")
+                                st.dataframe(df_ticket_del_display.reset_index(drop=True), use_container_width=True)
+                            else:
+                                st.info(f"No deliveries found for Ticket ID: {selected_ticket_view_del}")
+                    else:
+                        st.info("No assigned ticket IDs available to view deliveries.")
 
                     # Lower section: Submit New Delivery
                     st.markdown("""
