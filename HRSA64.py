@@ -2321,7 +2321,7 @@ else:
                         "Martine Etienne-Mesubi", "Seble Kassaye", "Weijun Yu", "Jiaqin Wu", "Zelalem Temesgen", "Carlos Rodriguez-Diaz",
                         "Kiah Moorehead","Vanessa Da Costa","Trena Mukherjee","Abby Jordan","Megan Highland","Jesus Hernandez Burgos",
                         "Samantha Cinnick","Bryan Shaw","Tara Hixson","Dzifa Awunyo-Akaba","Masill Miranda","Joy Berry","Ashley Clonchmore",
-                        "Grace Hazlett"]
+                        "Grace Hazlett","Lauren Wagner"]
 
                         staff_list_sorted = sorted(staff_list, key=lambda x: x.split()[0])
 
