@@ -211,10 +211,14 @@ def is_time_overlap(request_time, student_availability):
     
     # Parse request time (format: "09:00 - 17:00")
     try:
+        if ' - ' not in request_time:
+            return False
         request_start, request_end = request_time.split(' - ')
+        # Handle both "09:00" and "9:00" formats
         req_start_hour = int(request_start.split(':')[0])
         req_end_hour = int(request_end.split(':')[0])
-    except:
+    except Exception as e:
+        st.warning(f"⚠️ Error parsing request time '{request_time}': {e}")
         return False
     
     for avail_start, avail_end in student_availability:
@@ -249,7 +253,8 @@ def get_available_students(date_str, time_str):
         
         return available_students
     except Exception as e:
-        st.error(f"Error getting available students: {e}")
+        st.error(f"❌ Error getting available students: {e}")
+        st.exception(e)
         return []
 
 def send_support_request_notifications(date_str, time_str, request_description, anticipated_delivery, tap_name, tap_email):
@@ -257,8 +262,10 @@ def send_support_request_notifications(date_str, time_str, request_description, 
     available_students = get_available_students(date_str, time_str)
     
     if not available_students:
-        st.info("No students are available during the requested time slot.")
-        return True
+        st.warning("⚠️ No students are available during the requested time slot. Sending notifications to all research assistants instead.")
+        # Fallback: send to all students if none are available
+        available_students = [{"name": name, "email": info["email"], "availability": ""} 
+                             for name, info in STUDENT_SCHEDULE.items()]
     
     subject = f"New Support Request Available - {date_str} at {time_str}"
     success_count = 0
@@ -295,13 +302,16 @@ GU-TAP System
             if status:
                 success_count += 1
                 st.success(f"📧 ({i}/{total_count}) Sent to {student['name']} ({student['email']})")
+            else:
+                st.warning(f"⚠️ ({i}/{total_count}) Failed to send to {student['name']} ({student['email']})")
             
             # Add delay between emails to avoid rate limiting (except after the last email)
             if i < total_count:
                 time.sleep(0.8)  # 0.8 second delay between emails
                 
         except Exception as e:
-            st.warning(f"⚠️ Failed to send notification to {student['name']}: {e}")
+            st.error(f"❌ Error sending notification to {student['name']} ({student['email']}): {e}")
+            st.exception(e)
     
     if success_count == total_count:
         return True
@@ -348,13 +358,16 @@ GU-TAP System
             if status:
                 success_count += 1
                 st.success(f"📧 ({i}/{total_count}) Sent to {student_name} ({student_info['email']})")
+            else:
+                st.warning(f"⚠️ ({i}/{total_count}) Failed to send to {student_name} ({student_info['email']})")
             
             # Add delay between emails to avoid rate limiting (except after the last email)
             if i < total_count:
                 time.sleep(0.8)  # 0.8 second delay between emails
                 
         except Exception as e:
-            st.warning(f"⚠️ Failed to send project notification to {student_name}: {e}")
+            st.error(f"❌ Error sending project notification to {student_name} ({student_info['email']}): {e}")
+            st.exception(e)
     
     if success_count == total_count:
         return True
