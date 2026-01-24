@@ -131,10 +131,10 @@ STUDENT_SCHEDULE = {
         "email": "ssb120@georgetown.edu", 
         "schedule": {
             "Monday": "",
-            "Tuesday": "1:15pm - 5pm",
-            "Wednesday": "",
-            "Thursday": "1:15pm - 5pm", 
-            "Friday": ""
+            "Tuesday": "11am - 2pm",
+            "Wednesday": "9am - 5pm",
+            "Thursday": "1pm - 2pm, 3pm - 5pm", 
+            "Friday": "9am - 1pm, 3pm - 5pm"
         }
     },
     "Ziqiao Shan": {
