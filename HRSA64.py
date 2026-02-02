@@ -1604,7 +1604,7 @@ USERS = {
         "Coordinator": {"password": "Qin88251216", "name": "Jiaqin Wu"},
         "Assignee/Staff": {"password": "Qin88251216", "name": "Jiaqin Wu"}
     },
-    "Jenevieve.Opoku@georgetown.edu": {
+    "jenevieve.opoku@georgetown.edu": {
         "Coordinator": {"password": "Tootles82!", "name": "Jenevieve Opoku"},
         "Assignee/Staff": {"password": "Tootles82!", "name": "Jenevieve Opoku"}
     },
@@ -3299,7 +3299,7 @@ else:
                     current_coordinator_email = st.session_state.user_email
                     is_kemisha = current_coordinator_email == "kd802@georgetown.edu"
                     is_mabintou = current_coordinator_email == "mo887@georgetown.edu"
-                    is_jen = current_coordinator_email == "Jenevieve.Opoku@georgetown.edu"
+                    is_jen = current_coordinator_email == "jenevieve.opoku@georgetown.edu"
                     is_lauren = current_coordinator_email == "lm1353@georgetown.edu"
                     is_jiaqin = current_coordinator_email == "jw2104@georgetown.edu"
                     
@@ -5720,7 +5720,7 @@ GU-TAP System
                                             approver1_email = "mo887@georgetown.edu"
                                             approver1_name = "Mabintou Ouattara"
                                             approver1_status_col = 'Mabintou Approval Status'
-                                            approver2_email = "Jenevieve.Opoku@georgetown.edu"
+                                            approver2_email = "jenevieve.opoku@georgetown.edu"
                                             approver2_name = "Jenevieve Opoku"
                                             approver2_status_col = 'Jen Approval Status'
                                         elif is_mabintou_traveler:
@@ -5758,7 +5758,7 @@ GU-TAP System
                                             
                                             if out_of_office.get('kemisha', False):
                                                 # Kemisha is out, use Jen as alternative for lead
-                                                approver2_email = "Jenevieve.Opoku@georgetown.edu"
+                                                approver2_email = "jenevieve.opoku@georgetown.edu"
                                                 approver2_name = "Jenevieve Opoku"
                                                 approver2_status_col = 'Jen Approval Status'
                                             else:
