@@ -1620,7 +1620,7 @@ USERS = {
         "Coordinator": {"password": "Mabintou123!", "name": "Mabintou Ouattara"},
     },
     "lm1353@georgetown.edu": {
-        "Coordinator": {"password": "LM1353hrsa64?", "name": "Lauren Mathae",
+        "Coordinator": {"password": "LM1353hrsa64?", "name": "Lauren Mathae"},
         "Assignee/Staff": {"password": "LM1353hrsa64?", "name": "Lauren Mathae"}
     },
     "katherine.robsky@georgetown.edu": {
