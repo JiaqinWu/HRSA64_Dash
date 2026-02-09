@@ -6353,10 +6353,21 @@ GU-TAP System
                     if all_support_requests.empty:
                         st.info("No support requests have been submitted yet.")
                     else:
-                        # Convert date column
+                        # Convert date column to datetime for proper comparison
                         all_support_requests["Date"] = pd.to_datetime(all_support_requests["Date"], errors="coerce")
                         
-                        # Format date for display
+                        # Filter for unassigned requests that are not done and have date >= today
+                        # Keep datetime format for proper date comparison
+                        today_date = pd.Timestamp(datetime.today().date())
+                        unassigned_requests = all_support_requests[
+                            ((all_support_requests["Student assigned"].isna()) | 
+                            (all_support_requests["Student assigned"] == "") |
+                            (all_support_requests["Student assigned"] == "nan")) & 
+                            (all_support_requests["Request status"] != "Completed") &
+                            (all_support_requests['Date'] >= today_date)
+                        ].copy()
+                        
+                        # Format date for display (after filtering)
                         all_support_requests["Date"] = all_support_requests["Date"].dt.strftime("%Y-%m-%d")
                         
                         # Display all requests
@@ -6365,13 +6376,9 @@ GU-TAP System
                             "Date", "Time request needed", "Request description", "Anticipated Deliverable", 
                             "TAP Name", "TAP email", "Student assigned", "Student email", "Request status"
                         ]].sort_values(by="Date", ascending=True).reset_index(drop=True))
-
-                        # Filter for unassigned requests (where Student assigned is empty or NaN)
-                        unassigned_requests = all_support_requests[
-                            (all_support_requests["Student assigned"].isna()) | 
-                            (all_support_requests["Student assigned"] == "") |
-                            (all_support_requests["Student assigned"] == "nan")
-                        ].copy()
+                        
+                        # Format date for display in unassigned_requests (already datetime, just format it)
+                        unassigned_requests["Date"] = unassigned_requests["Date"].dt.strftime("%Y-%m-%d")
 
                         if not unassigned_requests.empty:
                             st.markdown("#### 🆕 Unassigned Requests")
