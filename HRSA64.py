@@ -6368,6 +6368,13 @@ GU-TAP System
                             date_valid
                         ].copy()
                         
+                        # Create sort-by-deadline column: use Date for meetings, Anticipated Deadline for projects
+                        all_support_requests["_sort_date"] = all_support_requests["Date"]
+                        if "Anticipated Deadline" in all_support_requests.columns:
+                            deadline_parsed = pd.to_datetime(all_support_requests["Anticipated Deadline"], errors="coerce")
+                            all_support_requests["_sort_date"] = all_support_requests["_sort_date"].fillna(deadline_parsed)
+                        all_support_requests = all_support_requests.sort_values(by="_sort_date", ascending=True, na_position="last")
+                        
                         # Format date for display (after filtering) - handle NaT for project requests
                         all_support_requests["Date"] = all_support_requests["Date"].apply(
                             lambda x: x.strftime("%Y-%m-%d") if pd.notna(x) else "Project"
@@ -6381,9 +6388,14 @@ GU-TAP System
                                 display_cols.insert(2, col)
                         display_cols = [c for c in display_cols if c in all_support_requests.columns]
                         st.markdown("#### 📝 All Submitted Support Requests")
-                        st.dataframe(all_support_requests[display_cols].sort_values(by="Date", ascending=True).reset_index(drop=True))
+                        st.dataframe(all_support_requests[display_cols].reset_index(drop=True))
                         
-                        # Format date for display in unassigned_requests - handle NaT for project requests
+                        # Sort unassigned by deadline and format date for display
+                        unassigned_requests["_sort_date"] = unassigned_requests["Date"]
+                        if "Anticipated Deadline" in unassigned_requests.columns:
+                            ud_deadline = pd.to_datetime(unassigned_requests["Anticipated Deadline"], errors="coerce")
+                            unassigned_requests["_sort_date"] = unassigned_requests["_sort_date"].fillna(ud_deadline)
+                        unassigned_requests = unassigned_requests.sort_values(by="_sort_date", ascending=True, na_position="last")
                         unassigned_requests["Date"] = unassigned_requests["Date"].apply(
                             lambda x: x.strftime("%Y-%m-%d") if pd.notna(x) else "Project"
                         )
@@ -6496,15 +6508,22 @@ GU-TAP System
                     if my_requests.empty:
                         st.info("You have no assigned requests at the moment.")
                     else:
-                        # Convert date column
+                        # Convert date column and create sort-by-deadline
                         my_requests["Date"] = pd.to_datetime(my_requests["Date"], errors="coerce")
-                        my_requests["Date"] = my_requests["Date"].dt.strftime("%Y-%m-%d")
+                        my_requests["_sort_date"] = my_requests["Date"]
+                        if "Anticipated Deadline" in my_requests.columns:
+                            mr_deadline = pd.to_datetime(my_requests["Anticipated Deadline"], errors="coerce")
+                            my_requests["_sort_date"] = my_requests["_sort_date"].fillna(mr_deadline)
+                        my_requests = my_requests.sort_values(by="_sort_date", ascending=True, na_position="last")
+                        my_requests["Date"] = my_requests["Date"].apply(
+                            lambda x: x.strftime("%Y-%m-%d") if pd.notna(x) else "Project"
+                        )
 
                         st.markdown("#### 📋 My Active Requests")
                         st.dataframe(my_requests[[
                             "Request Type","Date", "Time request needed", "Time Commitment", "Anticipated Deadline", "Request description", "Anticipated Deliverable", 
                             "TAP Name", "TAP email", "Request status"
-                        ]].sort_values(by="Date", ascending=True).reset_index(drop=True))
+                        ]].reset_index(drop=True))
 
                         # Select request to update status
                         my_request_indices = my_requests.index.tolist()
@@ -6669,15 +6688,22 @@ GU-TAP System
                     if my_assigned_for_reassign.empty:
                         st.info("You have no assigned requests that can be re-assigned.")
                     else:
-                        # Convert date column
+                        # Convert date column and sort by deadline
                         my_assigned_for_reassign["Date"] = pd.to_datetime(my_assigned_for_reassign["Date"], errors="coerce")
-                        my_assigned_for_reassign["Date"] = my_assigned_for_reassign["Date"].dt.strftime("%Y-%m-%d")
+                        my_assigned_for_reassign["_sort_date"] = my_assigned_for_reassign["Date"]
+                        if "Anticipated Deadline" in my_assigned_for_reassign.columns:
+                            mar_deadline = pd.to_datetime(my_assigned_for_reassign["Anticipated Deadline"], errors="coerce")
+                            my_assigned_for_reassign["_sort_date"] = my_assigned_for_reassign["_sort_date"].fillna(mar_deadline)
+                        my_assigned_for_reassign = my_assigned_for_reassign.sort_values(by="_sort_date", ascending=True, na_position="last")
+                        my_assigned_for_reassign["Date"] = my_assigned_for_reassign["Date"].apply(
+                            lambda x: x.strftime("%Y-%m-%d") if pd.notna(x) else "Project"
+                        )
 
                         st.markdown("#### 📋 My Assigned Requests (Can be Re-assigned)")
                         st.dataframe(my_assigned_for_reassign[[
                             "Request Type","Date", "Time request needed", "Time Commitment", "Anticipated Deadline", "Request description", "Anticipated Deliverable", 
                             "TAP Name", "TAP email", "Request status"
-                        ]].sort_values(by="Date", ascending=True).reset_index(drop=True))
+                        ]].reset_index(drop=True))
 
                         # Select request to re-assign
                         reassign_indices = my_assigned_for_reassign.index.tolist()
@@ -6854,13 +6880,20 @@ GU-TAP System
                     if completed_requests.empty:
                         st.info("You have no completed requests yet.")
                     else:
-                        # Convert date column
+                        # Convert date column and sort by deadline
                         completed_requests["Date"] = pd.to_datetime(completed_requests["Date"], errors="coerce")
-                        completed_requests["Date"] = completed_requests["Date"].dt.strftime("%Y-%m-%d")
+                        completed_requests["_sort_date"] = completed_requests["Date"]
+                        if "Anticipated Deadline" in completed_requests.columns:
+                            cr_deadline = pd.to_datetime(completed_requests["Anticipated Deadline"], errors="coerce")
+                            completed_requests["_sort_date"] = completed_requests["_sort_date"].fillna(cr_deadline)
+                        completed_requests = completed_requests.sort_values(by="_sort_date", ascending=True, na_position="last")
+                        completed_requests["Date"] = completed_requests["Date"].apply(
+                            lambda x: x.strftime("%Y-%m-%d") if pd.notna(x) else "Project"
+                        )
 
                         st.markdown("#### ✅ My Completed Requests")
                         st.dataframe(completed_requests[[
                             "Date", "Time request needed", "Request description", "Anticipated Deliverable", 
                             "TAP Name", "TAP email", "Request status"
-                        ]].sort_values(by="Date", ascending=True).reset_index(drop=True))
+                        ]].reset_index(drop=True))
 
