@@ -6356,39 +6356,52 @@ GU-TAP System
                         # Convert date column to datetime for proper comparison
                         all_support_requests["Date"] = pd.to_datetime(all_support_requests["Date"], errors="coerce")
                         
-                        # Filter for unassigned requests that are not done and have date >= today
-                        # Keep datetime format for proper date comparison
+                        # Filter for unassigned requests that are not done and have date >= today (or no date for projects)
+                        # Project requests have empty Date - include them so they can be assigned
                         today_date = pd.Timestamp(datetime.today().date())
+                        date_valid = (all_support_requests['Date'].isna()) | (all_support_requests['Date'] >= today_date)
                         unassigned_requests = all_support_requests[
                             ((all_support_requests["Student assigned"].isna()) | 
                             (all_support_requests["Student assigned"] == "") |
                             (all_support_requests["Student assigned"] == "nan")) & 
                             (all_support_requests["Request status"] != "Completed") &
-                            (all_support_requests['Date'] >= today_date)
+                            date_valid
                         ].copy()
                         
-                        # Format date for display (after filtering)
-                        all_support_requests["Date"] = all_support_requests["Date"].dt.strftime("%Y-%m-%d")
+                        # Format date for display (after filtering) - handle NaT for project requests
+                        all_support_requests["Date"] = all_support_requests["Date"].apply(
+                            lambda x: x.strftime("%Y-%m-%d") if pd.notna(x) else "Project"
+                        )
                         
-                        # Display all requests
+                        # Display all requests - include Time Commitment and Anticipated Deadline for projects
+                        display_cols = ["Date", "Time request needed", "Request description", "Anticipated Deliverable", 
+                            "TAP Name", "TAP email", "Student assigned", "Student email", "Request status"]
+                        for col in ["Anticipated Deadline", "Time Commitment", "Request Type"]:
+                            if col in all_support_requests.columns and col not in display_cols:
+                                display_cols.insert(2, col)
+                        display_cols = [c for c in display_cols if c in all_support_requests.columns]
                         st.markdown("#### 📝 All Submitted Support Requests")
-                        st.dataframe(all_support_requests[[
-                            "Date", "Time request needed", "Request description", "Anticipated Deliverable", 
-                            "TAP Name", "TAP email", "Student assigned", "Student email", "Request status"
-                        ]].sort_values(by="Date", ascending=True).reset_index(drop=True))
+                        st.dataframe(all_support_requests[display_cols].sort_values(by="Date", ascending=True).reset_index(drop=True))
                         
-                        # Format date for display in unassigned_requests (already datetime, just format it)
-                        unassigned_requests["Date"] = unassigned_requests["Date"].dt.strftime("%Y-%m-%d")
+                        # Format date for display in unassigned_requests - handle NaT for project requests
+                        unassigned_requests["Date"] = unassigned_requests["Date"].apply(
+                            lambda x: x.strftime("%Y-%m-%d") if pd.notna(x) else "Project"
+                        )
 
                         if not unassigned_requests.empty:
                             st.markdown("#### 🆕 Unassigned Requests")
                             
-                            # Select request to assign
+                            # Select request to assign - show Time Commitment for projects when Time request needed is empty
+                            def _time_display(idx):
+                                t = unassigned_requests.at[idx, 'Time request needed']
+                                if not t or (isinstance(t, str) and str(t).strip() == '') or str(t) == 'nan':
+                                    t = unassigned_requests.at[idx, 'Time Commitment'] if 'Time Commitment' in unassigned_requests.columns else ''
+                                return str(t) if t and str(t) != 'nan' else 'N/A'
                             request_indices = unassigned_requests.index.tolist()
                             selected_request_idx = st.selectbox(
                                 "Select a request to assign to yourself",
                                 options=request_indices,
-                                format_func=lambda idx: f"{unassigned_requests.at[idx, 'Date']} | {unassigned_requests.at[idx, 'TAP Name']} | {unassigned_requests.at[idx, 'Time request needed']}",
+                                format_func=lambda idx: f"{unassigned_requests.at[idx, 'Date']} | {unassigned_requests.at[idx, 'TAP Name']} | {_time_display(idx)}",
                                 key='unassigned_requests'
                             )
 
