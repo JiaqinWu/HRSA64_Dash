@@ -6250,6 +6250,28 @@ GU-TAP System
 
                 st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
 
+                # --- Section: Media Request System
+                with st.expander("📺 **MEDIA REQUEST SYSTEM**"):
+                    st.markdown("""
+                        <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 20px; box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3); padding: 2em 1.5em 1.5em 1.5em; margin-bottom: 2em; margin-top: 1em;'>
+                            <div style='color: white; font-family: "Segoe UI", "Arial", sans-serif; font-weight: 800; font-size: 1.6em; margin-bottom: 0.5em; text-align: center;'>
+                                📺 Media Request System
+                            </div>
+                            <div style='color: rgba(255,255,255,0.9); font-size: 1.1em; margin-bottom: 0.8em; text-align: center; line-height: 1.4;'>
+                                Submit media requests for your projects and communications.
+                            </div>
+                        </div>
+                    """, unsafe_allow_html=True)
+                    st.markdown("""
+                        <div style='background: #f8f9fa; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); padding: 2em; margin-bottom: 1em;'>
+                            <p style='font-size: 1.1em; color: #333; line-height: 1.6;'>
+                                Please check: to submit your request: <a href="https://cghpirequest.streamlit.app/" target="_blank" rel="noopener noreferrer" style="color: #1a237e; font-weight: 600;">https://cghpirequest.streamlit.app/</a>
+                            </p>
+                        </div>
+                    """, unsafe_allow_html=True)
+
+                st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
+
             elif st.session_state.role == "Research Assistant":
                 # Add staff content here
                 user_info = USERS.get(st.session_state.user_email)
