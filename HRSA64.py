@@ -7172,13 +7172,9 @@ GU-TAP System
                         </div>
                     """, unsafe_allow_html=True)
                     
-                    st.info(
-                        "**Submit** saves your request to Google Sheets, uploads the PDF and supporting files to Google Drive "
-                        "(same folders as Travel Authorization), emails the two routed coordinators for approval, and lets you download the PDF below."
-                    )
                     st.markdown("Fill out the form below to generate your GSA Lodging Rate Exemption Form.")
                     travel_city = st.text_input("Travel City/State *", placeholder="Enter text...", key="gsa_travel_city")
-                    st.markdown("##### Requester (from your login account)")
+                    st.markdown("##### Requester")
                     st.info(
                         f"**Name:** {staff_name or '—'}  \n**Email:** {user_email or '—'}"
                     )
