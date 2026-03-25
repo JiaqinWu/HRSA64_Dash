@@ -1528,26 +1528,254 @@ def _gsa_advance_stacked_logo_reader_and_size():
         return None, 0, 0
 
 
-def gsa_approver_routing_for_traveler(traveler_name):
+GSA_REASON_OPTION_LABELS = [
+    "The traveler is attending a conference or event that requires lodging at a pre-arranged location. Pre-arranged lodging costs at this location exceed the applicable government rate for the business destination.",
+    "Travel occurs during a period when subsistence costs have temporarily increased due to conferences, conventions, special events.",
+    "The applicable government rate limitation is generally inadequate for the business destination. Affordable lodging is not available or cannot be obtained within a reasonable commuting distance and transportation costs from less expensive lodging would offset any savings.",
+    "Safety or security considerations require the traveler to obtain lodging in a location that meets appropriate safety standards. Lodging options within the applicable government rate are not reasonably available in such areas, and higher-cost lodging is necessary to mitigate risk.",
+    "Due to special duties of the assignment, unusually high expenses are necessary to conduct official business.",
+    "Reason other than one listed above (please describe below).",
+]
+
+
+def travel_routing_from_traveler(traveler_name, traveler_email=''):
     """
-    Same routing as Travel Authorization. Returns two rows for signatures:
-    (name1, role1, sig_key1, date_key1), (name2, role2, sig_key2, date_key2)
+    Same routing as Travel Authorization (finalize / coordinator review).
+    Returns approver emails and sheet status column names.
     """
     tn = (traveler_name or '').lower()
-    if 'kemisha' in tn:
-        return (
-            ('Mabintou Ouattara', 'Program Assistant', 'mabintou_signature', 'mabintou_approval_date'),
-            ('Jenevieve Opoku', 'Lead Technical Assistance Provider', 'jen_signature', 'jen_approval_date'),
-        )
-    if 'mabintou' in tn:
-        return (
-            ('Lauren Mathae', 'Program Assistant', 'lauren_signature', 'lauren_approval_date'),
-            ('Kemisha Denny', 'Lead Technical Assistance Provider', 'kemisha_signature', 'kemisha_approval_date'),
-        )
+    te = (traveler_email or '').lower()
+    is_kemisha_traveler = (te == 'kd802@georgetown.edu' or 'kemisha' in tn)
+    is_mabintou_traveler = (te == 'mo887@georgetown.edu' or 'mabintou' in tn)
+    out_of_office = {'kemisha': False, 'mabintou': False}
+
+    if is_kemisha_traveler:
+        return {
+            'approver1_email': 'mo887@georgetown.edu',
+            'approver1_name': 'Mabintou Ouattara',
+            'approver1_status_col': 'Mabintou Approval Status',
+            'approver2_email': 'jenevieve.opoku@georgetown.edu',
+            'approver2_name': 'Jenevieve Opoku',
+            'approver2_status_col': 'Jen Approval Status',
+        }
+    if is_mabintou_traveler:
+        return {
+            'approver1_email': 'lm1353@georgetown.edu',
+            'approver1_name': 'Lauren Mathae',
+            'approver1_status_col': 'Lauren Approval Status',
+            'approver2_email': 'kd802@georgetown.edu',
+            'approver2_name': 'Kemisha Denny',
+            'approver2_status_col': 'Kemisha Approval Status',
+        }
+    if out_of_office.get('mabintou', False):
+        a1_email, a1_name, a1_col = 'lm1353@georgetown.edu', 'Lauren Mathae', 'Lauren Approval Status'
+    else:
+        a1_email, a1_name, a1_col = 'mo887@georgetown.edu', 'Mabintou Ouattara', 'Mabintou Approval Status'
+    if out_of_office.get('kemisha', False):
+        a2_email, a2_name, a2_col = 'jenevieve.opoku@georgetown.edu', 'Jenevieve Opoku', 'Jen Approval Status'
+    else:
+        a2_email, a2_name, a2_col = 'kd802@georgetown.edu', 'Kemisha Denny', 'Kemisha Approval Status'
+    return {
+        'approver1_email': a1_email,
+        'approver1_name': a1_name,
+        'approver1_status_col': a1_col,
+        'approver2_email': a2_email,
+        'approver2_name': a2_name,
+        'approver2_status_col': a2_col,
+    }
+
+
+def _status_col_to_gsa_pdf_keys(status_col):
+    """Map sheet-style status column to create_gsa_exemption_pdf form_data keys."""
+    if not status_col:
+        return 'mabintou_signature', 'mabintou_approval_date'
+    if 'Mabintou' in status_col:
+        return 'mabintou_signature', 'mabintou_approval_date'
+    if 'Jen' in status_col:
+        return 'jen_signature', 'jen_approval_date'
+    if 'Kemisha' in status_col:
+        return 'kemisha_signature', 'kemisha_approval_date'
+    if 'Lauren' in status_col:
+        return 'lauren_signature', 'lauren_approval_date'
+    return 'mabintou_signature', 'mabintou_approval_date'
+
+
+def gsa_approver_routing_for_traveler(traveler_name, traveler_email=''):
+    """
+    Same routing as Travel Authorization (including email for kd802/mo887).
+
+    For GSA Lodging Exemption, pass the **requester** name and email (not the traveler)
+    so approver routing matches who submitted the form.
+    Returns two tuples for PDF signature rows:
+    (name1, role1, sig_key1, date_key1), (name2, role2, sig_key2, date_key2)
+    """
+    r = travel_routing_from_traveler(traveler_name, traveler_email)
+    k1, d1 = _status_col_to_gsa_pdf_keys(r['approver1_status_col'])
+    k2, d2 = _status_col_to_gsa_pdf_keys(r['approver2_status_col'])
     return (
-        ('Mabintou Ouattara', 'Program Assistant', 'mabintou_signature', 'mabintou_approval_date'),
-        ('Kemisha Denny', 'Lead Technical Assistance Provider', 'kemisha_signature', 'kemisha_approval_date'),
+        (r['approver1_name'], 'Program Assistant', k1, d1),
+        (r['approver2_name'], 'Lead Technical Assistance Provider', k2, d2),
     )
+
+
+def gsa_blank_approval_columns():
+    """Same approval-related columns as Travel worksheet rows."""
+    return {
+        'Kemisha Approval Status': '',
+        'Mabintou Approval Status': '',
+        'Jen Approval Status': '',
+        'Lauren Approval Status': '',
+        'Kemisha Approval Date': '',
+        'Mabintou Approval Date': '',
+        'Jen Approval Date': '',
+        'Lauren Approval Date': '',
+        'Kemisha Signature': '',
+        'Mabintou Signature': '',
+        'Jen Signature': '',
+        'Lauren Signature': '',
+        'Kemisha Note': '',
+        'Mabintou Note': '',
+        'Jen Note': '',
+        'Lauren Note': '',
+    }
+
+
+# Google Sheet `GSA_exemption` column order (HRSA64_TA_Request spreadsheet). Includes PDF Link + Email for app workflow.
+GSA_EXEMPTION_FRONT_COLUMNS = [
+    'Requester Name',
+    'Traveler Name(s)',
+    'Travel City/State',
+    'Dates of Travel',
+    'Requested Lodfing Rate',
+    'GSA-Approved Lodging Rate',
+    'Excess of Applicable Rate',
+    'Reasons',
+    'Other Reason',
+    'Supporting Material(s)',
+    'PDF Link',
+    'Email',
+    'Requester Signature',
+    'Submission Date',
+]
+
+
+def gsa_exemption_full_column_order():
+    return GSA_EXEMPTION_FRONT_COLUMNS + list(gsa_blank_approval_columns().keys())
+
+
+def gsa_compute_excess_applicable_pct(requested, gsa_approved):
+    """Same % as PDF Section B (a ÷ b × 100)."""
+    try:
+        ga = float(gsa_approved)
+        rq = float(requested)
+        if ga:
+            return round((rq / ga) * 100, 1)
+        return 0.0
+    except (TypeError, ValueError):
+        return 0.0
+
+
+def normalize_gsa_exemption_dataframe(df):
+    """Rename legacy headers; ensure expected columns exist."""
+    if df is None or df.empty:
+        return df
+    renames = {}
+    if 'Requestor Name' in df.columns and 'Requester Name' not in df.columns:
+        renames['Requestor Name'] = 'Requester Name'
+    if 'Requested Lodging Rate' in df.columns and 'Requested Lodfing Rate' not in df.columns:
+        renames['Requested Lodging Rate'] = 'Requested Lodfing Rate'
+    if renames:
+        df = df.rename(columns=renames)
+    return df
+
+
+def reorder_gsa_exemption_dataframe(df):
+    """Align column order with Google Sheet backend; unknown columns appended last."""
+    if df is None or df.empty:
+        return df
+    order = gsa_exemption_full_column_order()
+    for c in order:
+        if c not in df.columns:
+            df[c] = ''
+    extra = [c for c in df.columns if c not in order]
+    return df[order + extra]
+
+
+def _gsa_safe_float(val, default=0.0):
+    try:
+        if val is None or (isinstance(val, float) and pd.isna(val)):
+            return default
+        if isinstance(val, str) and not val.strip():
+            return default
+        return float(val)
+    except (TypeError, ValueError):
+        return default
+
+
+def _gsa_parse_reasons_from_sheet(raw):
+    if raw is None or (isinstance(raw, float) and pd.isna(raw)):
+        return []
+    s = str(raw).strip()
+    if not s:
+        return []
+    if s.startswith('['):
+        try:
+            parsed = json.loads(s)
+            return [str(x) for x in parsed] if isinstance(parsed, list) else []
+        except json.JSONDecodeError:
+            pass
+    return [x.strip() for x in s.split('\n') if x.strip()]
+
+
+def _gsa_supporting_links_from_sheet_field(raw):
+    """Comma-separated Drive URLs saved in Supporting Material(s)."""
+    if raw is None or (isinstance(raw, float) and pd.isna(raw)):
+        return []
+    parts = re.split(r',\s*', str(raw).strip())
+    links = []
+    for i, p in enumerate(parts):
+        p = p.strip()
+        if p.startswith('http'):
+            links.append({'name': f'Supporting file {i + 1}', 'url': p})
+    return links
+
+
+def gsa_sheet_row_to_pdf_form_data(row_dict):
+    """Rebuild create_gsa_exemption_pdf input from a GSA_exemption sheet row."""
+    row = dict(row_dict)
+    reasons = _gsa_parse_reasons_from_sheet(row.get('Reasons', ''))
+    supporting = _gsa_supporting_links_from_sheet_field(row.get('Supporting Material(s)', ''))
+    requester_name = (
+        str(row.get('Requester Name', '') or '')
+        or str(row.get('Requestor Name', '') or '')
+    )
+    req_rate = _gsa_safe_float(
+        row.get('Requested Lodfing Rate', row.get('Requested Lodging Rate', 0)),
+    )
+    fd = {
+        'requestor_name': requester_name,
+        'requester_email': str(row.get('Email', '') or ''),
+        'traveler_name': str(row.get('Traveler Name(s)', '') or ''),
+        'travel_city': str(row.get('Travel City/State', '') or ''),
+        'dates_of_travel': str(row.get('Dates of Travel', '') or ''),
+        'requested_lodging_rate': req_rate,
+        'gsa_lodging_rate': _gsa_safe_float(row.get('GSA-Approved Lodging Rate', 0)),
+        'reasons': reasons,
+        'reason_option_labels': GSA_REASON_OPTION_LABELS,
+        'other_reason': str(row.get('Other Reason', '') or ''),
+        'submission_date': row.get('Submission Date', '') or '',
+        'supporting_drive_links': supporting,
+        'supporting_materials': '',
+        'mabintou_signature': str(row.get('Mabintou Signature', '') or ''),
+        'jen_signature': str(row.get('Jen Signature', '') or ''),
+        'kemisha_signature': str(row.get('Kemisha Signature', '') or ''),
+        'lauren_signature': str(row.get('Lauren Signature', '') or ''),
+        'mabintou_approval_date': str(row.get('Mabintou Approval Date', '') or ''),
+        'jen_approval_date': str(row.get('Jen Approval Date', '') or ''),
+        'kemisha_approval_date': str(row.get('Kemisha Approval Date', '') or ''),
+        'lauren_approval_date': str(row.get('Lauren Approval Date', '') or ''),
+    }
+    return fd
 
 
 def create_gsa_exemption_pdf(form_data):
@@ -1608,7 +1836,7 @@ def create_gsa_exemption_pdf(form_data):
     tc = _gsa_escape_for_paragraph(form_data.get('travel_city', ''))
     dt = _gsa_escape_for_paragraph(form_data.get('dates_of_travel', ''))
     section_a_rows = [
-        [Paragraph('<b>Requestor Name</b>', body_wrap), Paragraph(rn, body_wrap)],
+        [Paragraph('<b>Requester Name</b>', body_wrap), Paragraph(rn, body_wrap)],
         [Paragraph('<b>Traveler Name(s)</b>', body_wrap), Paragraph(tn, body_wrap)],
         [Paragraph('<b>Travel City/State</b>', body_wrap), Paragraph(tc, body_wrap)],
         [Paragraph('<b>Dates of Travel (Begin – End)</b>', body_wrap), Paragraph(dt, body_wrap)],
@@ -1740,13 +1968,20 @@ def create_gsa_exemption_pdf(form_data):
             pass
         return str(d)
 
-    traveler_for_route = form_data.get('traveler_name', '')
-    (n1, _r1, k1, d1k), (n2, _r2, k2, d2k) = gsa_approver_routing_for_traveler(traveler_for_route)
+    routing_name = (
+        (form_data.get('requestor_name') or form_data.get('requester_name') or '').strip()
+    )
+    routing_email = (
+        (form_data.get('requester_email') or form_data.get('email', '') or '').strip()
+    )
+    (n1, _r1, k1, d1k), (n2, _r2, k2, d2k) = gsa_approver_routing_for_traveler(routing_name, routing_email)
     sig_pa = form_data.get(k1, '') or ''
     sig_lead = form_data.get(k2, '') or ''
     date_pa = _fmt_date(form_data.get(d1k, ''))
     date_lead = _fmt_date(form_data.get(d2k, ''))
-    requestor_name = (form_data.get('requestor_name', '') or '').strip()
+    requestor_name = (
+        (form_data.get('requestor_name') or form_data.get('requester_name') or '').strip()
+    )
     sub_raw = form_data.get('submission_date', '')
     if not sub_raw:
         sub_raw = datetime.now()
@@ -1938,7 +2173,8 @@ def load_travel_sheet():
 @st.cache_data(ttl=600)
 def load_gsa_exemption_sheet():
     try:
-        return pd.DataFrame(_get_records_with_retry('HRSA64_TA_Request', 'GSA_exemption'))
+        df = pd.DataFrame(_get_records_with_retry('HRSA64_TA_Request', 'GSA_exemption'))
+        return normalize_gsa_exemption_dataframe(df)
     except Exception:
         return pd.DataFrame()
 
@@ -4524,64 +4760,290 @@ GU-TAP System
                                 st.info("No GSA exemption forms submitted yet.")
                             else:
                                 def is_routed_to_coordinator_gsa(row):
-                                    traveler_name_r = str(row.get('Traveler Name(s)', '')).lower()
-                                    if 'kemisha' in traveler_name_r:
-                                        return status_col in ['Mabintou Approval Status', 'Jen Approval Status']
-                                    elif 'mabintou' in traveler_name_r:
-                                        return status_col in ['Lauren Approval Status', 'Kemisha Approval Status']
-                                    return status_col in ['Mabintou Approval Status', 'Kemisha Approval Status']
+                                    requester_name_check = str(
+                                        row.get('Requester Name', '') or row.get('Requestor Name', '')
+                                    ).lower()
+                                    requester_email_check = str(row.get('Email', '')).lower()
+                                    is_kemisha_traveler = (
+                                        requester_email_check == 'kd802@georgetown.edu' or 'kemisha' in requester_name_check
+                                    )
+                                    is_mabintou_traveler = (
+                                        requester_email_check == 'mo887@georgetown.edu' or 'mabintou' in requester_name_check
+                                    )
+                                    if is_kemisha_traveler:
+                                        if is_mabintou:
+                                            return status_col == 'Mabintou Approval Status'
+                                        if is_jen:
+                                            return status_col == 'Jen Approval Status'
+                                        return False
+                                    if is_mabintou_traveler:
+                                        if is_lauren:
+                                            return status_col == 'Lauren Approval Status'
+                                        if is_kemisha:
+                                            return status_col == 'Kemisha Approval Status'
+                                        return False
+                                    if is_mabintou:
+                                        return status_col == 'Mabintou Approval Status'
+                                    if is_kemisha:
+                                        return status_col == 'Kemisha Approval Status'
+                                    if is_jen:
+                                        return status_col == 'Jen Approval Status'
+                                    if is_lauren:
+                                        return status_col == 'Lauren Approval Status'
+                                    return False
+
+                                def get_other_approver_status_col_gsa(row):
+                                    requester_name_check = str(
+                                        row.get('Requester Name', '') or row.get('Requestor Name', '')
+                                    ).lower()
+                                    requester_email_check = str(row.get('Email', '')).lower()
+                                    is_kemisha_traveler = (
+                                        requester_email_check == 'kd802@georgetown.edu' or 'kemisha' in requester_name_check
+                                    )
+                                    is_mabintou_traveler = (
+                                        requester_email_check == 'mo887@georgetown.edu' or 'mabintou' in requester_name_check
+                                    )
+                                    if is_kemisha_traveler:
+                                        if status_col == 'Mabintou Approval Status':
+                                            return 'Jen Approval Status'
+                                        if status_col == 'Jen Approval Status':
+                                            return 'Mabintou Approval Status'
+                                    elif is_mabintou_traveler:
+                                        if status_col == 'Lauren Approval Status':
+                                            return 'Kemisha Approval Status'
+                                        if status_col == 'Kemisha Approval Status':
+                                            return 'Lauren Approval Status'
+                                    else:
+                                        if status_col == 'Mabintou Approval Status':
+                                            return 'Kemisha Approval Status'
+                                        if status_col == 'Kemisha Approval Status':
+                                            return 'Mabintou Approval Status'
+                                        if status_col == 'Jen Approval Status':
+                                            return 'Mabintou Approval Status'
+                                        if status_col == 'Lauren Approval Status':
+                                            return 'Mabintou Approval Status'
+                                    return None
 
                                 pending_gsa = df_gsa_review.copy()
                                 if status_col not in pending_gsa.columns:
                                     pending_gsa[status_col] = ''
                                 routed_mask_gsa = pending_gsa.apply(is_routed_to_coordinator_gsa, axis=1)
-                                pending_gsa = pending_gsa[routed_mask_gsa]
-                                status_vals = pending_gsa[status_col].astype(str).str.lower()
-                                pending_gsa = pending_gsa[(status_vals.isin(['', 'pending', 'nan'])) | pending_gsa[status_col].isna()]
+                                pending_gsa = pending_gsa[routed_mask_gsa].copy()
+                                if status_col in pending_gsa.columns and len(pending_gsa) > 0:
+                                    pending_gsa = pending_gsa[
+                                        (pending_gsa[status_col].astype(str).str.lower() == 'pending')
+                                        | (pending_gsa[status_col].isna())
+                                        | (pending_gsa[status_col].astype(str) == '')
+                                        | (pending_gsa[status_col].astype(str) == 'nan')
+                                    ].copy()
+                                    if len(pending_gsa) > 0:
+                                        def not_rejected_by_other_gsa(row):
+                                            other_col = get_other_approver_status_col_gsa(row)
+                                            if other_col and other_col in df_gsa_review.columns:
+                                                other_status = str(row.get(other_col, '')).lower()
+                                                return other_status != 'reject'
+                                            return True
+
+                                        pending_gsa = pending_gsa[pending_gsa.apply(not_rejected_by_other_gsa, axis=1)].copy()
+                                elif status_col not in pending_gsa.columns:
+                                    pending_gsa = pd.DataFrame()
 
                                 st.markdown(f"#### 📋 GSA Forms Pending Your Approval ({coordinator_display_name})")
                                 if pending_gsa.empty:
                                     st.info("No GSA exemption forms pending your approval.")
                                 else:
                                     gsa_options = list(pending_gsa.index)
-                                    gsa_labels = {i: f"{pending_gsa.at[i, 'Traveler Name(s)']} | {pending_gsa.at[i, 'Travel City/State']} | {pending_gsa.at[i, 'Dates of Travel']}" for i in gsa_options}
-                                    selected_gsa_idx = st.selectbox("Select a GSA exemption form to review", options=gsa_options, format_func=lambda i: gsa_labels.get(i, str(i)))
+                                    gsa_labels = {
+                                        i: f"{pending_gsa.at[i, 'Traveler Name(s)']} | {pending_gsa.at[i, 'Travel City/State']} | {pending_gsa.at[i, 'Dates of Travel']}"
+                                        for i in gsa_options
+                                    }
+                                    selected_gsa_idx = st.selectbox(
+                                        "Select a GSA exemption form to review",
+                                        options=gsa_options,
+                                        format_func=lambda i: gsa_labels.get(i, str(i)),
+                                        key='gsa_review_select',
+                                    )
                                     selected_gsa = pending_gsa.loc[selected_gsa_idx].to_dict()
 
                                     st.markdown("**Form Details:**")
-                                    for k, v in [('Requestor Name', 'Requestor Name'), ('Traveler Name(s)', 'Traveler Name(s)'), ('Travel City/State', 'Travel City/State'), ('Dates of Travel', 'Dates of Travel'), ('Requested Lodging Rate', 'Requested Lodging Rate'), ('GSA-Approved Lodging Rate', 'GSA-Approved Lodging Rate'), ('Reasons', 'Reasons')]:
-                                        if k in selected_gsa and selected_gsa.get(k):
-                                            st.write(f"- **{k}**: {selected_gsa[k]}")
+                                    for k in [
+                                        'Requester Name',
+                                        'Email',
+                                        'Traveler Name(s)',
+                                        'Travel City/State',
+                                        'Dates of Travel',
+                                        'Requested Lodging Rate',
+                                        'GSA-Approved Lodging Rate',
+                                        'Excess of Applicable Rate',
+                                        'Reasons',
+                                        'Other Reason',
+                                        'Requester Signature',
+                                    ]:
+                                        val = selected_gsa.get(k)
+                                        if not val and k == 'Requester Name':
+                                            val = selected_gsa.get('Requestor Name')
+                                        if not val and k == 'Requested Lodfing Rate':
+                                            val = selected_gsa.get('Requested Lodging Rate')
+                                        if val:
+                                            disp = 'Email (requester)' if k == 'Email' else k
+                                            st.write(f"- **{disp}**: {val}")
                                     if selected_gsa.get('PDF Link'):
                                         st.markdown(f"**PDF:** [View Form]({selected_gsa['PDF Link']})")
                                     if selected_gsa.get('Supporting Material(s)'):
                                         st.markdown(f"**Supporting Materials:** {selected_gsa['Supporting Material(s)']}")
 
-                                    approval_decision_gsa = st.radio("Decision", ["✅ Approve", "❌ Reject"], key='gsa_approval_decision', horizontal=True)
+                                    approval_decision_gsa = st.radio(
+                                        "Decision",
+                                        ["✅ Approve", "❌ Reject"],
+                                        key='gsa_approval_decision',
+                                        horizontal=True,
+                                    )
+                                    approval_date_gsa = st.date_input(
+                                        "Approval date",
+                                        value=datetime.now().date(),
+                                        key='gsa_approval_date',
+                                    )
+
                                     if approval_decision_gsa == "✅ Approve":
-                                        coordinator_signature_gsa = st.text_input("Enter your full name (signature) *", key='gsa_coordinator_signature')
+                                        coordinator_signature_gsa = st.text_input(
+                                            "Enter your full name (signature) *",
+                                            key='gsa_coordinator_signature',
+                                        )
                                         approve_gsa_clicked = st.button("✅ Sign and Approve", key='gsa_approve_btn', type='primary')
                                         if approve_gsa_clicked and coordinator_signature_gsa:
                                             try:
                                                 updated_gsa = df_gsa_review.copy()
-                                                sig_col = status_col.replace('Approval Status', 'Signature')
-                                                date_col = status_col.replace('Approval Status', 'Date')
-                                                for c in [status_col, sig_col, date_col]:
+                                                sig_col_g = status_col.replace('Approval Status', 'Signature')
+                                                date_col_g = status_col.replace('Approval Status', 'Approval Date')
+                                                for c in [status_col, sig_col_g, date_col_g]:
                                                     if c not in updated_gsa.columns:
                                                         updated_gsa[c] = ''
                                                 updated_gsa.loc[selected_gsa_idx, status_col] = 'approve'
-                                                updated_gsa.loc[selected_gsa_idx, sig_col] = coordinator_signature_gsa
-                                                updated_gsa.loc[selected_gsa_idx, date_col] = datetime.today().strftime('%Y-%m-%d')
+                                                updated_gsa.loc[selected_gsa_idx, sig_col_g] = coordinator_signature_gsa
+                                                updated_gsa.loc[selected_gsa_idx, date_col_g] = approval_date_gsa.strftime('%Y-%m-%d')
                                                 updated_gsa = updated_gsa.fillna("")
+                                                updated_gsa = reorder_gsa_exemption_dataframe(updated_gsa)
 
                                                 spreadsheet_gsa = client.open('HRSA64_TA_Request')
                                                 try:
                                                     ws_gsa = spreadsheet_gsa.worksheet('GSA_exemption')
-                                                except:
-                                                    ws_gsa = spreadsheet_gsa.add_worksheet(title='GSA_exemption', rows=1000, cols=25)
+                                                except Exception:
+                                                    ws_gsa = spreadsheet_gsa.add_worksheet(title='GSA_exemption', rows=1000, cols=40)
                                                 ws_gsa.update([updated_gsa.columns.values.tolist()] + updated_gsa.values.tolist())
+
+                                                requester_nc = str(
+                                                    selected_gsa.get('Requester Name', '')
+                                                    or selected_gsa.get('Requestor Name', '')
+                                                ).lower()
+                                                requester_ec = str(selected_gsa.get('Email', '')).lower()
+                                                is_kemisha_t = requester_ec == 'kd802@georgetown.edu' or 'kemisha' in requester_nc
+                                                is_mabintou_t = requester_ec == 'mo887@georgetown.edu' or 'mabintou' in requester_nc
+                                                out_of_office_chk = {'kemisha': False, 'mabintou': False}
+                                                if is_kemisha_t:
+                                                    approver1_status_col_check = 'Mabintou Approval Status'
+                                                    approver2_status_col_check = 'Jen Approval Status'
+                                                    approver1_name_final = 'Mabintou Ouattara'
+                                                    approver2_name_final = 'Jenevieve Opoku'
+                                                elif is_mabintou_t:
+                                                    approver1_status_col_check = 'Lauren Approval Status'
+                                                    approver2_status_col_check = 'Kemisha Approval Status'
+                                                    approver1_name_final = 'Lauren Mathae'
+                                                    approver2_name_final = 'Kemisha Denny'
+                                                else:
+                                                    if out_of_office_chk.get('mabintou', False):
+                                                        approver1_status_col_check = 'Lauren Approval Status'
+                                                        approver1_name_final = 'Lauren Mathae'
+                                                    else:
+                                                        approver1_status_col_check = 'Mabintou Approval Status'
+                                                        approver1_name_final = 'Mabintou Ouattara'
+                                                    if out_of_office_chk.get('kemisha', False):
+                                                        approver2_status_col_check = 'Jen Approval Status'
+                                                        approver2_name_final = 'Jenevieve Opoku'
+                                                    else:
+                                                        approver2_status_col_check = 'Kemisha Approval Status'
+                                                        approver2_name_final = 'Kemisha Denny'
+
+                                                for col in [approver1_status_col_check, approver2_status_col_check]:
+                                                    if col not in updated_gsa.columns:
+                                                        updated_gsa[col] = ''
+                                                a1s = updated_gsa.loc[selected_gsa_idx, approver1_status_col_check]
+                                                a2s = updated_gsa.loc[selected_gsa_idx, approver2_status_col_check]
+                                                if pd.isna(a1s) or str(a1s).lower() == 'nan':
+                                                    a1s = ''
+                                                if pd.isna(a2s) or str(a2s).lower() == 'nan':
+                                                    a2s = ''
+
+                                                if (
+                                                    str(a1s).lower() == 'approve'
+                                                    and str(a2s).lower() == 'approve'
+                                                ):
+                                                    try:
+                                                        row_dict = updated_gsa.loc[selected_gsa_idx].to_dict()
+                                                        form_pdf = gsa_sheet_row_to_pdf_form_data(row_dict)
+                                                        final_buf = create_gsa_exemption_pdf(form_pdf)
+                                                        safe_ap = re.sub(
+                                                            r'[^\w\-. ]',
+                                                            '_',
+                                                            f"{selected_gsa.get('Requester Name') or selected_gsa.get('Requestor Name', '')}_{selected_gsa.get('Traveler Name(s)', '')}_{selected_gsa.get('Travel City/State', '')}",
+                                                        )[:120]
+                                                        final_name = f"GSA_Lodging_Exemption_Approved_{safe_ap}.pdf"
+                                                        folder_id_travel_pdf = "1_O_L-jPR7bldiryRNB3WxbAaG8VqvmCt"
+                                                        pdf_obj = io.BytesIO(final_buf.getvalue())
+                                                        pdf_obj.name = final_name
+                                                        pdf_obj.type = 'application/pdf'
+                                                        final_link = upload_file_to_drive(
+                                                            file=pdf_obj,
+                                                            filename=final_name,
+                                                            folder_id=folder_id_travel_pdf,
+                                                            creds_dict=st.secrets["gcp_service_account"],
+                                                        )
+                                                        updated_gsa.loc[selected_gsa_idx, 'PDF Link'] = final_link
+                                                        updated_gsa = updated_gsa.fillna("")
+                                                        updated_gsa = reorder_gsa_exemption_dataframe(updated_gsa)
+                                                        ws_gsa.update(
+                                                            [updated_gsa.columns.values.tolist()] + updated_gsa.values.tolist()
+                                                        )
+                                                        notify_email = str(selected_gsa.get('Email', '') or '').strip()
+                                                        if notify_email:
+                                                            subj = f"GSA Lodging Exemption Approved - {selected_gsa.get('Travel City/State', '')}"
+                                                            body = f"""
+Dear {selected_gsa.get('Requester Name') or selected_gsa.get('Requestor Name', 'colleague')},
+
+Your GSA Lodging Rate Exemption form has been fully approved by both coordinators.
+
+Travel city/state: {selected_gsa.get('Travel City/State', 'N/A')}
+Dates: {selected_gsa.get('Dates of Travel', 'N/A')}
+
+Approved by:
+- {approver1_name_final}
+- {approver2_name_final}
+
+Final PDF: {final_link}
+
+Best regards,
+GU-TAP System
+                                                            """
+                                                            try:
+                                                                send_email_mailjet(
+                                                                    to_email=notify_email,
+                                                                    subject=subj,
+                                                                    body=body.strip(),
+                                                                )
+                                                                st.success(
+                                                                    f"✅ GSA form fully approved. Notification sent to {notify_email}"
+                                                                )
+                                                            except Exception as em:
+                                                                st.warning(f"⚠️ Approved but email failed: {str(em)}")
+                                                        else:
+                                                            st.success("✅ GSA form fully approved (no email on file).")
+                                                    except Exception as ex:
+                                                        st.warning(f"⚠️ Final PDF/email step: {str(ex)}")
+                                                else:
+                                                    st.success(
+                                                        "✅ Your approval has been recorded. Waiting for the other coordinator's approval."
+                                                    )
+
                                                 st.cache_data.clear()
-                                                st.success("✅ GSA exemption form approved!")
                                                 time.sleep(2)
                                                 st.rerun()
                                             except Exception as e:
@@ -4589,32 +5051,119 @@ GU-TAP System
                                         elif approve_gsa_clicked:
                                             st.warning("Please enter your signature.")
                                     else:
-                                        reject_note_gsa = st.text_input("Rejection reason (optional)", key='gsa_reject_note')
+                                        reject_note_gsa = st.text_area(
+                                            "Reason for rejection *",
+                                            key='gsa_reject_note',
+                                            height=120,
+                                        )
                                         reject_gsa_clicked = st.button("❌ Reject", key='gsa_reject_btn', type='secondary')
                                         if reject_gsa_clicked:
-                                            try:
-                                                updated_gsa = df_gsa_review.copy()
-                                                for c in [status_col]:
-                                                    if c not in updated_gsa.columns:
-                                                        updated_gsa[c] = ''
-                                                updated_gsa.loc[selected_gsa_idx, status_col] = 'reject'
-                                                note_col_gsa = status_col.replace('Approval Status', 'Note')
-                                                if note_col_gsa not in updated_gsa.columns:
-                                                    updated_gsa[note_col_gsa] = ''
-                                                updated_gsa.loc[selected_gsa_idx, note_col_gsa] = reject_note_gsa or ''
-                                                updated_gsa = updated_gsa.fillna("")
-                                                spreadsheet_gsa = client.open('HRSA64_TA_Request')
+                                            if not (reject_note_gsa or "").strip():
+                                                st.warning("⚠️ Please provide a reason for rejection.")
+                                            else:
                                                 try:
-                                                    ws_gsa = spreadsheet_gsa.worksheet('GSA_exemption')
-                                                except:
-                                                    ws_gsa = spreadsheet_gsa.add_worksheet(title='GSA_exemption', rows=1000, cols=25)
-                                                ws_gsa.update([updated_gsa.columns.values.tolist()] + updated_gsa.values.tolist())
-                                                st.cache_data.clear()
-                                                st.success("❌ GSA exemption form rejected.")
-                                                time.sleep(2)
-                                                st.rerun()
-                                            except Exception as e:
-                                                st.error(f"Error: {str(e)}")
+                                                    updated_gsa = df_gsa_review.copy()
+                                                    for c in [status_col]:
+                                                        if c not in updated_gsa.columns:
+                                                            updated_gsa[c] = ''
+                                                    updated_gsa.loc[selected_gsa_idx, status_col] = 'reject'
+                                                    date_col_r = status_col.replace('Approval Status', 'Approval Date')
+                                                    if date_col_r not in updated_gsa.columns:
+                                                        updated_gsa[date_col_r] = ''
+                                                    updated_gsa.loc[selected_gsa_idx, date_col_r] = approval_date_gsa.strftime('%Y-%m-%d')
+                                                    note_col_gsa = status_col.replace('Approval Status', 'Note')
+                                                    if note_col_gsa not in updated_gsa.columns:
+                                                        updated_gsa[note_col_gsa] = ''
+                                                    updated_gsa.loc[selected_gsa_idx, note_col_gsa] = reject_note_gsa.strip()
+
+                                                    requester_name_chk = str(
+                                                        selected_gsa.get('Requester Name', '')
+                                                        or selected_gsa.get('Requestor Name', '')
+                                                    ).lower()
+                                                    requester_email_chk = str(selected_gsa.get('Email', '')).lower()
+                                                    is_kemisha_traveler_check = (
+                                                        requester_email_chk == 'kd802@georgetown.edu'
+                                                        or 'kemisha' in requester_name_chk
+                                                    )
+                                                    is_mabintou_traveler_check = (
+                                                        requester_email_chk == 'mo887@georgetown.edu'
+                                                        or 'mabintou' in requester_name_chk
+                                                    )
+                                                    other_status_col = None
+                                                    if is_kemisha_traveler_check:
+                                                        if status_col == 'Mabintou Approval Status':
+                                                            other_status_col = 'Jen Approval Status'
+                                                        elif status_col == 'Jen Approval Status':
+                                                            other_status_col = 'Mabintou Approval Status'
+                                                    elif is_mabintou_traveler_check:
+                                                        if status_col == 'Lauren Approval Status':
+                                                            other_status_col = 'Kemisha Approval Status'
+                                                        elif status_col == 'Kemisha Approval Status':
+                                                            other_status_col = 'Lauren Approval Status'
+                                                    else:
+                                                        if status_col == 'Mabintou Approval Status':
+                                                            other_status_col = 'Kemisha Approval Status'
+                                                        elif status_col == 'Kemisha Approval Status':
+                                                            other_status_col = 'Mabintou Approval Status'
+                                                        elif status_col == 'Jen Approval Status':
+                                                            other_status_col = 'Mabintou Approval Status'
+                                                        elif status_col == 'Lauren Approval Status':
+                                                            other_status_col = 'Mabintou Approval Status'
+
+                                                    if other_status_col and other_status_col in updated_gsa.columns:
+                                                        updated_gsa.loc[selected_gsa_idx, other_status_col] = ''
+                                                        other_date_col = other_status_col.replace('Approval Status', 'Approval Date')
+                                                        other_sig_col = other_status_col.replace('Approval Status', 'Signature')
+                                                        if other_date_col in updated_gsa.columns:
+                                                            updated_gsa.loc[selected_gsa_idx, other_date_col] = ''
+                                                        if other_sig_col in updated_gsa.columns:
+                                                            updated_gsa.loc[selected_gsa_idx, other_sig_col] = ''
+
+                                                    updated_gsa = updated_gsa.fillna("")
+                                                    updated_gsa = reorder_gsa_exemption_dataframe(updated_gsa)
+                                                    spreadsheet_gsa = client.open('HRSA64_TA_Request')
+                                                    try:
+                                                        ws_gsa = spreadsheet_gsa.worksheet('GSA_exemption')
+                                                    except Exception:
+                                                        ws_gsa = spreadsheet_gsa.add_worksheet(title='GSA_exemption', rows=1000, cols=40)
+                                                    ws_gsa.update([updated_gsa.columns.values.tolist()] + updated_gsa.values.tolist())
+
+                                                    notify_email = str(selected_gsa.get('Email', '') or '').strip()
+                                                    if notify_email:
+                                                        subj = f"GSA Lodging Exemption Rejected - {selected_gsa.get('Travel City/State', '')}"
+                                                        body = f"""
+Dear {selected_gsa.get('Requester Name') or selected_gsa.get('Requestor Name', 'colleague')},
+
+Your GSA Lodging Rate Exemption form has been rejected.
+
+City/State: {selected_gsa.get('Travel City/State', 'N/A')}
+Dates: {selected_gsa.get('Dates of Travel', 'N/A')}
+
+Rejected by: {coordinator_display_name}
+Reason: {reject_note_gsa.strip()}
+
+Best regards,
+GU-TAP System
+                                                        """
+                                                        try:
+                                                            send_email_mailjet(
+                                                                to_email=notify_email,
+                                                                subject=subj,
+                                                                body=body.strip(),
+                                                            )
+                                                            st.success(
+                                                                f"❌ GSA form rejected. Notification sent to {notify_email}"
+                                                            )
+                                                        except Exception as em:
+                                                            st.warning(f"⚠️ Rejected but email failed: {str(em)}")
+                                                    else:
+                                                        st.success("❌ GSA exemption form rejected.")
+
+                                                    st.cache_data.clear()
+                                                    time.sleep(2)
+                                                    st.rerun()
+                                                except Exception as e:
+                                                    st.error(f"Error: {str(e)}")
                         except Exception as e:
                             st.error(f"Error loading GSA exemption forms: {str(e)}")
 
@@ -6624,16 +7173,20 @@ GU-TAP System
                     """, unsafe_allow_html=True)
                     
                     st.info(
-                        "**PDF:** Generated for download below. **Supporting files** are uploaded to Google Drive; "
-                        "the PDF lists clickable links to those files. (No sheet/email for signatures in this flow.)"
+                        "**Submit** saves your request to Google Sheets, uploads the PDF and supporting files to Google Drive "
+                        "(same folders as Travel Authorization), emails the two routed coordinators for approval, and lets you download the PDF below."
                     )
                     st.markdown("Fill out the form below to generate your GSA Lodging Rate Exemption Form.")
                     travel_city = st.text_input("Travel City/State *", placeholder="Enter text...", key="gsa_travel_city")
-                    col1, col2 = st.columns(2)
-                    with col1:
-                        requestor_name = st.text_input("Requestor Name *", placeholder="Enter text...", key="gsa_requestor_name")
-                    with col2:
-                        traveler_name = st.text_input("Traveler Name *", placeholder="Enter text...", key="gsa_traveler_name")
+                    st.markdown("##### Requester (from your login account)")
+                    st.info(
+                        f"**Name:** {staff_name or '—'}  \n**Email:** {user_email or '—'}"
+                    )
+                    st.caption(
+                        "Requester name and email come from your GU-TAP login. They are saved on the form, "
+                        "used for approver routing, and for all notifications to you."
+                    )
+                    traveler_name = st.text_input("Traveler Name *", placeholder="Enter text...", key="gsa_traveler_name")
                     col3, col4 = st.columns(2)
                     with col3:
                         travel_date_from = st.date_input("Travel Date From *", value=datetime.today().date(), key="gsa_travel_date_from")
@@ -6644,19 +7197,11 @@ GU-TAP System
                     requested_lodging_rate = st.number_input("Requested Lodging Rate *", value=100, min_value=0, step=1, key="gsa_requested_lodging_rate")
                     gsa_lodging_rate = st.number_input("GSA-Approved Lodging Rate *", value=100, min_value=0, step=1, key="gsa_lodging_rate")
 
-                    gsa_reason_option_labels = [
-                        "The traveler is attending a conference or event that requires lodging at a pre-arranged location. Pre-arranged lodging costs at this location exceed the applicable government rate for the business destination.",
-                        "Travel occurs during a period when subsistence costs have temporarily increased due to conferences, conventions, special events.",
-                        "The applicable government rate limitation is generally inadequate for the business destination. Affordable lodging is not available or cannot be obtained within a reasonable commuting distance and transportation costs from less expensive lodging would offset any savings.",
-                        "Safety or security considerations require the traveler to obtain lodging in a location that meets appropriate safety standards. Lodging options within the applicable government rate are not reasonably available in such areas, and higher-cost lodging is necessary to mitigate risk.",
-                        "Due to special duties of the assignment, unusually high expenses are necessary to conduct official business.",
-                        "Reason other than one listed above (please describe below).",
-                    ]
-                    gsa_other_idx = len(gsa_reason_option_labels) - 1
+                    gsa_other_idx = len(GSA_REASON_OPTION_LABELS) - 1
 
                     st.markdown("##### Section C: Reason(s) for request")
                     st.caption("Check ✔️ each line that applies (use the box on the left).")
-                    for idx, rlab in enumerate(gsa_reason_option_labels):
+                    for idx, rlab in enumerate(GSA_REASON_OPTION_LABELS):
                         c_mark, c_txt = st.columns([0.065, 0.935])
                         with c_mark:
                             st.checkbox(" ", key=f"gsa_reason_cb_{idx}", label_visibility="collapsed")
@@ -6672,7 +7217,7 @@ GU-TAP System
                         )
 
                     st.markdown("##### Supporting materials")
-                    st.caption("Files are uploaded to Google Drive; each file’s link appears in the PDF.")
+                    st.caption("Files are uploaded to Google Drive; each file's link appears in the PDF.")
                     document_lodging = st.file_uploader(
                         "Upload supporting files (optional).",
                         accept_multiple_files=True,
@@ -6680,16 +7225,23 @@ GU-TAP System
                     )
 
                     if st.button("Submit", key="gsa_lodging_submit1"):
+                        requester_name = (staff_name or "").strip()
+                        ce = (user_email or "").strip()
                         reason_for_request = []
-                        for idx in range(len(gsa_reason_option_labels)):
+                        for idx in range(len(GSA_REASON_OPTION_LABELS)):
                             if st.session_state.get(f"gsa_reason_cb_{idx}", False):
-                                reason_for_request.append(gsa_reason_option_labels[idx])
+                                reason_for_request.append(GSA_REASON_OPTION_LABELS[idx])
                         other_reason = ""
                         if st.session_state.get(f"gsa_reason_cb_{gsa_other_idx}", False):
                             other_reason = (st.session_state.get("gsa_other_explanation") or "").strip()
 
                         errors = []
-                        if not requestor_name: errors.append("Requestor name is required.")
+                        if not requester_name:
+                            errors.append(
+                                "Your login account has no display name in the system. Contact an administrator."
+                            )
+                        if not ce or '@' not in ce:
+                            errors.append("Your login email is missing or invalid.")
                         if not traveler_name: errors.append("Traveler name is required.")
                         if not travel_city: errors.append("Travel city is required.")
                         if not travel_date_from: errors.append("Travel date from is required.")
@@ -6710,8 +7262,8 @@ GU-TAP System
                                     folder_id_lodging = "14n7LFGUyncbi_t2pdWvME1mHNw_t8Mii"
                                     for file in document_lodging:
                                         renamed_filename = (
-                                            f"{requestor_name}_{traveler_name}_{travel_city}_"
-                                            f"{travel_date_from}_{travel_date_to}_{file.name}"
+                                            f"GSA_{requester_name.replace(' ', '_')}_{traveler_name.replace(' ', '_')}_"
+                                            f"{travel_city.replace(' ', '_')}_{file.name}"
                                         )
                                         renamed_filename = re.sub(r'[^\w\-. ]', '_', renamed_filename)[:200]
                                         link = upload_file_to_drive(
@@ -6725,8 +7277,11 @@ GU-TAP System
                                 except Exception as e:
                                     st.warning(f"⚠️ Supporting file upload failed: {str(e)}. PDF will list uploads only if successful.")
 
+                            support_urls = ", ".join([x["url"] for x in supporting_drive_links if x.get("url")])
+
                             gsa_form_data = {
-                                'requestor_name': requestor_name,
+                                'requestor_name': requester_name,
+                                'requester_email': ce,
                                 'submission_date': datetime.now(),
                                 'traveler_name': traveler_name,
                                 'travel_city': travel_city,
@@ -6734,7 +7289,7 @@ GU-TAP System
                                 'requested_lodging_rate': requested_lodging_rate,
                                 'gsa_lodging_rate': gsa_lodging_rate,
                                 'reasons': reason_for_request,
-                                'reason_option_labels': gsa_reason_option_labels,
+                                'reason_option_labels': GSA_REASON_OPTION_LABELS,
                                 'other_reason': other_reason,
                                 'supporting_drive_links': supporting_drive_links,
                                 'supporting_materials': '',
@@ -6749,13 +7304,167 @@ GU-TAP System
                             }
                             try:
                                 pdf_buffer = create_gsa_exemption_pdf(gsa_form_data)
-                                safe_bits = re.sub(r'[^\w\-. ]', '_', f"{requestor_name}_{traveler_name}_{travel_city}")[:120]
+                                safe_bits = re.sub(r'[^\w\-. ]', '_', f"{requester_name}_{traveler_name}_{travel_city}")[:120]
                                 pdf_filename = f"GSA_Lodging_Exemption_{safe_bits}.pdf"
-                                st.session_state["gsa_pdf_bytes"] = pdf_buffer.getvalue()
-                                st.session_state["gsa_pdf_filename"] = pdf_filename
-                                st.success("✅ PDF ready. Download below; supporting links are in the PDF when upload succeeded.")
                             except Exception as e:
                                 st.error(f"Could not generate PDF: {str(e)}")
+                                pdf_buffer = None
+
+                            if pdf_buffer is not None:
+                                excess_pct = gsa_compute_excess_applicable_pct(requested_lodging_rate, gsa_lodging_rate)
+                                new_gsa_row = {
+                                    'Requester Name': requester_name,
+                                    'Traveler Name(s)': traveler_name,
+                                    'Travel City/State': travel_city,
+                                    'Dates of Travel': travel_date_from.strftime("%Y-%m-%d") + " – " + travel_date_to.strftime("%Y-%m-%d"),
+                                    'Requested Lodfing Rate': requested_lodging_rate,
+                                    'GSA-Approved Lodging Rate': gsa_lodging_rate,
+                                    'Excess of Applicable Rate': f'{excess_pct}%',
+                                    'Reasons': "\n".join(reason_for_request),
+                                    'Other Reason': other_reason,
+                                    'Supporting Material(s)': support_urls,
+                                    'PDF Link': '',
+                                    'Email': ce,
+                                    'Requester Signature': (requester_name or '').strip(),
+                                    'Submission Date': datetime.now().strftime('%Y-%m-%d'),
+                                    **gsa_blank_approval_columns(),
+                                }
+                                try:
+                                    df_gsa_save = load_gsa_exemption_sheet()
+                                    if df_gsa_save.empty:
+                                        merged_gsa = pd.DataFrame([new_gsa_row])
+                                    else:
+                                        for c in df_gsa_save.columns:
+                                            if c not in new_gsa_row:
+                                                new_gsa_row[c] = ''
+                                        for c in list(new_gsa_row.keys()):
+                                            if c not in df_gsa_save.columns:
+                                                df_gsa_save[c] = ''
+                                        merged_gsa = pd.concat([df_gsa_save, pd.DataFrame([new_gsa_row])], ignore_index=True)
+                                    merged_gsa = merged_gsa.fillna("")
+                                    merged_gsa = reorder_gsa_exemption_dataframe(merged_gsa)
+                                    spreadsheet_gsa = client.open('HRSA64_TA_Request')
+                                    try:
+                                        ws_gsa_save = spreadsheet_gsa.worksheet('GSA_exemption')
+                                    except Exception:
+                                        ws_gsa_save = spreadsheet_gsa.add_worksheet(
+                                            title='GSA_exemption',
+                                            rows=1000,
+                                            cols=len(gsa_exemption_full_column_order()) + 5,
+                                        )
+                                    ws_gsa_save.update([merged_gsa.columns.values.tolist()] + merged_gsa.values.tolist())
+                                    st.cache_data.clear()
+                                    st.success("✅ GSA exemption form saved to Google Sheets.")
+                                except Exception as e:
+                                    st.warning(f"⚠️ Error saving to Google Sheets: {str(e)}")
+
+                                folder_id_pdf = "1_O_L-jPR7bldiryRNB3WxbAaG8VqvmCt"
+                                try:
+                                    pdf_file_obj = io.BytesIO(pdf_buffer.getvalue())
+                                    pdf_file_obj.name = pdf_filename
+                                    pdf_file_obj.type = 'application/pdf'
+                                    pdf_link = upload_file_to_drive(
+                                        file=pdf_file_obj,
+                                        filename=pdf_filename,
+                                        folder_id=folder_id_pdf,
+                                        creds_dict=st.secrets["gcp_service_account"],
+                                    )
+                                    st.success("✅ PDF uploaded to Google Drive.")
+                                except Exception as e:
+                                    st.error(f"❌ Error uploading PDF: {str(e)}")
+                                    pdf_link = ''
+
+                                if pdf_link:
+                                    try:
+                                        st.cache_data.clear()
+                                        df_gsa2 = load_gsa_exemption_sheet()
+                                        submission_date = datetime.now().strftime('%Y-%m-%d')
+                                        row_idx = None
+                                        if (
+                                            not df_gsa2.empty
+                                            and 'Traveler Name(s)' in df_gsa2.columns
+                                            and 'Submission Date' in df_gsa2.columns
+                                        ):
+                                            match = df_gsa2[
+                                                (df_gsa2['Traveler Name(s)'].astype(str) == str(traveler_name))
+                                                & (df_gsa2['Submission Date'].astype(str).str.contains(submission_date, na=False))
+                                            ]
+                                            if 'Requester Name' in df_gsa2.columns:
+                                                match = match[
+                                                    match['Requester Name'].astype(str) == str(requester_name)
+                                                ]
+                                            if not match.empty:
+                                                row_idx = match.index[-1]
+                                        if row_idx is None and not df_gsa2.empty:
+                                            row_idx = len(df_gsa2) - 1
+                                        if row_idx is not None and row_idx >= 0 and row_idx < len(df_gsa2):
+                                            updated_df = df_gsa2.copy()
+                                            route = travel_routing_from_traveler(requester_name, ce)
+                                            c1 = route['approver1_status_col']
+                                            c2 = route['approver2_status_col']
+                                            for col in ['PDF Link', c1, c2]:
+                                                if col not in updated_df.columns:
+                                                    updated_df[col] = ''
+                                            updated_df.loc[row_idx, 'PDF Link'] = pdf_link
+                                            updated_df.loc[row_idx, c1] = 'pending'
+                                            updated_df.loc[row_idx, c2] = 'pending'
+                                            updated_df = updated_df.fillna("")
+                                            updated_df = reorder_gsa_exemption_dataframe(updated_df)
+                                            spreadsheet_gsa = client.open('HRSA64_TA_Request')
+                                            try:
+                                                ws_u = spreadsheet_gsa.worksheet('GSA_exemption')
+                                            except Exception:
+                                                ws_u = spreadsheet_gsa.add_worksheet(title='GSA_exemption', rows=1000, cols=40)
+                                            ws_u.update([updated_df.columns.values.tolist()] + updated_df.values.tolist())
+                                            st.success("✅ Sheet updated with PDF link and pending approvals.")
+
+                                            traveler_name_sub = traveler_name
+                                            city_sub = travel_city
+                                            dates_sub = gsa_form_data['dates_of_travel']
+
+                                            def _send_gsa_pending_email(to_email, approver_name):
+                                                subj = f"GSA Lodging Exemption Pending Approval - {traveler_name_sub}"
+                                                body = f"""
+Dear {approver_name},
+
+A new GSA Lodging Rate Exemption form has been submitted and is pending your approval.
+
+Details:
+- Requester: {requester_name}
+- Traveler(s): {traveler_name_sub}
+- City/State: {city_sub}
+- Dates: {dates_sub}
+
+PDF Link: {pdf_link}
+
+Please review and approve via the GU-TAP System: https://hrsagutap.streamlit.app/
+
+Best regards,
+GU-TAP System
+                                            """
+                                                try:
+                                                    send_email_mailjet(to_email=to_email, subject=subj, body=body.strip())
+                                                    return True, f"✅ Email sent to {approver_name} ({to_email})"
+                                                except Exception as ex:
+                                                    return False, f"⚠️ Failed to email {approver_name}: {str(ex)}"
+
+                                            ok1, msg1 = _send_gsa_pending_email(route['approver1_email'], route['approver1_name'])
+                                            ok2, msg2 = _send_gsa_pending_email(route['approver2_email'], route['approver2_name'])
+                                            for msg in (msg1, msg2):
+                                                if msg.startswith("✅"):
+                                                    st.success(msg)
+                                                else:
+                                                    st.warning(msg)
+                                            if ok1 and ok2:
+                                                st.success("🎉 Coordinators notified. Both approvers have been emailed.")
+                                    except Exception as e:
+                                        st.warning(f"⚠️ Could not update sheet status or send emails: {str(e)}")
+
+                                st.session_state["gsa_pdf_bytes"] = pdf_buffer.getvalue()
+                                st.session_state["gsa_pdf_filename"] = pdf_filename
+                                st.cache_data.clear()
+                                time.sleep(1)
+                                st.rerun()
 
                     if st.session_state.get("gsa_pdf_bytes"):
                         st.download_button(
