@@ -1778,6 +1778,40 @@ def gsa_sheet_row_to_pdf_form_data(row_dict):
     return fd
 
 
+def _gsa_coordinator_signature_flowable(sig_text, sig_para_style, max_width=2.95 * inch, max_height=0.5 * inch):
+    """
+    Same approach as Travel Authorization PDF: render typed name as a signature-style image
+    in the GSA table (Program Assistant / Lead rows).
+    """
+    stxt = (sig_text or '').strip()
+    if not stxt:
+        return Paragraph('', sig_para_style)
+    try:
+        pil = generate_signature_image(stxt, width=800, height=150, scale_factor=2)
+        if pil is None:
+            return Paragraph(_gsa_escape_for_paragraph(stxt), sig_para_style)
+        if pil.mode != 'RGB':
+            rgb = PILImage.new('RGB', pil.size, (255, 255, 255))
+            if pil.mode == 'RGBA':
+                rgb.paste(pil, mask=pil.split()[3])
+            else:
+                rgb.paste(pil)
+            pil = rgb
+        img_buffer = io.BytesIO()
+        pil.save(img_buffer, format='PNG', optimize=False, compress_level=1)
+        img_buffer.seek(0)
+        img_w_px, img_h_px = pil.size
+        aspect_ratio = img_h_px / float(img_w_px) if img_w_px else 1.0
+        new_width = max_width
+        new_height = new_width * aspect_ratio
+        if new_height > max_height:
+            new_height = max_height
+            new_width = new_height / aspect_ratio if aspect_ratio else max_width
+        return Image(img_buffer, width=new_width, height=new_height)
+    except Exception:
+        return Paragraph(_gsa_escape_for_paragraph(stxt), sig_para_style)
+
+
 def create_gsa_exemption_pdf(form_data):
     """Generate GSA Lodging Rate Exemption Form PDF with wrapped text and routing-based signatures."""
     buffer = io.BytesIO()
@@ -2025,13 +2059,13 @@ def create_gsa_exemption_pdf(form_data):
             Paragraph('Program Assistant', label_style),
             Paragraph(_gsa_escape_for_paragraph(n1 or ''), sig_para_style),
             Paragraph(_gsa_escape_for_paragraph(str(date_pa)), sig_para_style),
-            Paragraph(_gsa_escape_for_paragraph(sig_pa), sig_para_style),
+            _gsa_coordinator_signature_flowable(sig_pa, sig_para_style),
         ],
         [
             Paragraph('Lead Technical Assistance Provider', label_style),
             Paragraph(_gsa_escape_for_paragraph(n2 or ''), sig_para_style),
             Paragraph(_gsa_escape_for_paragraph(str(date_lead)), sig_para_style),
-            Paragraph(_gsa_escape_for_paragraph(sig_lead), sig_para_style),
+            _gsa_coordinator_signature_flowable(sig_lead, sig_para_style),
         ],
     ]
     sig_table = Table(sig_data, colWidths=[1.35 * inch, 1.75 * inch, 1.05 * inch, 3.35 * inch])
@@ -4906,9 +4940,32 @@ GU-TAP System
 
                                     if approval_decision_gsa == "✅ Approve":
                                         coordinator_signature_gsa = st.text_input(
-                                            "Enter your full name (signature) *",
+                                            "Type your full name to sign (same style as Travel Authorization) *",
                                             key='gsa_coordinator_signature',
+                                            placeholder="Type your full name",
                                         )
+                                        if coordinator_signature_gsa:
+                                            try:
+                                                preview_sig = generate_signature_image(
+                                                    coordinator_signature_gsa,
+                                                    width=600,
+                                                    height=120,
+                                                    scale_factor=2,
+                                                )
+                                                if preview_sig:
+                                                    if preview_sig.mode != 'RGB':
+                                                        rgb_p = PILImage.new('RGB', preview_sig.size, (255, 255, 255))
+                                                        if preview_sig.mode == 'RGBA':
+                                                            rgb_p.paste(preview_sig, mask=preview_sig.split()[3])
+                                                        else:
+                                                            rgb_p.paste(preview_sig)
+                                                        preview_sig = rgb_p
+                                                    pv = preview_sig.resize(
+                                                        (400, int(400 * preview_sig.size[1] / max(preview_sig.size[0], 1)))
+                                                    )
+                                                    st.image(pv, caption="Signature preview", width=400)
+                                            except Exception:
+                                                pass
                                         approve_gsa_clicked = st.button("✅ Sign and Approve", key='gsa_approve_btn', type='primary')
                                         if approve_gsa_clicked and coordinator_signature_gsa:
                                             try:
@@ -4973,41 +5030,51 @@ GU-TAP System
                                                 if pd.isna(a2s) or str(a2s).lower() == 'nan':
                                                     a2s = ''
 
-                                                if (
+                                                both_done = (
                                                     str(a1s).lower() == 'approve'
                                                     and str(a2s).lower() == 'approve'
-                                                ):
-                                                    try:
-                                                        row_dict = updated_gsa.loc[selected_gsa_idx].to_dict()
-                                                        form_pdf = gsa_sheet_row_to_pdf_form_data(row_dict)
-                                                        final_buf = create_gsa_exemption_pdf(form_pdf)
-                                                        safe_ap = re.sub(
-                                                            r'[^\w\-. ]',
-                                                            '_',
-                                                            f"{selected_gsa.get('Requester Name') or selected_gsa.get('Requestor Name', '')}_{selected_gsa.get('Traveler Name(s)', '')}_{selected_gsa.get('Travel City/State', '')}",
-                                                        )[:120]
-                                                        final_name = f"GSA_Lodging_Exemption_Approved_{safe_ap}.pdf"
-                                                        folder_id_travel_pdf = "1_O_L-jPR7bldiryRNB3WxbAaG8VqvmCt"
-                                                        pdf_obj = io.BytesIO(final_buf.getvalue())
-                                                        pdf_obj.name = final_name
-                                                        pdf_obj.type = 'application/pdf'
-                                                        final_link = upload_file_to_drive(
-                                                            file=pdf_obj,
-                                                            filename=final_name,
-                                                            folder_id=folder_id_travel_pdf,
-                                                            creds_dict=st.secrets["gcp_service_account"],
-                                                        )
-                                                        updated_gsa.loc[selected_gsa_idx, 'PDF Link'] = final_link
-                                                        updated_gsa = updated_gsa.fillna("")
-                                                        updated_gsa = reorder_gsa_exemption_dataframe(updated_gsa)
-                                                        ws_gsa.update(
-                                                            [updated_gsa.columns.values.tolist()] + updated_gsa.values.tolist()
-                                                        )
-                                                        notify_email = str(selected_gsa.get('Email', '') or '').strip()
-                                                        if notify_email:
-                                                            subj = f"GSA Lodging Exemption Approved - {selected_gsa.get('Travel City/State', '')}"
+                                                )
+                                                try:
+                                                    row_dict = updated_gsa.loc[selected_gsa_idx].to_dict()
+                                                    form_pdf = gsa_sheet_row_to_pdf_form_data(row_dict)
+                                                    final_buf = create_gsa_exemption_pdf(form_pdf)
+                                                    safe_ap = re.sub(
+                                                        r'[^\w\-. ]',
+                                                        '_',
+                                                        f"{selected_gsa.get('Requester Name') or selected_gsa.get('Requestor Name', '')}_{selected_gsa.get('Traveler Name(s)', '')}_{selected_gsa.get('Travel City/State', '')}",
+                                                    )[:120]
+                                                    final_name = (
+                                                        f"GSA_Lodging_Exemption_Approved_{safe_ap}.pdf"
+                                                        if both_done
+                                                        else f"GSA_Lodging_Exemption_Progress_{safe_ap}.pdf"
+                                                    )
+                                                    folder_id_travel_pdf = "1_O_L-jPR7bldiryRNB3WxbAaG8VqvmCt"
+                                                    pdf_obj = io.BytesIO(final_buf.getvalue())
+                                                    pdf_obj.name = final_name
+                                                    pdf_obj.type = 'application/pdf'
+                                                    final_link = upload_file_to_drive(
+                                                        file=pdf_obj,
+                                                        filename=final_name,
+                                                        folder_id=folder_id_travel_pdf,
+                                                        creds_dict=st.secrets["gcp_service_account"],
+                                                    )
+                                                    updated_gsa.loc[selected_gsa_idx, 'PDF Link'] = final_link
+                                                    updated_gsa = updated_gsa.fillna("")
+                                                    updated_gsa = reorder_gsa_exemption_dataframe(updated_gsa)
+                                                    ws_gsa.update(
+                                                        [updated_gsa.columns.values.tolist()] + updated_gsa.values.tolist()
+                                                    )
+                                                    notify_email = str(selected_gsa.get('Email', '') or '').strip()
+                                                    req_nm = (
+                                                        selected_gsa.get('Requester Name')
+                                                        or selected_gsa.get('Requestor Name', 'colleague')
+                                                    )
+                                                    city = selected_gsa.get('Travel City/State', '')
+                                                    if notify_email:
+                                                        if both_done:
+                                                            subj = f"GSA Lodging Exemption Approved - {city}"
                                                             body = f"""
-Dear {selected_gsa.get('Requester Name') or selected_gsa.get('Requestor Name', 'colleague')},
+Dear {req_nm},
 
 Your GSA Lodging Rate Exemption form has been fully approved by both coordinators.
 
@@ -5023,24 +5090,48 @@ Final PDF: {final_link}
 Best regards,
 GU-TAP System
                                                             """
-                                                            try:
-                                                                send_email_mailjet(
-                                                                    to_email=notify_email,
-                                                                    subject=subj,
-                                                                    body=body.strip(),
-                                                                )
-                                                                st.success(
-                                                                    f"✅ GSA form fully approved. Notification sent to {notify_email}"
-                                                                )
-                                                            except Exception as em:
-                                                                st.warning(f"⚠️ Approved but email failed: {str(em)}")
                                                         else:
-                                                            st.success("✅ GSA form fully approved (no email on file).")
-                                                    except Exception as ex:
-                                                        st.warning(f"⚠️ Final PDF/email step: {str(ex)}")
-                                                else:
-                                                    st.success(
-                                                        "✅ Your approval has been recorded. Waiting for the other coordinator's approval."
+                                                            subj = f"GSA Lodging Exemption updated – {city}"
+                                                            body = f"""
+Dear {req_nm},
+
+Your GSA Lodging Rate Exemption form has been updated with a signature from {coordinator_display_name}.
+
+Current PDF (signatures recorded so far): {final_link}
+
+You will receive another email when both coordinators have approved your form.
+
+Best regards,
+GU-TAP System
+                                                            """
+                                                        try:
+                                                            send_email_mailjet(
+                                                                to_email=notify_email,
+                                                                subject=subj,
+                                                                body=body.strip(),
+                                                            )
+                                                            if both_done:
+                                                                st.success(
+                                                                    f"✅ Final PDF uploaded and sent to {notify_email}"
+                                                                )
+                                                            else:
+                                                                st.success(
+                                                                    f"✅ Updated PDF uploaded and sent to {notify_email}. Waiting for the other coordinator."
+                                                                )
+                                                        except Exception as em:
+                                                            st.warning(f"⚠️ PDF uploaded but email failed: {str(em)}")
+                                                    else:
+                                                        if both_done:
+                                                            st.success(
+                                                                "✅ Final PDF uploaded (no requester email on file)."
+                                                            )
+                                                        else:
+                                                            st.success(
+                                                                "✅ Updated PDF uploaded. Waiting for the other coordinator."
+                                                            )
+                                                except Exception as ex:
+                                                    st.warning(
+                                                        f"⚠️ PDF upload/email step: {str(ex)}"
                                                     )
 
                                                 st.cache_data.clear()
