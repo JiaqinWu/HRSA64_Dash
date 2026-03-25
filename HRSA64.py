@@ -18,6 +18,7 @@ import openpyxl
 from openpyxl.styles import PatternFill
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import letter
+from reportlab.lib.utils import ImageReader
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Image
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import inch
@@ -1482,6 +1483,33 @@ def _gsa_escape_href(url):
     return str(url).replace('&', '&amp;').replace('"', '&quot;')
 
 
+def _gsa_advance_logo_reader_and_size():
+    """
+    Load ADVANCE Logo_Horizontal Blue.png (same asset as Travel form) for PDF header.
+    Returns (ImageReader or None, width_pt, height_pt) for canvas.drawImage.
+    """
+    advance_url = (
+        'https://raw.githubusercontent.com/JiaqinWu/HRSA64_Dash/main/'
+        'ADVANCE%20Logo_Horizontal%20Blue.png'
+    )
+    try:
+        with urllib.request.urlopen(advance_url, timeout=30) as resp:
+            data = resp.read()
+        img_pil = PILImage.open(io.BytesIO(data)).convert('RGB')
+        w0, h0 = img_pil.size
+        if h0 <= 0:
+            return None, 0, 0
+        aspect = w0 / float(h0)
+        lh = 0.42 * inch
+        lw = lh * aspect
+        buf = io.BytesIO()
+        img_pil.save(buf, format='PNG')
+        buf.seek(0)
+        return ImageReader(buf), float(lw), float(lh)
+    except Exception:
+        return None, 0, 0
+
+
 def gsa_approver_routing_for_traveler(traveler_name):
     """
     Same routing as Travel Authorization. Returns two rows for signatures:
@@ -1508,8 +1536,15 @@ def create_gsa_exemption_pdf(form_data):
     """Generate GSA Lodging Rate Exemption Form PDF with wrapped text and routing-based signatures."""
     buffer = io.BytesIO()
     content_w = letter[0] - 1.0 * inch
-    doc = SimpleDocTemplate(buffer, pagesize=letter, topMargin=0.5*inch, bottomMargin=0.5*inch,
-                            leftMargin=0.5*inch, rightMargin=0.5*inch)
+    header_top = 0.95 * inch
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=letter,
+        topMargin=header_top,
+        bottomMargin=0.5 * inch,
+        leftMargin=0.5 * inch,
+        rightMargin=0.5 * inch,
+    )
     story = []
     styles = getSampleStyleSheet()
 
@@ -1605,51 +1640,46 @@ def create_gsa_exemption_pdf(form_data):
         selected_set = set(reasons)
 
     other_label = "Reason other than one listed above (please describe below)."
-    reason_rows = []
+    # Reasons: plain lines — ✔ only (no table/grid so no “box” around checkmarks)
     for lab in reason_labels:
-        mark = '✔️' if lab in selected_set else '—'
-        reason_rows.append([
-            Paragraph(mark, reason_cell_style),
-            Paragraph(_gsa_escape_for_paragraph(lab), reason_cell_style),
-        ])
-
-    if reason_rows:
-        reason_table = Table(reason_rows, colWidths=[0.45*inch, content_w - 0.45*inch])
-        reason_table.setStyle(TableStyle([
-            ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
-            ('VALIGN', (0, 0), (-1, -1), 'TOP'),
-            ('ALIGN', (0, 0), (0, -1), 'CENTER'),
-            ('TOPPADDING', (0, 0), (-1, -1), 4),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
-            ('LEFTPADDING', (0, 0), (-1, -1), 4),
-            ('RIGHTPADDING', (0, 0), (-1, -1), 4),
-        ]))
-        story.append(reason_table)
+        mark = '✔' if lab in selected_set else '—'
+        line = f'{mark} {_gsa_escape_for_paragraph(lab)}'
+        story.append(Paragraph(line, reason_cell_style))
 
     other_explanation = form_data.get('other_reason', '') or ''
     if other_label in selected_set and other_explanation.strip():
-        story.append(Spacer(1, 0.1*inch))
+        story.append(Spacer(1, 0.1 * inch))
         story.append(Paragraph(
             "<b>Explanation for above selection</b> (including comparison of hotel quotes, conference/event communication regarding pre-arranged accommodations, etc.):",
             body_wrap,
         ))
-        story.append(Paragraph(_gsa_escape_for_paragraph(other_explanation), reason_cell_style))
+        expl_para = Paragraph(_gsa_escape_for_paragraph(other_explanation.strip()), reason_cell_style)
+        other_box = Table([[expl_para]], colWidths=[content_w])
+        other_box.setStyle(TableStyle([
+            ('BOX', (0, 0), (-1, -1), 0.75, colors.black),
+            ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor('#FAFAFA')),
+            ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+            ('TOPPADDING', (0, 0), (-1, -1), 8),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+            ('LEFTPADDING', (0, 0), (-1, -1), 8),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 8),
+        ]))
+        story.append(other_box)
 
-    story.append(Spacer(1, 0.12*inch))
+    story.append(Spacer(1, 0.12 * inch))
     story.append(Paragraph("<b>Supporting materials</b>", styles['Heading3']))
     supporting_links = form_data.get('supporting_drive_links') or []
     if supporting_links:
+        link_parts = []
         for item in supporting_links:
-            fname = _gsa_escape_for_paragraph(item.get('name', 'File'))
             url = item.get('url') or ''
+            fname = _gsa_escape_for_paragraph(item.get('name', 'File'))
             if url:
                 href = _gsa_escape_href(url)
-                story.append(Paragraph(
-                    f'<b>{fname}</b>: <a href="{href}" color="blue">Open link (Google Drive)</a>',
-                    reason_cell_style,
-                ))
+                link_parts.append(f'<a href="{href}" color="blue">{fname}</a>')
             else:
-                story.append(Paragraph(fname, reason_cell_style))
+                link_parts.append(fname)
+        story.append(Paragraph(', '.join(link_parts), reason_cell_style))
     else:
         supporting = form_data.get('supporting_materials', '') or ''
         story.append(Paragraph(
@@ -1699,7 +1729,18 @@ def create_gsa_exemption_pdf(form_data):
     ]))
     story.append(sig_table)
 
-    doc.build(story)
+    logo_reader, logo_w, logo_h = _gsa_advance_logo_reader_and_size()
+
+    def _gsa_draw_header(canvas, doc):
+        canvas.saveState()
+        if logo_reader and logo_w > 0 and logo_h > 0:
+            pw, ph = doc.pagesize
+            x = doc.leftMargin + doc.width - logo_w
+            y = ph - doc.topMargin - logo_h + 0.05 * inch
+            canvas.drawImage(logo_reader, x, y, width=logo_w, height=logo_h, mask='auto')
+        canvas.restoreState()
+
+    doc.build(story, onFirstPage=_gsa_draw_header, onLaterPages=_gsa_draw_header)
     buffer.seek(0)
     return buffer
 
