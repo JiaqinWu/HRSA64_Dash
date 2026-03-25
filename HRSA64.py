@@ -7201,10 +7201,6 @@ GU-TAP System
                         </div>
                     """, unsafe_allow_html=True)
                     
-                    st.info(
-                        "**Submit** saves your form to Google Sheets and uploads your PDF to **Google Drive**. "
-                        "You do **not** need to download anything here—you will get a short **confirmation email** after you submit."
-                    )
                     st.markdown("Fill out the form below, then click **Submit**.")
                     travel_city = st.text_input("Travel City/State *", placeholder="Enter text...", key="gsa_travel_city")
                     st.markdown("##### Requester")
