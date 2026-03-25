@@ -4750,7 +4750,7 @@ GU-TAP System
                                 🧳 GSA Lodging Exemption Review Center
                             </div>
                             <div style='color: rgba(255,255,255,0.9); font-size: 1.1em; margin-bottom: 0.8em; text-align: center; line-height: 1.4;'>
-                                Review and approve pending GSA Lodging Rate Exemption forms. Same approval flow as Travel Authorization (Program Assistant + Lead Technical Assistant).
+                                Review and approve pending GSA Lodging Rate Exemption forms.
                             </div>
                         </div>
                     """, unsafe_allow_html=True)
