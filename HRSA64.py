@@ -1467,6 +1467,223 @@ def create_pdf(form_data, ws):
     return buffer
 
 
+def _gsa_escape_for_paragraph(text):
+    """Escape text for ReportLab Paragraph (XML subset)."""
+    if text is None:
+        return ''
+    s = str(text)
+    return s.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
+
+
+def gsa_approver_routing_for_traveler(traveler_name):
+    """
+    Same routing as Travel Authorization. Returns two rows for signatures:
+    (name1, role1, sig_key1, date_key1), (name2, role2, sig_key2, date_key2)
+    """
+    tn = (traveler_name or '').lower()
+    if 'kemisha' in tn:
+        return (
+            ('Mabintou Ouattara', 'Program Assistant', 'mabintou_signature', 'mabintou_approval_date'),
+            ('Jenevieve Opoku', 'Lead Technical Assistance Provider', 'jen_signature', 'jen_approval_date'),
+        )
+    if 'mabintou' in tn:
+        return (
+            ('Lauren Mathae', 'Program Assistant', 'lauren_signature', 'lauren_approval_date'),
+            ('Kemisha Denny', 'Lead Technical Assistance Provider', 'kemisha_signature', 'kemisha_approval_date'),
+        )
+    return (
+        ('Mabintou Ouattara', 'Program Assistant', 'mabintou_signature', 'mabintou_approval_date'),
+        ('Kemisha Denny', 'Lead Technical Assistance Provider', 'kemisha_signature', 'kemisha_approval_date'),
+    )
+
+
+def create_gsa_exemption_pdf(form_data):
+    """Generate GSA Lodging Rate Exemption Form PDF with wrapped text and routing-based signatures."""
+    buffer = io.BytesIO()
+    content_w = letter[0] - 1.0 * inch
+    doc = SimpleDocTemplate(buffer, pagesize=letter, topMargin=0.5*inch, bottomMargin=0.5*inch,
+                            leftMargin=0.5*inch, rightMargin=0.5*inch)
+    story = []
+    styles = getSampleStyleSheet()
+
+    body_wrap = ParagraphStyle(
+        'GSA_BodyWrap',
+        parent=styles['Normal'],
+        fontSize=9,
+        leading=12,
+        spaceAfter=6,
+    )
+    title_style = ParagraphStyle(
+        'GSA_Title',
+        parent=styles['Heading1'],
+        fontSize=14,
+        alignment=1,
+        spaceAfter=12,
+    )
+    reason_cell_style = ParagraphStyle(
+        'GSA_ReasonCell',
+        parent=styles['Normal'],
+        fontSize=8,
+        leading=10,
+    )
+
+    story.append(Paragraph("EXEMPTION FORM FOR LODGING RATES OVER GSA-APPROVED LIMIT", title_style))
+    policy_chunks = [
+        "Georgetown University will cover the GSA-allowed lodging rate based upon the destination of travel. Lodging rates refer to <b>room rates</b> only and <b>do not include taxes and surcharges.</b>",
+        "Lodging <b>up to 150% of the allowed rate</b> (the allowed nightly room rate multiplied by 1.5) may be approved <b>when special or unusual circumstances warrant.</b> When the room rate exceeds the allowed rate, a justification for the exception must be <b>approved prior to booking lodging,</b> documenting that the higher rate is justifiable and necessary to conduct official business.",
+        "Lodging rates that exceed the maximum GSA-allowed rate without prior approval are not allowable, and will not be reimbursed. Authorized exceptions <b>must be uploaded with the associated Expense Report</b> in the Georgetown Management System (GMS). Travelers who do not follow these guidelines may be responsible for the additional expense personally.",
+    ]
+    for chunk in policy_chunks:
+        story.append(Paragraph(chunk, body_wrap))
+    story.append(Spacer(1, 0.15*inch))
+
+    # Section A: Information (values wrapped)
+    rn = _gsa_escape_for_paragraph(form_data.get('requestor_name', ''))
+    tn = _gsa_escape_for_paragraph(form_data.get('traveler_name', ''))
+    tc = _gsa_escape_for_paragraph(form_data.get('travel_city', ''))
+    dt = _gsa_escape_for_paragraph(form_data.get('dates_of_travel', ''))
+    traveler_data = [
+        [
+            Paragraph('<b>Requestor Name</b>', body_wrap), Paragraph(rn, body_wrap),
+            Paragraph('<b>Traveler Name(s)</b>', body_wrap), Paragraph(tn, body_wrap),
+        ],
+        [
+            Paragraph('<b>Travel City/State</b>', body_wrap), Paragraph(tc, body_wrap),
+            Paragraph('<b>Dates of Travel (Begin – End)</b>', body_wrap), Paragraph(dt, body_wrap),
+        ],
+    ]
+    traveler_table = Table(traveler_data, colWidths=[1.35*inch, 2.4*inch, 1.35*inch, 2.4*inch])
+    traveler_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (0, -1), colors.HexColor('#E0E0E0')),
+        ('BACKGROUND', (2, 0), (2, -1), colors.HexColor('#E0E0E0')),
+        ('GRID', (0, 0), (-1, -1), 1, colors.black),
+        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+        ('TOPPADDING', (0, 0), (-1, -1), 6),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+    ]))
+    story.append(traveler_table)
+    story.append(Spacer(1, 0.12*inch))
+
+    story.append(Paragraph(
+        "The following circumstances exist to request that the traveler be reimbursed up to 150% of the GSA-allowed lodging rate for the above listed location and dates of travel:",
+        body_wrap,
+    ))
+    req_rate = form_data.get('requested_lodging_rate', 0)
+    gsa_rate = form_data.get('gsa_lodging_rate', 1)
+    excess_pct = round((req_rate / gsa_rate) * 100, 1) if gsa_rate else 0
+    fin_data = [
+        ['(a) Requested Lodging Rate', f'${req_rate}', '(b) GSA-Approved Lodging Rate', f'${gsa_rate}'],
+        ['% in Excess of Applicable Rate (a ÷ b)', f'{excess_pct}%', '', ''],
+    ]
+    fin_table = Table(fin_data, colWidths=[2.5*inch, 1.5*inch, 2.5*inch, 1.5*inch])
+    fin_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (0, -1), colors.HexColor('#E0E0E0')),
+        ('BACKGROUND', (2, 0), (2, -1), colors.HexColor('#E0E0E0')),
+        ('GRID', (0, 0), (-1, -1), 1, colors.black),
+        ('FONTSIZE', (0, 0), (-1, -1), 9),
+        ('TOPPADDING', (0, 0), (-1, -1), 6),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+    ]))
+    story.append(fin_table)
+    story.append(Spacer(1, 0.12*inch))
+
+    # Section C: fixed table — one row per reason with checkmark
+    story.append(Paragraph("<b>Section C: Select reason(s) below (check all that apply)</b>", styles['Heading2']))
+    story.append(Paragraph("Select reason(s) below and provide the required information to support your request.", body_wrap))
+
+    reason_labels = form_data.get('reason_option_labels', [])
+    if not reason_labels:
+        reason_labels = form_data.get('reason_labels', [])
+    selected_set = set()
+    reasons = form_data.get('reasons', [])
+    if isinstance(reasons, str) and reasons:
+        reasons = [r.strip() for r in reasons.split(';') if r.strip()]
+    if isinstance(reasons, list):
+        selected_set = set(reasons)
+
+    other_label = "Reason other than one listed above (please describe below)."
+    reason_rows = []
+    for lab in reason_labels:
+        mark = '☑' if lab in selected_set else '☐'
+        reason_rows.append([
+            Paragraph(mark, reason_cell_style),
+            Paragraph(_gsa_escape_for_paragraph(lab), reason_cell_style),
+        ])
+
+    if reason_rows:
+        reason_table = Table(reason_rows, colWidths=[0.35*inch, content_w - 0.35*inch])
+        reason_table.setStyle(TableStyle([
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+            ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+            ('ALIGN', (0, 0), (0, -1), 'CENTER'),
+            ('TOPPADDING', (0, 0), (-1, -1), 4),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
+            ('LEFTPADDING', (0, 0), (-1, -1), 4),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 4),
+        ]))
+        story.append(reason_table)
+
+    other_explanation = form_data.get('other_reason', '') or ''
+    if other_label in selected_set and other_explanation.strip():
+        story.append(Spacer(1, 0.1*inch))
+        story.append(Paragraph(
+            "<b>Explanation for above selection</b> (including comparison of hotel quotes, conference/event communication regarding pre-arranged accommodations, etc.):",
+            body_wrap,
+        ))
+        story.append(Paragraph(_gsa_escape_for_paragraph(other_explanation), reason_cell_style))
+
+    supporting = form_data.get('supporting_materials', '') or ''
+    story.append(Spacer(1, 0.12*inch))
+    story.append(Paragraph("<b>Supporting materials</b>", styles['Heading3']))
+    story.append(Paragraph(_gsa_escape_for_paragraph(supporting) if supporting else 'None provided at submission.', reason_cell_style))
+
+    story.append(Spacer(1, 0.15*inch))
+    story.append(Paragraph("<b>Approval Signatures</b>", styles['Heading2']))
+
+    def _fmt_date(d):
+        if not d:
+            return ''
+        try:
+            if hasattr(d, 'strftime'):
+                return d.strftime('%m/%d/%Y')
+            if isinstance(d, str) and '-' in d:
+                parsed = datetime.strptime(d.split()[0], '%Y-%m-%d')
+                return parsed.strftime('%m/%d/%Y')
+        except Exception:
+            pass
+        return str(d)
+
+    traveler_for_route = form_data.get('traveler_name', '')
+    (n1, r1, k1, d1k), (n2, r2, k2, d2k) = gsa_approver_routing_for_traveler(traveler_for_route)
+    sig1 = form_data.get(k1, '') or ''
+    sig2 = form_data.get(k2, '') or ''
+    date1 = _fmt_date(form_data.get(d1k, ''))
+    date2 = _fmt_date(form_data.get(d2k, ''))
+
+    label_style = ParagraphStyle('LabelStyle', parent=styles['Normal'], fontSize=9, fontName='Helvetica', alignment=0)
+    row1_label = Paragraph(f"<b>{_gsa_escape_for_paragraph(n1)}</b><br/>{_gsa_escape_for_paragraph(r1)}", label_style)
+    row2_label = Paragraph(f"<b>{_gsa_escape_for_paragraph(n2)}</b><br/>{_gsa_escape_for_paragraph(r2)}", label_style)
+
+    sig_para_style = ParagraphStyle('GSA_SigCell', parent=label_style, fontSize=9, leading=11)
+    sig_data = [
+        [row1_label, Paragraph(_gsa_escape_for_paragraph(sig1), sig_para_style), Paragraph("Date", label_style), Paragraph(_gsa_escape_for_paragraph(str(date1)), sig_para_style)],
+        [row2_label, Paragraph(_gsa_escape_for_paragraph(sig2), sig_para_style), Paragraph("Date", label_style), Paragraph(_gsa_escape_for_paragraph(str(date2)), sig_para_style)],
+    ]
+    sig_table = Table(sig_data, colWidths=[2.1*inch, 2.4*inch, 0.75*inch, 2.25*inch])
+    sig_table.setStyle(TableStyle([
+        ('GRID', (0, 0), (-1, -1), 1, colors.black),
+        ('FONTSIZE', (0, 0), (-1, -1), 9),
+        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+        ('TOPPADDING', (0, 0), (-1, -1), 8),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+    ]))
+    story.append(sig_table)
+
+    doc.build(story)
+    buffer.seek(0)
+    return buffer
+
+
 def upload_file_to_drive(file, filename, folder_id, creds_dict):
     # Convert Streamlit secret dict into Google Credentials object
     drive_creds = Credentials.from_service_account_info(creds_dict, scopes=[
@@ -1574,6 +1791,13 @@ df_support = load_support_sheet()
 @st.cache_data(ttl=600)
 def load_travel_sheet():
     return pd.DataFrame(_get_records_with_retry('HRSA64_TA_Request', 'Travel'))
+
+@st.cache_data(ttl=600)
+def load_gsa_exemption_sheet():
+    try:
+        return pd.DataFrame(_get_records_with_retry('HRSA64_TA_Request', 'GSA_exemption'))
+    except Exception:
+        return pd.DataFrame()
 
 df_travel = load_travel_sheet()
 
@@ -4136,6 +4360,121 @@ GU-TAP System
                         except Exception as e:
                             st.error(f"Error loading travel forms: {str(e)}")
 
+                st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
+                with st.expander("🧳 **REVIEW & APPROVE GSA LODGING EXEMPTION FORMS**"):
+                    if not can_view_travel_review:
+                        st.info("This section is not available to you.")
+                    else:
+                        st.markdown("""
+                        <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 20px; box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3); padding: 2em 1.5em 1.5em 1.5em; margin-bottom: 2em; margin-top: 1em;'>
+                            <div style='color: white; font-family: "Segoe UI", "Arial", sans-serif; font-weight: 800; font-size: 1.6em; margin-bottom: 0.5em; text-align: center;'>
+                                🧳 GSA Lodging Exemption Review Center
+                            </div>
+                            <div style='color: rgba(255,255,255,0.9); font-size: 1.1em; margin-bottom: 0.8em; text-align: center; line-height: 1.4;'>
+                                Review and approve pending GSA Lodging Rate Exemption forms. Same approval flow as Travel Authorization (Program Assistant + Lead Technical Assistant).
+                            </div>
+                        </div>
+                    """, unsafe_allow_html=True)
+                        try:
+                            df_gsa_review = load_gsa_exemption_sheet()
+                            if df_gsa_review.empty:
+                                st.info("No GSA exemption forms submitted yet.")
+                            else:
+                                def is_routed_to_coordinator_gsa(row):
+                                    traveler_name_r = str(row.get('Traveler Name(s)', '')).lower()
+                                    if 'kemisha' in traveler_name_r:
+                                        return status_col in ['Mabintou Approval Status', 'Jen Approval Status']
+                                    elif 'mabintou' in traveler_name_r:
+                                        return status_col in ['Lauren Approval Status', 'Kemisha Approval Status']
+                                    return status_col in ['Mabintou Approval Status', 'Kemisha Approval Status']
+
+                                pending_gsa = df_gsa_review.copy()
+                                if status_col not in pending_gsa.columns:
+                                    pending_gsa[status_col] = ''
+                                routed_mask_gsa = pending_gsa.apply(is_routed_to_coordinator_gsa, axis=1)
+                                pending_gsa = pending_gsa[routed_mask_gsa]
+                                status_vals = pending_gsa[status_col].astype(str).str.lower()
+                                pending_gsa = pending_gsa[(status_vals.isin(['', 'pending', 'nan'])) | pending_gsa[status_col].isna()]
+
+                                st.markdown(f"#### 📋 GSA Forms Pending Your Approval ({coordinator_display_name})")
+                                if pending_gsa.empty:
+                                    st.info("No GSA exemption forms pending your approval.")
+                                else:
+                                    gsa_options = list(pending_gsa.index)
+                                    gsa_labels = {i: f"{pending_gsa.at[i, 'Traveler Name(s)']} | {pending_gsa.at[i, 'Travel City/State']} | {pending_gsa.at[i, 'Dates of Travel']}" for i in gsa_options}
+                                    selected_gsa_idx = st.selectbox("Select a GSA exemption form to review", options=gsa_options, format_func=lambda i: gsa_labels.get(i, str(i)))
+                                    selected_gsa = pending_gsa.loc[selected_gsa_idx].to_dict()
+
+                                    st.markdown("**Form Details:**")
+                                    for k, v in [('Requestor Name', 'Requestor Name'), ('Traveler Name(s)', 'Traveler Name(s)'), ('Travel City/State', 'Travel City/State'), ('Dates of Travel', 'Dates of Travel'), ('Requested Lodging Rate', 'Requested Lodging Rate'), ('GSA-Approved Lodging Rate', 'GSA-Approved Lodging Rate'), ('Reasons', 'Reasons')]:
+                                        if k in selected_gsa and selected_gsa.get(k):
+                                            st.write(f"- **{k}**: {selected_gsa[k]}")
+                                    if selected_gsa.get('PDF Link'):
+                                        st.markdown(f"**PDF:** [View Form]({selected_gsa['PDF Link']})")
+                                    if selected_gsa.get('Supporting Material(s)'):
+                                        st.markdown(f"**Supporting Materials:** {selected_gsa['Supporting Material(s)']}")
+
+                                    approval_decision_gsa = st.radio("Decision", ["✅ Approve", "❌ Reject"], key='gsa_approval_decision', horizontal=True)
+                                    if approval_decision_gsa == "✅ Approve":
+                                        coordinator_signature_gsa = st.text_input("Enter your full name (signature) *", key='gsa_coordinator_signature')
+                                        approve_gsa_clicked = st.button("✅ Sign and Approve", key='gsa_approve_btn', type='primary')
+                                        if approve_gsa_clicked and coordinator_signature_gsa:
+                                            try:
+                                                updated_gsa = df_gsa_review.copy()
+                                                sig_col = status_col.replace('Approval Status', 'Signature')
+                                                date_col = status_col.replace('Approval Status', 'Date')
+                                                for c in [status_col, sig_col, date_col]:
+                                                    if c not in updated_gsa.columns:
+                                                        updated_gsa[c] = ''
+                                                updated_gsa.loc[selected_gsa_idx, status_col] = 'approve'
+                                                updated_gsa.loc[selected_gsa_idx, sig_col] = coordinator_signature_gsa
+                                                updated_gsa.loc[selected_gsa_idx, date_col] = datetime.today().strftime('%Y-%m-%d')
+                                                updated_gsa = updated_gsa.fillna("")
+
+                                                spreadsheet_gsa = client.open('HRSA64_TA_Request')
+                                                try:
+                                                    ws_gsa = spreadsheet_gsa.worksheet('GSA_exemption')
+                                                except:
+                                                    ws_gsa = spreadsheet_gsa.add_worksheet(title='GSA_exemption', rows=1000, cols=25)
+                                                ws_gsa.update([updated_gsa.columns.values.tolist()] + updated_gsa.values.tolist())
+                                                st.cache_data.clear()
+                                                st.success("✅ GSA exemption form approved!")
+                                                time.sleep(2)
+                                                st.rerun()
+                                            except Exception as e:
+                                                st.error(f"Error: {str(e)}")
+                                        elif approve_gsa_clicked:
+                                            st.warning("Please enter your signature.")
+                                    else:
+                                        reject_note_gsa = st.text_input("Rejection reason (optional)", key='gsa_reject_note')
+                                        reject_gsa_clicked = st.button("❌ Reject", key='gsa_reject_btn', type='secondary')
+                                        if reject_gsa_clicked:
+                                            try:
+                                                updated_gsa = df_gsa_review.copy()
+                                                for c in [status_col]:
+                                                    if c not in updated_gsa.columns:
+                                                        updated_gsa[c] = ''
+                                                updated_gsa.loc[selected_gsa_idx, status_col] = 'reject'
+                                                note_col_gsa = status_col.replace('Approval Status', 'Note')
+                                                if note_col_gsa not in updated_gsa.columns:
+                                                    updated_gsa[note_col_gsa] = ''
+                                                updated_gsa.loc[selected_gsa_idx, note_col_gsa] = reject_note_gsa or ''
+                                                updated_gsa = updated_gsa.fillna("")
+                                                spreadsheet_gsa = client.open('HRSA64_TA_Request')
+                                                try:
+                                                    ws_gsa = spreadsheet_gsa.worksheet('GSA_exemption')
+                                                except:
+                                                    ws_gsa = spreadsheet_gsa.add_worksheet(title='GSA_exemption', rows=1000, cols=25)
+                                                ws_gsa.update([updated_gsa.columns.values.tolist()] + updated_gsa.values.tolist())
+                                                st.cache_data.clear()
+                                                st.success("❌ GSA exemption form rejected.")
+                                                time.sleep(2)
+                                                st.rerun()
+                                            except Exception as e:
+                                                st.error(f"Error: {str(e)}")
+                        except Exception as e:
+                            st.error(f"Error loading GSA exemption forms: {str(e)}")
+
                 # Hide Check Interaction & Delivery Patterns for Mabintou
                 if not is_mabintou_coordinator:
                     st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
@@ -6128,6 +6467,146 @@ GU-TAP System
                             except Exception as e:
                                 st.error(f"Error updating Google Sheets: {str(e)}")
 
+                st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
+                with st.expander("🧳 **GENERATE GSA LODGING RATE EXEMPTION FORM**"):
+                    st.markdown("""
+                        <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 20px; box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3); padding: 2em 1.5em 1.5em 1.5em; margin-bottom: 2em; margin-top: 1em;'>
+                            <div style='color: white; font-family: "Segoe UI", "Arial", sans-serif; font-weight: 800; font-size: 1.6em; margin-bottom: 0.5em; text-align: center;'>
+                                🧳 Generate GSA Lodging Rate Exemption Form
+                            </div>
+                            <div style='color: rgba(255,255,255,0.9); font-size: 1.1em; margin-bottom: 0.8em; text-align: center; line-height: 1.4;'>
+                                Input your travel information to generate a GSA Lodging Rate Exemption Form.
+                            </div>
+                        </div>
+                    """, unsafe_allow_html=True)
+                    
+                    st.info(
+                        "**Test mode:** Generates a PDF for download in your browser only. "
+                        "Nothing is uploaded to Google Drive, saved to Sheets, or emailed for signatures."
+                    )
+                    st.markdown("Fill out the form below to generate your GSA Lodging Rate Exemption Form.")
+                    travel_city = st.text_input("Travel City/State *", placeholder="Enter text...",key='travel_city')
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        requestor_name = st.text_input("Requestor Name *", placeholder="Enter text...",key='requestor_name')
+                    with col2:
+                        traveler_name = st.text_input("Traveler Name *",placeholder="Enter text...",key='traveler_name')
+                    col3, col4 = st.columns(2)
+                    with col3:
+                        travel_date_from = st.date_input("Travel Date From *",value=datetime.today().date())
+                    with col4:
+                        travel_date_to = st.date_input("Travel Date To *",value=datetime.today().date())
+                    st.markdown("The following circumstances exist to request that the traveler be reimbursed up to 150\% of the GSA-allowed Lodging Rate for lodging costs.")
+                    st.markdown("**Please confirm the official GSA per diem rate for your travel destination at https://www.gsa.gov/travel/plan-book/per-diem-rates and select the corresponding rate below.**")
+                    requested_lodging_rate = st.number_input("Requested Lodging Rate *",value=100,min_value=0,step=1,key='requested_lodging_rate')
+                    gsa_lodging_rate = st.number_input("GSA-Approved Lodging Rate *",value=100,min_value=0,step=1,key='gsa_lodging_rate')
+
+                    gsa_reason_option_labels = [
+                        "The traveler is attending a conference or event that requires lodging at a pre-arranged location. Pre-arranged lodging costs at this location exceed the applicable government rate for the business destination.",
+                        "Travel occurs during a period when subsistence costs have temporarily increased due to conferences, conventions, special events.",
+                        "The applicable government rate limitation is generally inadequate for the business destination. Affordable lodging is not available or cannot be obtained within a reasonable commuting distance and transportation costs from less expensive lodging would offset any savings.",
+                        "Safety or security considerations require the traveler to obtain lodging in a location that meets appropriate safety standards. Lodging options within the applicable government rate are not reasonably available in such areas, and higher-cost lodging is necessary to mitigate risk.",
+                        "Due to special duties of the assignment, unusually high expenses are necessary to conduct official business.",
+                        "Reason other than one listed above (please describe below).",
+                    ]
+                    gsa_other_idx = len(gsa_reason_option_labels) - 1
+
+                    st.markdown("##### Section C: Reason(s) for request")
+                    st.caption("Fixed list — check all that apply (multiple selections).")
+                    for idx, rlab in enumerate(gsa_reason_option_labels):
+                        st.checkbox(rlab, key=f"gsa_reason_cb_{idx}")
+
+                    if st.session_state.get(f"gsa_reason_cb_{gsa_other_idx}", False):
+                        st.text_area(
+                            "Explanation for above selection (including comparison of hotel quotes, conference/event communication regarding pre-arranged accommodations, etc). *",
+                            placeholder="Enter explanation...",
+                            key="gsa_other_explanation",
+                            height=140,
+                        )
+
+                    st.markdown("##### Supporting materials")
+                    st.caption("Test mode: file names are listed on the PDF only; files are not uploaded anywhere.")
+                    document_lodging = st.file_uploader(
+                        "Select files to reference on the form (optional).",
+                        accept_multiple_files=True,
+                        key="gsa_supporting_upload",
+                    )
+
+                    if st.button("Submit", key='lodging_submit1'):
+                        reason_for_request = []
+                        for idx in range(len(gsa_reason_option_labels)):
+                            if st.session_state.get(f"gsa_reason_cb_{idx}", False):
+                                reason_for_request.append(gsa_reason_option_labels[idx])
+                        other_reason = ""
+                        if st.session_state.get(f"gsa_reason_cb_{gsa_other_idx}", False):
+                            other_reason = (st.session_state.get("gsa_other_explanation") or "").strip()
+
+                        errors = []
+                        if not requestor_name: errors.append("Requestor name is required.")
+                        if not traveler_name: errors.append("Traveler name is required.")
+                        if not travel_city: errors.append("Travel city is required.")
+                        if not travel_date_from: errors.append("Travel date from is required.")
+                        if not travel_date_to: errors.append("Travel date to is required.")
+                        if not requested_lodging_rate: errors.append("Requested lodging rate is required.")
+                        if not gsa_lodging_rate: errors.append("GSA-approved lodging rate is required.")
+                        if not reason_for_request: errors.append("Select at least one reason in Section C.")
+                        if st.session_state.get(f"gsa_reason_cb_{gsa_other_idx}", False) and not (other_reason or "").strip():
+                            errors.append("Explanation is required when \"Reason other than one listed above\" is checked.")
+
+                        if errors:
+                            for error in errors:
+                                st.warning(error)
+                        else:
+                            # Test mode: PDF download only (no Drive, Sheets, or email)
+                            if document_lodging:
+                                support_note = "File(s) listed for your records (not uploaded in test mode): " + ", ".join(
+                                    f.name for f in document_lodging
+                                )
+                            else:
+                                support_note = "None (test mode — supporting files not uploaded)."
+
+                            gsa_form_data = {
+                                'requestor_name': requestor_name,
+                                'traveler_name': traveler_name,
+                                'travel_city': travel_city,
+                                'dates_of_travel': travel_date_from.strftime("%Y-%m-%d") + " – " + travel_date_to.strftime("%Y-%m-%d"),
+                                'requested_lodging_rate': requested_lodging_rate,
+                                'gsa_lodging_rate': gsa_lodging_rate,
+                                'reasons': reason_for_request,
+                                'reason_option_labels': gsa_reason_option_labels,
+                                'other_reason': other_reason,
+                                'supporting_materials': support_note,
+                                'mabintou_signature': '',
+                                'jen_signature': '',
+                                'kemisha_signature': '',
+                                'lauren_signature': '',
+                                'mabintou_approval_date': '',
+                                'jen_approval_date': '',
+                                'kemisha_approval_date': '',
+                                'lauren_approval_date': '',
+                            }
+                            try:
+                                pdf_buffer = create_gsa_exemption_pdf(gsa_form_data)
+                                safe_bits = re.sub(r'[^\w\-. ]', '_', f"{requestor_name}_{traveler_name}_{travel_city}")[:120]
+                                pdf_filename = f"GSA_Lodging_Exemption_{safe_bits}.pdf"
+                                st.session_state["gsa_pdf_bytes"] = pdf_buffer.getvalue()
+                                st.session_state["gsa_pdf_filename"] = pdf_filename
+                                st.success("✅ PDF generated. Use the download button below (test mode — nothing sent to Google Drive or email).")
+                            except Exception as e:
+                                st.error(f"Could not generate PDF: {str(e)}")
+
+                    if st.session_state.get("gsa_pdf_bytes"):
+                        st.download_button(
+                            label="⬇️ Download GSA Exemption PDF",
+                            data=st.session_state["gsa_pdf_bytes"],
+                            file_name=st.session_state.get("gsa_pdf_filename", "GSA_Lodging_Exemption.pdf"),
+                            mime="application/pdf",
+                            key="gsa_download_pdf_btn",
+                        )
+                        if st.button("Clear downloaded PDF from this session", key="gsa_clear_pdf_session"):
+                            st.session_state.pop("gsa_pdf_bytes", None)
+                            st.session_state.pop("gsa_pdf_filename", None)
+                            st.rerun()
                 st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
 
                 # --- Section 1: Mark as Completed
