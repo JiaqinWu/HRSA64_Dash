@@ -1483,27 +1483,45 @@ def _gsa_escape_href(url):
     return str(url).replace('&', '&amp;').replace('"', '&quot;')
 
 
-def _gsa_gutap_logo_reader_and_size():
+def _gsa_advance_stacked_logo_reader_and_size():
     """
-    Load Georgetown GU-TAP branding logo (Georgetown_logo_blueRGB.png) for PDF header.
-    Larger, centered on every page. Returns (ImageReader or None, width_pt, height_pt).
+    Load ADVANCE Logo_Stacked_Blue.png for PDF header (centered, every page).
+    RGBA is composited on white so transparent areas never render as black in the PDF.
+    Returns (ImageReader or None, width_pt, height_pt).
     """
-    gutap_url = (
+    stacked_url = (
         'https://raw.githubusercontent.com/JiaqinWu/HRSA64_Dash/main/'
-        'Georgetown_logo_blueRGB.png'
+        'ADVANCE%20Logo_Stacked_Blue.png'
     )
     try:
-        with urllib.request.urlopen(gutap_url, timeout=30) as resp:
+        with urllib.request.urlopen(stacked_url, timeout=30) as resp:
             data = resp.read()
-        img_pil = PILImage.open(io.BytesIO(data)).convert('RGB')
+        img_pil = PILImage.open(io.BytesIO(data))
+        if img_pil.mode == 'P':
+            img_pil = img_pil.convert('RGBA')
+        elif img_pil.mode not in ('RGBA', 'RGB', 'LA'):
+            img_pil = img_pil.convert('RGBA')
+        if img_pil.mode == 'LA':
+            img_pil = img_pil.convert('RGBA')
         w0, h0 = img_pil.size
         if h0 <= 0:
             return None, 0, 0
         aspect = w0 / float(h0)
-        lh = 1.05 * inch
-        lw = lh * aspect
+        max_w = 3.15 * inch
+        max_h = 1.0 * inch
+        lw = max_w
+        lh = lw / aspect
+        if lh > max_h:
+            lh = max_h
+            lw = lh * aspect
+        if img_pil.mode == 'RGBA':
+            bg = PILImage.new('RGB', img_pil.size, (255, 255, 255))
+            bg.paste(img_pil, mask=img_pil.split()[3])
+            img_pil = bg
+        elif img_pil.mode != 'RGB':
+            img_pil = img_pil.convert('RGB')
         buf = io.BytesIO()
-        img_pil.save(buf, format='PNG')
+        img_pil.save(buf, format='PNG', optimize=True)
         buf.seek(0)
         return ImageReader(buf), float(lw), float(lh)
     except Exception:
@@ -1536,7 +1554,12 @@ def create_gsa_exemption_pdf(form_data):
     """Generate GSA Lodging Rate Exemption Form PDF with wrapped text and routing-based signatures."""
     buffer = io.BytesIO()
     content_w = letter[0] - 1.0 * inch
-    header_top = 1.25 * inch
+    logo_reader, logo_w, logo_h = _gsa_advance_stacked_logo_reader_and_size()
+    header_pad = 0.28 * inch
+    if logo_h and logo_h > 0:
+        header_top = logo_h + header_pad
+    else:
+        header_top = 1.35 * inch
     doc = SimpleDocTemplate(
         buffer,
         pagesize=letter,
@@ -1753,14 +1776,13 @@ def create_gsa_exemption_pdf(form_data):
     ]))
     story.append(sig_table)
 
-    logo_reader, logo_w, logo_h = _gsa_gutap_logo_reader_and_size()
-
     def _gsa_draw_header(canvas, doc):
         canvas.saveState()
         if logo_reader and logo_w > 0 and logo_h > 0:
             pw, ph = doc.pagesize
             x = (pw - logo_w) / 2.0
-            y = ph - doc.topMargin - logo_h
+            # Bottom of logo sits on the top edge of the text frame (no overlap on any page).
+            y = ph - doc.topMargin
             canvas.drawImage(logo_reader, x, y, width=logo_w, height=logo_h, mask='auto')
         canvas.restoreState()
 
