@@ -6485,21 +6485,21 @@ GU-TAP System
                         "Nothing is uploaded to Google Drive, saved to Sheets, or emailed for signatures."
                     )
                     st.markdown("Fill out the form below to generate your GSA Lodging Rate Exemption Form.")
-                    travel_city = st.text_input("Travel City/State *", placeholder="Enter text...",key='travel_city')
+                    travel_city = st.text_input("Travel City/State *", placeholder="Enter text...", key="gsa_travel_city")
                     col1, col2 = st.columns(2)
                     with col1:
-                        requestor_name = st.text_input("Requestor Name *", placeholder="Enter text...",key='requestor_name')
+                        requestor_name = st.text_input("Requestor Name *", placeholder="Enter text...", key="gsa_requestor_name")
                     with col2:
-                        traveler_name = st.text_input("Traveler Name *",placeholder="Enter text...",key='traveler_name')
+                        traveler_name = st.text_input("Traveler Name *", placeholder="Enter text...", key="gsa_traveler_name")
                     col3, col4 = st.columns(2)
                     with col3:
-                        travel_date_from = st.date_input("Travel Date From *",value=datetime.today().date())
+                        travel_date_from = st.date_input("Travel Date From *", value=datetime.today().date(), key="gsa_travel_date_from")
                     with col4:
-                        travel_date_to = st.date_input("Travel Date To *",value=datetime.today().date())
+                        travel_date_to = st.date_input("Travel Date To *", value=datetime.today().date(), key="gsa_travel_date_to")
                     st.markdown("The following circumstances exist to request that the traveler be reimbursed up to 150\% of the GSA-allowed Lodging Rate for lodging costs.")
                     st.markdown("**Please confirm the official GSA per diem rate for your travel destination at https://www.gsa.gov/travel/plan-book/per-diem-rates and select the corresponding rate below.**")
-                    requested_lodging_rate = st.number_input("Requested Lodging Rate *",value=100,min_value=0,step=1,key='requested_lodging_rate')
-                    gsa_lodging_rate = st.number_input("GSA-Approved Lodging Rate *",value=100,min_value=0,step=1,key='gsa_lodging_rate')
+                    requested_lodging_rate = st.number_input("Requested Lodging Rate *", value=100, min_value=0, step=1, key="gsa_requested_lodging_rate")
+                    gsa_lodging_rate = st.number_input("GSA-Approved Lodging Rate *", value=100, min_value=0, step=1, key="gsa_lodging_rate")
 
                     gsa_reason_option_labels = [
                         "The traveler is attending a conference or event that requires lodging at a pre-arranged location. Pre-arranged lodging costs at this location exceed the applicable government rate for the business destination.",
@@ -6532,7 +6532,7 @@ GU-TAP System
                         key="gsa_supporting_upload",
                     )
 
-                    if st.button("Submit", key='lodging_submit1'):
+                    if st.button("Submit", key="gsa_lodging_submit1"):
                         reason_for_request = []
                         for idx in range(len(gsa_reason_option_labels)):
                             if st.session_state.get(f"gsa_reason_cb_{idx}", False):
