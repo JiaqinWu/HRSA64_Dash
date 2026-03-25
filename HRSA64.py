@@ -4999,26 +4999,18 @@ GU-TAP System
                                                 if is_kemisha_t:
                                                     approver1_status_col_check = 'Mabintou Approval Status'
                                                     approver2_status_col_check = 'Jen Approval Status'
-                                                    approver1_name_final = 'Mabintou Ouattara'
-                                                    approver2_name_final = 'Jenevieve Opoku'
                                                 elif is_mabintou_t:
                                                     approver1_status_col_check = 'Lauren Approval Status'
                                                     approver2_status_col_check = 'Kemisha Approval Status'
-                                                    approver1_name_final = 'Lauren Mathae'
-                                                    approver2_name_final = 'Kemisha Denny'
                                                 else:
                                                     if out_of_office_chk.get('mabintou', False):
                                                         approver1_status_col_check = 'Lauren Approval Status'
-                                                        approver1_name_final = 'Lauren Mathae'
                                                     else:
                                                         approver1_status_col_check = 'Mabintou Approval Status'
-                                                        approver1_name_final = 'Mabintou Ouattara'
                                                     if out_of_office_chk.get('kemisha', False):
                                                         approver2_status_col_check = 'Jen Approval Status'
-                                                        approver2_name_final = 'Jenevieve Opoku'
                                                     else:
                                                         approver2_status_col_check = 'Kemisha Approval Status'
-                                                        approver2_name_final = 'Kemisha Denny'
 
                                                 for col in [approver1_status_col_check, approver2_status_col_check]:
                                                     if col not in updated_gsa.columns:
@@ -5072,36 +5064,25 @@ GU-TAP System
                                                     city = selected_gsa.get('Travel City/State', '')
                                                     if notify_email:
                                                         if both_done:
-                                                            subj = f"GSA Lodging Exemption Approved - {city}"
+                                                            subj = "GSA form submitted — approved"
                                                             body = f"""
 Dear {req_nm},
 
-Your GSA Lodging Rate Exemption form has been fully approved by both coordinators.
+Your submission was approved ({city}; {selected_gsa.get('Dates of Travel', 'N/A')}).
 
-Travel city/state: {selected_gsa.get('Travel City/State', 'N/A')}
-Dates: {selected_gsa.get('Dates of Travel', 'N/A')}
+PDF Link: {final_link}
 
-Approved by:
-- {approver1_name_final}
-- {approver2_name_final}
-
-Final PDF: {final_link}
-
-Best regards,
 GU-TAP System
                                                             """
                                                         else:
-                                                            subj = f"GSA Lodging Exemption updated – {city}"
+                                                            subj = "GSA form submitted — update"
                                                             body = f"""
 Dear {req_nm},
 
-Your GSA Lodging Rate Exemption form has been updated with a signature from {coordinator_display_name}.
+Your submission was updated ({coordinator_display_name} signed). You will get another email when fully approved.
 
-Current PDF (signatures recorded so far): {final_link}
+PDF Link: {final_link}
 
-You will receive another email when both coordinators have approved your form.
-
-Best regards,
 GU-TAP System
                                                             """
                                                         try:
@@ -5221,19 +5202,14 @@ GU-TAP System
 
                                                     notify_email = str(selected_gsa.get('Email', '') or '').strip()
                                                     if notify_email:
-                                                        subj = f"GSA Lodging Exemption Rejected - {selected_gsa.get('Travel City/State', '')}"
+                                                        subj = "GSA form submitted — not approved"
                                                         body = f"""
 Dear {selected_gsa.get('Requester Name') or selected_gsa.get('Requestor Name', 'colleague')},
 
-Your GSA Lodging Rate Exemption form has been rejected.
+Your submission was not approved.
 
-City/State: {selected_gsa.get('Travel City/State', 'N/A')}
-Dates: {selected_gsa.get('Dates of Travel', 'N/A')}
-
-Rejected by: {coordinator_display_name}
 Reason: {reject_note_gsa.strip()}
 
-Best regards,
 GU-TAP System
                                                         """
                                                         try:
@@ -7263,7 +7239,11 @@ GU-TAP System
                         </div>
                     """, unsafe_allow_html=True)
                     
-                    st.markdown("Fill out the form below to generate your GSA Lodging Rate Exemption Form.")
+                    st.info(
+                        "**Submit** saves your form to Google Sheets and uploads your PDF to **Google Drive**. "
+                        "You do **not** need to download anything here—you will get a short **confirmation email** after you submit."
+                    )
+                    st.markdown("Fill out the form below, then click **Submit**.")
                     travel_city = st.text_input("Travel City/State *", placeholder="Enter text...", key="gsa_travel_city")
                     st.markdown("##### Requester")
                     st.info(
@@ -7544,27 +7524,26 @@ GU-TAP System
                                                     st.warning(msg)
                                             if ok1 and ok2:
                                                 st.success("🎉 Coordinators notified. Both approvers have been emailed.")
+                                            try:
+                                                send_email_mailjet(
+                                                    to_email=ce,
+                                                    subject="GSA form submitted",
+                                                    body=(
+                                                        f"Dear {requester_name},\n\n"
+                                                        "Submitted. Coordinators were notified.\n\n"
+                                                        f"PDF Link: {pdf_link}\n\n"
+                                                        "GU-TAP System"
+                                                    ).strip(),
+                                                )
+                                                st.success("✅ Confirmation email sent to you.")
+                                            except Exception as em_req:
+                                                st.warning(f"⚠️ Could not send confirmation email to you: {str(em_req)}")
                                     except Exception as e:
                                         st.warning(f"⚠️ Could not update sheet status or send emails: {str(e)}")
 
-                                st.session_state["gsa_pdf_bytes"] = pdf_buffer.getvalue()
-                                st.session_state["gsa_pdf_filename"] = pdf_filename
                                 st.cache_data.clear()
                                 time.sleep(1)
                                 st.rerun()
-
-                    if st.session_state.get("gsa_pdf_bytes"):
-                        st.download_button(
-                            label="⬇️ Download GSA Exemption PDF",
-                            data=st.session_state["gsa_pdf_bytes"],
-                            file_name=st.session_state.get("gsa_pdf_filename", "GSA_Lodging_Exemption.pdf"),
-                            mime="application/pdf",
-                            key="gsa_download_pdf_btn",
-                        )
-                        if st.button("Clear downloaded PDF from this session", key="gsa_clear_pdf_session"):
-                            st.session_state.pop("gsa_pdf_bytes", None)
-                            st.session_state.pop("gsa_pdf_filename", None)
-                            st.rerun()
                 st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
 
                 # --- Section 1: Mark as Completed
