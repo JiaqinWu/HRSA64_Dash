@@ -1475,6 +1475,13 @@ def _gsa_escape_for_paragraph(text):
     return s.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
 
 
+def _gsa_escape_href(url):
+    """Escape URL for use in ReportLab Paragraph href attribute."""
+    if not url:
+        return ''
+    return str(url).replace('&', '&amp;').replace('"', '&quot;')
+
+
 def gsa_approver_routing_for_traveler(traveler_name):
     """
     Same routing as Travel Authorization. Returns two rows for signatures:
@@ -1537,25 +1544,20 @@ def create_gsa_exemption_pdf(form_data):
         story.append(Paragraph(chunk, body_wrap))
     story.append(Spacer(1, 0.15*inch))
 
-    # Section A: Information (values wrapped)
+    # Section A: one field per row (label | value)
     rn = _gsa_escape_for_paragraph(form_data.get('requestor_name', ''))
     tn = _gsa_escape_for_paragraph(form_data.get('traveler_name', ''))
     tc = _gsa_escape_for_paragraph(form_data.get('travel_city', ''))
     dt = _gsa_escape_for_paragraph(form_data.get('dates_of_travel', ''))
-    traveler_data = [
-        [
-            Paragraph('<b>Requestor Name</b>', body_wrap), Paragraph(rn, body_wrap),
-            Paragraph('<b>Traveler Name(s)</b>', body_wrap), Paragraph(tn, body_wrap),
-        ],
-        [
-            Paragraph('<b>Travel City/State</b>', body_wrap), Paragraph(tc, body_wrap),
-            Paragraph('<b>Dates of Travel (Begin – End)</b>', body_wrap), Paragraph(dt, body_wrap),
-        ],
+    section_a_rows = [
+        [Paragraph('<b>Requestor Name</b>', body_wrap), Paragraph(rn, body_wrap)],
+        [Paragraph('<b>Traveler Name(s)</b>', body_wrap), Paragraph(tn, body_wrap)],
+        [Paragraph('<b>Travel City/State</b>', body_wrap), Paragraph(tc, body_wrap)],
+        [Paragraph('<b>Dates of Travel (Begin – End)</b>', body_wrap), Paragraph(dt, body_wrap)],
     ]
-    traveler_table = Table(traveler_data, colWidths=[1.35*inch, 2.4*inch, 1.35*inch, 2.4*inch])
+    traveler_table = Table(section_a_rows, colWidths=[2.2*inch, 5.3*inch])
     traveler_table.setStyle(TableStyle([
         ('BACKGROUND', (0, 0), (0, -1), colors.HexColor('#E0E0E0')),
-        ('BACKGROUND', (2, 0), (2, -1), colors.HexColor('#E0E0E0')),
         ('GRID', (0, 0), (-1, -1), 1, colors.black),
         ('VALIGN', (0, 0), (-1, -1), 'TOP'),
         ('TOPPADDING', (0, 0), (-1, -1), 6),
@@ -1571,16 +1573,17 @@ def create_gsa_exemption_pdf(form_data):
     req_rate = form_data.get('requested_lodging_rate', 0)
     gsa_rate = form_data.get('gsa_lodging_rate', 1)
     excess_pct = round((req_rate / gsa_rate) * 100, 1) if gsa_rate else 0
-    fin_data = [
-        ['(a) Requested Lodging Rate', f'${req_rate}', '(b) GSA-Approved Lodging Rate', f'${gsa_rate}'],
-        ['% in Excess of Applicable Rate (a ÷ b)', f'{excess_pct}%', '', ''],
+    # Section B: one financial line per row
+    fin_rows = [
+        [Paragraph('<b>(a) Requested Lodging Rate</b>', body_wrap), Paragraph(f'${req_rate}', body_wrap)],
+        [Paragraph('<b>(b) GSA-Approved Lodging Rate</b>', body_wrap), Paragraph(f'${gsa_rate}', body_wrap)],
+        [Paragraph('<b>% in Excess of Applicable Rate (a ÷ b)</b>', body_wrap), Paragraph(f'{excess_pct}%', body_wrap)],
     ]
-    fin_table = Table(fin_data, colWidths=[2.5*inch, 1.5*inch, 2.5*inch, 1.5*inch])
+    fin_table = Table(fin_rows, colWidths=[2.2*inch, 5.3*inch])
     fin_table.setStyle(TableStyle([
         ('BACKGROUND', (0, 0), (0, -1), colors.HexColor('#E0E0E0')),
-        ('BACKGROUND', (2, 0), (2, -1), colors.HexColor('#E0E0E0')),
         ('GRID', (0, 0), (-1, -1), 1, colors.black),
-        ('FONTSIZE', (0, 0), (-1, -1), 9),
+        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
         ('TOPPADDING', (0, 0), (-1, -1), 6),
         ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
     ]))
@@ -1604,14 +1607,14 @@ def create_gsa_exemption_pdf(form_data):
     other_label = "Reason other than one listed above (please describe below)."
     reason_rows = []
     for lab in reason_labels:
-        mark = '☑' if lab in selected_set else '☐'
+        mark = '✔️' if lab in selected_set else '—'
         reason_rows.append([
             Paragraph(mark, reason_cell_style),
             Paragraph(_gsa_escape_for_paragraph(lab), reason_cell_style),
         ])
 
     if reason_rows:
-        reason_table = Table(reason_rows, colWidths=[0.35*inch, content_w - 0.35*inch])
+        reason_table = Table(reason_rows, colWidths=[0.45*inch, content_w - 0.45*inch])
         reason_table.setStyle(TableStyle([
             ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
             ('VALIGN', (0, 0), (-1, -1), 'TOP'),
@@ -1632,10 +1635,27 @@ def create_gsa_exemption_pdf(form_data):
         ))
         story.append(Paragraph(_gsa_escape_for_paragraph(other_explanation), reason_cell_style))
 
-    supporting = form_data.get('supporting_materials', '') or ''
     story.append(Spacer(1, 0.12*inch))
     story.append(Paragraph("<b>Supporting materials</b>", styles['Heading3']))
-    story.append(Paragraph(_gsa_escape_for_paragraph(supporting) if supporting else 'None provided at submission.', reason_cell_style))
+    supporting_links = form_data.get('supporting_drive_links') or []
+    if supporting_links:
+        for item in supporting_links:
+            fname = _gsa_escape_for_paragraph(item.get('name', 'File'))
+            url = item.get('url') or ''
+            if url:
+                href = _gsa_escape_href(url)
+                story.append(Paragraph(
+                    f'<b>{fname}</b>: <a href="{href}" color="blue">Open link (Google Drive)</a>',
+                    reason_cell_style,
+                ))
+            else:
+                story.append(Paragraph(fname, reason_cell_style))
+    else:
+        supporting = form_data.get('supporting_materials', '') or ''
+        story.append(Paragraph(
+            _gsa_escape_for_paragraph(supporting) if supporting else 'No supporting files uploaded.',
+            reason_cell_style,
+        ))
 
     story.append(Spacer(1, 0.15*inch))
     story.append(Paragraph("<b>Approval Signatures</b>", styles['Heading2']))
@@ -6481,8 +6501,8 @@ GU-TAP System
                     """, unsafe_allow_html=True)
                     
                     st.info(
-                        "**Test mode:** Generates a PDF for download in your browser only. "
-                        "Nothing is uploaded to Google Drive, saved to Sheets, or emailed for signatures."
+                        "**PDF:** Generated for download below. **Supporting files** are uploaded to Google Drive; "
+                        "the PDF lists clickable links to those files. (No sheet/email for signatures in this flow.)"
                     )
                     st.markdown("Fill out the form below to generate your GSA Lodging Rate Exemption Form.")
                     travel_city = st.text_input("Travel City/State *", placeholder="Enter text...", key="gsa_travel_city")
@@ -6512,9 +6532,13 @@ GU-TAP System
                     gsa_other_idx = len(gsa_reason_option_labels) - 1
 
                     st.markdown("##### Section C: Reason(s) for request")
-                    st.caption("Fixed list — check all that apply (multiple selections).")
+                    st.caption("Check ✔️ each line that applies (use the box on the left).")
                     for idx, rlab in enumerate(gsa_reason_option_labels):
-                        st.checkbox(rlab, key=f"gsa_reason_cb_{idx}")
+                        c_mark, c_txt = st.columns([0.065, 0.935])
+                        with c_mark:
+                            st.checkbox(" ", key=f"gsa_reason_cb_{idx}", label_visibility="collapsed")
+                        with c_txt:
+                            st.markdown(f"**{idx + 1}.** {rlab}")
 
                     if st.session_state.get(f"gsa_reason_cb_{gsa_other_idx}", False):
                         st.text_area(
@@ -6525,9 +6549,9 @@ GU-TAP System
                         )
 
                     st.markdown("##### Supporting materials")
-                    st.caption("Test mode: file names are listed on the PDF only; files are not uploaded anywhere.")
+                    st.caption("Files are uploaded to Google Drive; each file’s link appears in the PDF.")
                     document_lodging = st.file_uploader(
-                        "Select files to reference on the form (optional).",
+                        "Upload supporting files (optional).",
                         accept_multiple_files=True,
                         key="gsa_supporting_upload",
                     )
@@ -6557,13 +6581,26 @@ GU-TAP System
                             for error in errors:
                                 st.warning(error)
                         else:
-                            # Test mode: PDF download only (no Drive, Sheets, or email)
+                            supporting_drive_links = []
                             if document_lodging:
-                                support_note = "File(s) listed for your records (not uploaded in test mode): " + ", ".join(
-                                    f.name for f in document_lodging
-                                )
-                            else:
-                                support_note = "None (test mode — supporting files not uploaded)."
+                                try:
+                                    folder_id_lodging = "14n7LFGUyncbi_t2pdWvME1mHNw_t8Mii"
+                                    for file in document_lodging:
+                                        renamed_filename = (
+                                            f"{requestor_name}_{traveler_name}_{travel_city}_"
+                                            f"{travel_date_from}_{travel_date_to}_{file.name}"
+                                        )
+                                        renamed_filename = re.sub(r'[^\w\-. ]', '_', renamed_filename)[:200]
+                                        link = upload_file_to_drive(
+                                            file=file,
+                                            filename=renamed_filename,
+                                            folder_id=folder_id_lodging,
+                                            creds_dict=st.secrets["gcp_service_account"],
+                                        )
+                                        supporting_drive_links.append({"name": file.name, "url": link})
+                                        st.success(f"✅ Uploaded: {file.name}")
+                                except Exception as e:
+                                    st.warning(f"⚠️ Supporting file upload failed: {str(e)}. PDF will list uploads only if successful.")
 
                             gsa_form_data = {
                                 'requestor_name': requestor_name,
@@ -6575,7 +6612,8 @@ GU-TAP System
                                 'reasons': reason_for_request,
                                 'reason_option_labels': gsa_reason_option_labels,
                                 'other_reason': other_reason,
-                                'supporting_materials': support_note,
+                                'supporting_drive_links': supporting_drive_links,
+                                'supporting_materials': '',
                                 'mabintou_signature': '',
                                 'jen_signature': '',
                                 'kemisha_signature': '',
@@ -6591,7 +6629,7 @@ GU-TAP System
                                 pdf_filename = f"GSA_Lodging_Exemption_{safe_bits}.pdf"
                                 st.session_state["gsa_pdf_bytes"] = pdf_buffer.getvalue()
                                 st.session_state["gsa_pdf_filename"] = pdf_filename
-                                st.success("✅ PDF generated. Use the download button below (test mode — nothing sent to Google Drive or email).")
+                                st.success("✅ PDF ready. Download below; supporting links are in the PDF when upload succeeded.")
                             except Exception as e:
                                 st.error(f"Could not generate PDF: {str(e)}")
 
