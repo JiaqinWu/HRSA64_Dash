@@ -1483,24 +1483,24 @@ def _gsa_escape_href(url):
     return str(url).replace('&', '&amp;').replace('"', '&quot;')
 
 
-def _gsa_advance_logo_reader_and_size():
+def _gsa_gutap_logo_reader_and_size():
     """
-    Load ADVANCE Logo_Horizontal Blue.png (same asset as Travel form) for PDF header.
-    Returns (ImageReader or None, width_pt, height_pt) for canvas.drawImage.
+    Load Georgetown GU-TAP branding logo (Georgetown_logo_blueRGB.png) for PDF header.
+    Larger, centered on every page. Returns (ImageReader or None, width_pt, height_pt).
     """
-    advance_url = (
+    gutap_url = (
         'https://raw.githubusercontent.com/JiaqinWu/HRSA64_Dash/main/'
-        'ADVANCE%20Logo_Horizontal%20Blue.png'
+        'Georgetown_logo_blueRGB.png'
     )
     try:
-        with urllib.request.urlopen(advance_url, timeout=30) as resp:
+        with urllib.request.urlopen(gutap_url, timeout=30) as resp:
             data = resp.read()
         img_pil = PILImage.open(io.BytesIO(data)).convert('RGB')
         w0, h0 = img_pil.size
         if h0 <= 0:
             return None, 0, 0
         aspect = w0 / float(h0)
-        lh = 0.42 * inch
+        lh = 1.05 * inch
         lw = lh * aspect
         buf = io.BytesIO()
         img_pil.save(buf, format='PNG')
@@ -1536,7 +1536,7 @@ def create_gsa_exemption_pdf(form_data):
     """Generate GSA Lodging Rate Exemption Form PDF with wrapped text and routing-based signatures."""
     buffer = io.BytesIO()
     content_w = letter[0] - 1.0 * inch
-    header_top = 0.95 * inch
+    header_top = 1.25 * inch
     doc = SimpleDocTemplate(
         buffer,
         pagesize=letter,
@@ -1555,6 +1555,14 @@ def create_gsa_exemption_pdf(form_data):
         leading=12,
         spaceAfter=6,
     )
+    gutap_subtitle_style = ParagraphStyle(
+        'GSA_GUTAP_Subtitle',
+        parent=styles['Normal'],
+        fontSize=11,
+        alignment=1,
+        textColor=colors.HexColor('#041E42'),
+        spaceAfter=6,
+    )
     title_style = ParagraphStyle(
         'GSA_Title',
         parent=styles['Heading1'],
@@ -1569,6 +1577,7 @@ def create_gsa_exemption_pdf(form_data):
         leading=10,
     )
 
+    story.append(Paragraph("GU-TAP System", gutap_subtitle_style))
     story.append(Paragraph("EXEMPTION FORM FOR LODGING RATES OVER GSA-APPROVED LIMIT", title_style))
     policy_chunks = [
         "Georgetown University will cover the GSA-allowed lodging rate based upon the destination of travel. Lodging rates refer to <b>room rates</b> only and <b>do not include taxes and surcharges.</b>",
@@ -1640,11 +1649,26 @@ def create_gsa_exemption_pdf(form_data):
         selected_set = set(reasons)
 
     other_label = "Reason other than one listed above (please describe below)."
-    # Reasons: plain lines — ✔ only (no table/grid so no “box” around checkmarks)
+    reason_rows = []
     for lab in reason_labels:
         mark = '✔' if lab in selected_set else '—'
-        line = f'{mark} {_gsa_escape_for_paragraph(lab)}'
-        story.append(Paragraph(line, reason_cell_style))
+        reason_rows.append([
+            Paragraph(mark, reason_cell_style),
+            Paragraph(_gsa_escape_for_paragraph(lab), reason_cell_style),
+        ])
+    if reason_rows:
+        reason_table = Table(reason_rows, colWidths=[0.42 * inch, content_w - 0.42 * inch])
+        line_gray = colors.HexColor('#BDBDBD')
+        reason_table.setStyle(TableStyle([
+            ('GRID', (0, 0), (-1, -1), 0.5, line_gray),
+            ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+            ('ALIGN', (0, 0), (0, -1), 'CENTER'),
+            ('TOPPADDING', (0, 0), (-1, -1), 5),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
+            ('LEFTPADDING', (0, 0), (-1, -1), 5),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 5),
+        ]))
+        story.append(reason_table)
 
     other_explanation = form_data.get('other_reason', '') or ''
     if other_label in selected_set and other_explanation.strip():
@@ -1729,14 +1753,14 @@ def create_gsa_exemption_pdf(form_data):
     ]))
     story.append(sig_table)
 
-    logo_reader, logo_w, logo_h = _gsa_advance_logo_reader_and_size()
+    logo_reader, logo_w, logo_h = _gsa_gutap_logo_reader_and_size()
 
     def _gsa_draw_header(canvas, doc):
         canvas.saveState()
         if logo_reader and logo_w > 0 and logo_h > 0:
             pw, ph = doc.pagesize
-            x = doc.leftMargin + doc.width - logo_w
-            y = ph - doc.topMargin - logo_h + 0.05 * inch
+            x = (pw - logo_w) / 2.0
+            y = ph - doc.topMargin - logo_h
             canvas.drawImage(logo_reader, x, y, width=logo_w, height=logo_h, mask='auto')
         canvas.restoreState()
 
