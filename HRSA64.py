@@ -1741,41 +1741,65 @@ def create_gsa_exemption_pdf(form_data):
         return str(d)
 
     traveler_for_route = form_data.get('traveler_name', '')
-    (_, _, k1, d1k), (_, _, k2, d2k) = gsa_approver_routing_for_traveler(traveler_for_route)
+    (n1, _r1, k1, d1k), (n2, _r2, k2, d2k) = gsa_approver_routing_for_traveler(traveler_for_route)
     sig_pa = form_data.get(k1, '') or ''
     sig_lead = form_data.get(k2, '') or ''
     date_pa = _fmt_date(form_data.get(d1k, ''))
     date_lead = _fmt_date(form_data.get(d2k, ''))
-    req_sig = form_data.get('requester_signature', '') or ''
-    req_date = _fmt_date(form_data.get('requester_signature_date', ''))
+    requestor_name = (form_data.get('requestor_name', '') or '').strip()
+    sub_raw = form_data.get('submission_date', '')
+    if not sub_raw:
+        sub_raw = datetime.now()
+    submission_date_str = _fmt_date(sub_raw)
 
     label_style = ParagraphStyle('LabelStyle', parent=styles['Normal'], fontSize=9, fontName='Helvetica', alignment=0)
     sig_para_style = ParagraphStyle('GSA_SigCell', parent=label_style, fontSize=9, leading=11)
     hdr = ParagraphStyle('GSA_SigHdr', parent=label_style, fontName='Helvetica-Bold')
+    auto_sig_style = ParagraphStyle(
+        'GSA_AutoSig',
+        parent=label_style,
+        fontName='Helvetica-Oblique',
+        fontSize=13,
+        leading=15,
+        textColor=colors.HexColor('#1c2841'),
+    )
+
+    # Auto-generated "signature" line from requester name (stylized text, not a separate image).
+    if requestor_name:
+        req_sig_cell = Paragraph(
+            '<i>%s</i>' % (_gsa_escape_for_paragraph(requestor_name),),
+            auto_sig_style,
+        )
+    else:
+        req_sig_cell = Paragraph('', sig_para_style)
 
     sig_data = [
         [
+            Paragraph('', hdr),
             Paragraph('Name', hdr),
             Paragraph('Date', hdr),
             Paragraph('Signature', hdr),
         ],
         [
             Paragraph('Requester', label_style),
-            Paragraph(_gsa_escape_for_paragraph(str(req_date)), sig_para_style),
-            Paragraph(_gsa_escape_for_paragraph(req_sig), sig_para_style),
+            Paragraph(_gsa_escape_for_paragraph(requestor_name), sig_para_style),
+            Paragraph(_gsa_escape_for_paragraph(str(submission_date_str)), sig_para_style),
+            req_sig_cell,
         ],
         [
             Paragraph('Program Assistant', label_style),
+            Paragraph(_gsa_escape_for_paragraph(n1 or ''), sig_para_style),
             Paragraph(_gsa_escape_for_paragraph(str(date_pa)), sig_para_style),
             Paragraph(_gsa_escape_for_paragraph(sig_pa), sig_para_style),
         ],
         [
             Paragraph('Lead Technical Assistance Provider', label_style),
+            Paragraph(_gsa_escape_for_paragraph(n2 or ''), sig_para_style),
             Paragraph(_gsa_escape_for_paragraph(str(date_lead)), sig_para_style),
             Paragraph(_gsa_escape_for_paragraph(sig_lead), sig_para_style),
         ],
     ]
-    sig_table = Table(sig_data, colWidths=[2.35 * inch, 1.35 * inch, 3.8 * inch])
+    sig_table = Table(sig_data, colWidths=[1.35 * inch, 1.75 * inch, 1.05 * inch, 3.35 * inch])
     sig_table.setStyle(TableStyle([
         ('GRID', (0, 0), (-1, -1), 1, colors.black),
         ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#E8E8E8')),
@@ -6703,6 +6727,7 @@ GU-TAP System
 
                             gsa_form_data = {
                                 'requestor_name': requestor_name,
+                                'submission_date': datetime.now(),
                                 'traveler_name': traveler_name,
                                 'travel_city': travel_city,
                                 'dates_of_travel': travel_date_from.strftime("%Y-%m-%d") + " – " + travel_date_to.strftime("%Y-%m-%d"),
