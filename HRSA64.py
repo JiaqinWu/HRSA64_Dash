@@ -1578,14 +1578,6 @@ def create_gsa_exemption_pdf(form_data):
         leading=12,
         spaceAfter=6,
     )
-    gutap_subtitle_style = ParagraphStyle(
-        'GSA_GUTAP_Subtitle',
-        parent=styles['Normal'],
-        fontSize=11,
-        alignment=1,
-        textColor=colors.HexColor('#041E42'),
-        spaceAfter=6,
-    )
     title_style = ParagraphStyle(
         'GSA_Title',
         parent=styles['Heading1'],
@@ -1600,7 +1592,6 @@ def create_gsa_exemption_pdf(form_data):
         leading=10,
     )
 
-    story.append(Paragraph("GU-TAP System", gutap_subtitle_style))
     story.append(Paragraph("EXEMPTION FORM FOR LODGING RATES OVER GSA-APPROVED LIMIT", title_style))
     policy_chunks = [
         "Georgetown University will cover the GSA-allowed lodging rate based upon the destination of travel. Lodging rates refer to <b>room rates</b> only and <b>do not include taxes and surcharges.</b>",
@@ -1658,7 +1649,6 @@ def create_gsa_exemption_pdf(form_data):
     story.append(Spacer(1, 0.12*inch))
 
     # Section C: fixed table — one row per reason with checkmark
-    story.append(Paragraph("<b>Section C: Select reason(s) below (check all that apply)</b>", styles['Heading2']))
     story.append(Paragraph("Select reason(s) below and provide the required information to support your request.", body_wrap))
 
     reason_labels = form_data.get('reason_option_labels', [])
@@ -1735,7 +1725,7 @@ def create_gsa_exemption_pdf(form_data):
         ))
 
     story.append(Spacer(1, 0.15*inch))
-    story.append(Paragraph("<b>Approval Signatures</b>", styles['Heading2']))
+    story.append(Paragraph("<b>Signatures</b>", styles['Heading2']))
 
     def _fmt_date(d):
         if not d:
@@ -1751,28 +1741,50 @@ def create_gsa_exemption_pdf(form_data):
         return str(d)
 
     traveler_for_route = form_data.get('traveler_name', '')
-    (n1, r1, k1, d1k), (n2, r2, k2, d2k) = gsa_approver_routing_for_traveler(traveler_for_route)
-    sig1 = form_data.get(k1, '') or ''
-    sig2 = form_data.get(k2, '') or ''
-    date1 = _fmt_date(form_data.get(d1k, ''))
-    date2 = _fmt_date(form_data.get(d2k, ''))
+    (_, _, k1, d1k), (_, _, k2, d2k) = gsa_approver_routing_for_traveler(traveler_for_route)
+    sig_pa = form_data.get(k1, '') or ''
+    sig_lead = form_data.get(k2, '') or ''
+    date_pa = _fmt_date(form_data.get(d1k, ''))
+    date_lead = _fmt_date(form_data.get(d2k, ''))
+    req_sig = form_data.get('requester_signature', '') or ''
+    req_date = _fmt_date(form_data.get('requester_signature_date', ''))
 
     label_style = ParagraphStyle('LabelStyle', parent=styles['Normal'], fontSize=9, fontName='Helvetica', alignment=0)
-    row1_label = Paragraph(f"<b>{_gsa_escape_for_paragraph(n1)}</b><br/>{_gsa_escape_for_paragraph(r1)}", label_style)
-    row2_label = Paragraph(f"<b>{_gsa_escape_for_paragraph(n2)}</b><br/>{_gsa_escape_for_paragraph(r2)}", label_style)
-
     sig_para_style = ParagraphStyle('GSA_SigCell', parent=label_style, fontSize=9, leading=11)
+    hdr = ParagraphStyle('GSA_SigHdr', parent=label_style, fontName='Helvetica-Bold')
+
     sig_data = [
-        [row1_label, Paragraph(_gsa_escape_for_paragraph(sig1), sig_para_style), Paragraph("Date", label_style), Paragraph(_gsa_escape_for_paragraph(str(date1)), sig_para_style)],
-        [row2_label, Paragraph(_gsa_escape_for_paragraph(sig2), sig_para_style), Paragraph("Date", label_style), Paragraph(_gsa_escape_for_paragraph(str(date2)), sig_para_style)],
+        [
+            Paragraph('Name', hdr),
+            Paragraph('Date', hdr),
+            Paragraph('Signature', hdr),
+        ],
+        [
+            Paragraph('Requester', label_style),
+            Paragraph(_gsa_escape_for_paragraph(str(req_date)), sig_para_style),
+            Paragraph(_gsa_escape_for_paragraph(req_sig), sig_para_style),
+        ],
+        [
+            Paragraph('Program Assistant', label_style),
+            Paragraph(_gsa_escape_for_paragraph(str(date_pa)), sig_para_style),
+            Paragraph(_gsa_escape_for_paragraph(sig_pa), sig_para_style),
+        ],
+        [
+            Paragraph('Lead Technical Assistance Provider', label_style),
+            Paragraph(_gsa_escape_for_paragraph(str(date_lead)), sig_para_style),
+            Paragraph(_gsa_escape_for_paragraph(sig_lead), sig_para_style),
+        ],
     ]
-    sig_table = Table(sig_data, colWidths=[2.1*inch, 2.4*inch, 0.75*inch, 2.25*inch])
+    sig_table = Table(sig_data, colWidths=[2.35 * inch, 1.35 * inch, 3.8 * inch])
     sig_table.setStyle(TableStyle([
         ('GRID', (0, 0), (-1, -1), 1, colors.black),
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#E8E8E8')),
         ('FONTSIZE', (0, 0), (-1, -1), 9),
         ('VALIGN', (0, 0), (-1, -1), 'TOP'),
         ('TOPPADDING', (0, 0), (-1, -1), 8),
         ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+        ('LEFTPADDING', (0, 0), (-1, -1), 6),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 6),
     ]))
     story.append(sig_table)
 
