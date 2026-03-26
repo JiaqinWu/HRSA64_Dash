@@ -1312,8 +1312,8 @@ def create_pdf(form_data, ws):
     )
     
     traveler_label = Paragraph("Traveler Signature", label_style)
-    program_assistant_label = Paragraph("Reviewer 1", label_style)
-    lead_provider_text = Paragraph("Reviewer 2", label_style)
+    program_assistant_label = Paragraph("Program Assistant", label_style)
+    lead_provider_text = Paragraph("Lead Technical\nAssistance Provider", label_style)
     
     # Helper function to format dates consistently to MM/DD/YYYY
     def format_date_for_pdf(date_value):
@@ -1361,7 +1361,7 @@ def create_pdf(form_data, ws):
     kemisha_date = format_date_for_pdf(form_data.get('kemisha_approval_date', ''))
     traveler_date = format_date_for_pdf(form_data.get('signature_date', ''))
     
-    # Generate Mabintou signature image (Reviewer 1 row)
+    # Generate Mabintou signature image (Program Assistant)
     mabintou_signature_cell = ''
     if mabintou_sig_text:
         try:
@@ -1393,7 +1393,7 @@ def create_pdf(form_data, ws):
         except Exception:
             mabintou_signature_cell = mabintou_sig_text
     
-    # Generate Kemisha signature image (Reviewer 2 row)
+    # Generate Kemisha signature image (Lead Technical Assistance Provider)
     kemisha_signature_cell = ''
     if kemisha_sig_text:
         try:
@@ -1449,11 +1449,11 @@ def create_pdf(form_data, ws):
         ('BACKGROUND', (0, 0), (-1, 0), colors.white),
         ('TEXTCOLOR', (1, 0), (1, 0), colors.red),
         ('TEXTCOLOR', (3, 0), (3, 0), colors.red),
-        # Reviewer 1 row (row 1) - signature and date cells red if signature exists
+        # Program Assistant row (row 1) - signature and date cells red if signature exists
         ('BACKGROUND', (0, 1), (-1, 1), colors.white),
         ('TEXTCOLOR', (1, 1), (1, 1), colors.red),
         ('TEXTCOLOR', (3, 1), (3, 1), colors.red),
-        # Reviewer 2 row (row 2) - signature and date cells red if signature exists
+        # Lead Technical Assistance Provider row (row 2) - signature and date cells red if signature exists
         ('BACKGROUND', (0, 2), (-1, 2), colors.white),
         ('TEXTCOLOR', (1, 2), (1, 2), colors.red),
         ('TEXTCOLOR', (3, 2), (3, 2), colors.red),
@@ -1588,7 +1588,7 @@ def travel_routing_from_traveler(traveler_name, traveler_email=''):
 def gsa_exemption_approver_routing():
     """
     GSA Lodging Exemption: only Jen and Kemisha sign (fixed; not travel-style routing).
-    Jen = Reviewer 1 row; Kemisha = Reviewer 2 row in the PDF.
+    Jen = Program Director row; Kemisha = Technical Assistance Lead row in the PDF.
     """
     return {
         'approver1_email': 'jenevieve.opoku@georgetown.edu',
@@ -1627,8 +1627,8 @@ def gsa_approver_routing_for_traveler(traveler_name, traveler_email=''):
     k1, d1 = _status_col_to_gsa_pdf_keys(r['approver1_status_col'])
     k2, d2 = _status_col_to_gsa_pdf_keys(r['approver2_status_col'])
     return (
-        (r['approver1_name'], 'Reviewer 1', k1, d1),
-        (r['approver2_name'], 'Reviewer 2', k2, d2),
+        (r['approver1_name'], 'Program Director', k1, d1),
+        (r['approver2_name'], 'Technical Assistance Lead', k2, d2),
     )
 
 
@@ -1795,7 +1795,7 @@ def gsa_sheet_row_to_pdf_form_data(row_dict):
 def _gsa_coordinator_signature_flowable(sig_text, sig_para_style, max_width=2.95 * inch, max_height=0.5 * inch):
     """
     Same approach as Travel Authorization PDF: render typed name as a signature-style image
-    in the GSA table (Reviewer 1 / Reviewer 2 rows).
+    in the GSA table (Program Director / Technical Assistance Lead rows).
     """
     stxt = (sig_text or '').strip()
     if not stxt:
@@ -2070,13 +2070,13 @@ def create_gsa_exemption_pdf(form_data):
             req_sig_cell,
         ],
         [
-            Paragraph(_gsa_escape_for_paragraph(r1_label or 'Reviewer 1'), label_style),
+            Paragraph(_gsa_escape_for_paragraph(r1_label or 'Program Director'), label_style),
             Paragraph(_gsa_escape_for_paragraph(n1 or ''), sig_para_style),
             Paragraph(_gsa_escape_for_paragraph(str(date_pa)), sig_para_style),
             _gsa_coordinator_signature_flowable(sig_pa, sig_para_style),
         ],
         [
-            Paragraph(_gsa_escape_for_paragraph(r2_label or 'Reviewer 2'), label_style),
+            Paragraph(_gsa_escape_for_paragraph(r2_label or 'Technical Assistance Lead'), label_style),
             Paragraph(_gsa_escape_for_paragraph(n2 or ''), sig_para_style),
             Paragraph(_gsa_escape_for_paragraph(str(date_lead)), sig_para_style),
             _gsa_coordinator_signature_flowable(sig_lead, sig_para_style),
