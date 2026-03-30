@@ -376,6 +376,139 @@ GU-TAP System
         st.warning(f"⚠️ Sent {success_count}/{total_count} emails successfully")
         return False
 
+
+def _student_assigned_missing(val):
+    if val is None or (isinstance(val, float) and pd.isna(val)):
+        return True
+    s = str(val).strip().lower()
+    return s in ("", "nan", "none")
+
+
+def _support_unassigned_reference_date(row):
+    """Meeting requests: use Date. Project requests: use Anticipated Deadline."""
+    rt = str(row.get("Request Type", "") or "").strip()
+    if rt == "Project":
+        ad = pd.to_datetime(row.get("Anticipated Deadline"), errors="coerce")
+        if pd.notna(ad):
+            return ad.date()
+        return None
+    d = pd.to_datetime(row.get("Date"), errors="coerce")
+    if pd.notna(d):
+        return d.date()
+    ad = pd.to_datetime(row.get("Anticipated Deadline"), errors="coerce")
+    if pd.notna(ad):
+        return ad.date()
+    return None
+
+
+def maybe_send_ga_unassigned_reminders():
+    """Email all research assistants when a request is unassigned and within 5 days of the meeting or project deadline. At most once per request per calendar day (tracked in sheet column GA Reminder Last Sent)."""
+    today = datetime.today().date()
+    today_str = today.strftime("%Y-%m-%d")
+    try:
+        df = pd.DataFrame(_get_records_with_retry("HRSA64_TA_Request", "GA_Support"))
+    except Exception:
+        return
+    if df.empty:
+        return
+    if "GA Reminder Last Sent" not in df.columns:
+        df["GA Reminder Last Sent"] = ""
+    ga_list = list(STUDENT_SCHEDULE.items())
+    if not ga_list:
+        return
+    sheet_updated = False
+    for idx, row in df.iterrows():
+        if str(row.get("Request status", "")).strip() == "Completed":
+            continue
+        if not _student_assigned_missing(row.get("Student assigned")):
+            continue
+        ref = _support_unassigned_reference_date(row)
+        if ref is None:
+            continue
+        days_left = (ref - today).days
+        if days_left < 0 or days_left > 5:
+            continue
+        last = str(row.get("GA Reminder Last Sent", "") or "").strip()
+        if last == today_str:
+            continue
+        req_type = str(row.get("Request Type", "") or "").strip() or "Meeting"
+        date_raw = row.get("Date")
+        if pd.isna(date_raw) or str(date_raw).strip() in ("", "nan"):
+            date_display = "N/A (project)"
+        else:
+            try:
+                date_display = pd.to_datetime(date_raw).strftime("%Y-%m-%d")
+            except Exception:
+                date_display = str(date_raw)
+        ad_raw = row.get("Anticipated Deadline", "")
+        ad_display = ""
+        if ad_raw is not None and str(ad_raw).strip() not in ("", "nan"):
+            try:
+                ad_display = pd.to_datetime(ad_raw).strftime("%Y-%m-%d")
+            except Exception:
+                ad_display = str(ad_raw)
+        time_needed = row.get("Time request needed") or row.get("Time Commitment") or ""
+        if pd.isna(time_needed) or str(time_needed).strip() in ("", "nan"):
+            time_display = "N/A"
+        else:
+            time_display = str(time_needed).strip()
+        tap_name = row.get("TAP Name", "N/A")
+        tap_email = row.get("TAP email", "N/A")
+        desc = row.get("Request description", "N/A")
+        deliverable = row.get("Anticipated Deliverable", "N/A")
+        ref_label = "Anticipated deadline" if req_type == "Project" else "Meeting date"
+        subject = f"[GU-TAP] Reminder: Unassigned support — {days_left} day(s) until {ref_label} ({ref.strftime('%Y-%m-%d')})"
+        all_ok = True
+        for i, (student_name, student_info) in enumerate(ga_list):
+            body = f"""
+Dear {student_name},
+
+This is an automated reminder: a support request is still unassigned and is within 5 days of the {ref_label} ({ref.strftime('%Y-%m-%d')}).
+
+Request details:
+- Request type: {req_type}
+- {ref_label}: {ref.strftime('%Y-%m-%d')}
+- Meeting date (if applicable): {date_display}
+- Time / time commitment: {time_display}
+- Anticipated deliverable: {deliverable}
+{f"- Anticipated deadline: {ad_display}" if ad_display else ""}
+- Request description: {desc}
+- TAP name: {tap_name}
+- TAP email: {tap_email}
+
+Please log into the GU-TAP System and assign yourself if you can take this request.
+
+GU-TAP System: https://hrsagutap.streamlit.app/
+
+Best regards,
+GU-TAP System
+"""
+            try:
+                ok = send_email_mailjet(
+                    to_email=student_info["email"],
+                    subject=subject,
+                    body=body.strip()
+                )
+                if not ok:
+                    all_ok = False
+            except Exception:
+                all_ok = False
+            if i < len(ga_list) - 1:
+                time.sleep(0.8)
+        if all_ok:
+            df.loc[idx, "GA Reminder Last Sent"] = today_str
+            sheet_updated = True
+    if sheet_updated:
+        try:
+            df_out = df.fillna("")
+            spreadsheet_support = client.open("HRSA64_TA_Request")
+            worksheet_support = spreadsheet_support.worksheet("GA_Support")
+            worksheet_support.update([df_out.columns.values.tolist()] + df_out.values.tolist())
+            st.cache_data.clear()
+        except Exception:
+            pass
+
+
 # Travel Form Generator Functions
 @st.cache_data
 def load_excel_template():
@@ -2851,6 +2984,7 @@ else:
                     st.error("Invalid credentials or role mismatch.")
 
         else:
+            maybe_send_ga_unassigned_reminders()
             if st.session_state.role == "Coordinator":
                 user_info = USERS.get(st.session_state.user_email)
                 coordinator_name = user_info["Coordinator"]["name"]
