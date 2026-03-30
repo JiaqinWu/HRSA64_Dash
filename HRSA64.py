@@ -2383,7 +2383,7 @@ lis_location = ["Maricopa Co. - Arizona", "Alameda Co. - California", "Los Angel
 lis_organization = ["Maricopa County Public Health Department","Alameda County Public Health Department","Los Angeles County Department of Public Health",\
     "Orange County Health Care Agency","Riverside County Department of Public Health","Sacramento County Public Health","San Bernadino County Public Health",\
     "County of San Diego Health and Human Services Agency","San Francisco Department of Public Health","Broward County, Florida",\
-    "Duval County, Florida","Hillsborough County, Florida","Miami-Dade County, Florida",\
+    "Duval County, Florida","Hillsborough County, Florida","Miami-Dade County, Florida","DC Health Department",\
     "Orange County, Florida","Palm Beach County, Florida","Pinellas County, Florida","Clark County Social Services, Office of HIV",\
     "Cobb and Douglas Public Health","Dekalb Public Health","Fulton County Government","Gwinnett County Board of Health","Cook County Health",\
     "Marion County Public Health Department","East Baton Rouge Parish Health Unit","New Orleans Health Department","Baltimore City Health Department",\
