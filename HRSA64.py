@@ -5922,6 +5922,93 @@ GU-TAP System
                             </div>
                         """, unsafe_allow_html=True)
 
+                        # Upper section: previous support requests (same portal pattern as Interaction Log)
+                        st.markdown("""
+                            <div style='background: #f8f9fa; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); padding: 1.5em; margin-bottom: 2em;'>
+                                <h3 style='color: #1a237e; font-family: "Segoe UI", sans-serif; font-weight: 700; margin-bottom: 1em; text-align: center;'>
+                                    📊 Your Previous Student Support Requests
+                                </h3>
+                            </div>
+                        """, unsafe_allow_html=True)
+
+                        _mask_prev_support = pd.Series(False, index=df_support.index)
+                        if "TAP Name" in df_support.columns and staff_name:
+                            _mask_prev_support = _mask_prev_support | (
+                                df_support["TAP Name"].astype(str).str.strip() == str(staff_name).strip()
+                            )
+                        if "TAP email" in df_support.columns and user_email:
+                            _mask_prev_support = _mask_prev_support | (
+                                df_support["TAP email"].astype(str).str.strip().str.lower()
+                                == str(user_email).strip().lower()
+                            )
+                        df_support_staff_prev = df_support[_mask_prev_support].copy()
+
+                        if not df_support_staff_prev.empty:
+                            _hide_prev = {"TAP Name", "TAP email", "Student email"}
+                            _display_cols = [c for c in df_support_staff_prev.columns if c not in _hide_prev]
+                            df_support_prev_disp = df_support_staff_prev[_display_cols].copy()
+
+                            _sort_ts = pd.Series(pd.NaT, index=df_support_prev_disp.index)
+                            if "Date" in df_support_prev_disp.columns:
+                                _sort_ts = pd.to_datetime(df_support_prev_disp["Date"], errors="coerce")
+                            if "Anticipated Deadline" in df_support_prev_disp.columns:
+                                _sort_ts = _sort_ts.fillna(
+                                    pd.to_datetime(df_support_prev_disp["Anticipated Deadline"], errors="coerce")
+                                )
+                            df_support_prev_disp = df_support_prev_disp.assign(_sort_ts=_sort_ts)
+                            df_support_prev_disp = df_support_prev_disp.sort_values("_sort_ts", ascending=True).drop(
+                                columns=["_sort_ts"]
+                            )
+
+                            for _dc in ("Date", "Anticipated Deadline"):
+                                if _dc in df_support_prev_disp.columns:
+                                    _dts = pd.to_datetime(df_support_prev_disp[_dc], errors="coerce")
+                                    df_support_prev_disp[_dc] = _dts.apply(
+                                        lambda x: x.strftime("%Y-%m-%d") if pd.notna(x) else ""
+                                    )
+
+                            _total_support_prev = len(df_support_staff_prev)
+                            if "Request status" in df_support_staff_prev.columns:
+                                _completed_support_prev = (
+                                    df_support_staff_prev["Request status"].astype(str).str.strip().str.lower()
+                                    == "completed"
+                                ).sum()
+                            else:
+                                _completed_support_prev = 0
+
+                            st.markdown(f"""
+                                <div style='background: #e3f2fd; border-radius: 10px; padding: 1em; margin-bottom: 1em; text-align: center;'>
+                                    <div style='display: flex; justify-content: space-around;'>
+                                        <div>
+                                            <div style='font-size: 1.5em; font-weight: bold; color: #1976d2;'>{_total_support_prev}</div>
+                                            <div style='font-size: 0.9em; color: #666;'>Total Requests</div>
+                                        </div>
+                                        <div>
+                                            <div style='font-size: 1.5em; font-weight: bold; color: #388e3c;'>{_completed_support_prev}</div>
+                                            <div style='font-size: 0.9em; color: #666;'>Completed</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            """, unsafe_allow_html=True)
+
+                            st.dataframe(df_support_prev_disp.reset_index(drop=True), use_container_width=True)
+                        else:
+                            st.markdown("""
+                                <div style='background: #fff3e0; border-radius: 15px; padding: 2em; text-align: center; border: 2px dashed #ff9800;'>
+                                    <div style='font-size: 3em; margin-bottom: 0.5em;">📝</div>
+                                    <h4 style='color: #e65100; margin-bottom: 0.5em;'>No Previous Student Support Requests</h4>
+                                    <p style='color: #666; margin: 0;'>You have not submitted any student support requests yet. Use the form below to submit your first request.</p>
+                                </div>
+                            """, unsafe_allow_html=True)
+
+                        st.markdown("""
+                            <div style='background: #f8f9fa; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); padding: 1.5em; margin-bottom: 1em; margin-top: 2em;'>
+                                <h3 style='color: #1a237e; font-family: "Segoe UI", sans-serif; font-weight: 700; margin-bottom: 1em; text-align: center;'>
+                                    ✍️ Submit New Student Support Request
+                                </h3>
+                            </div>
+                        """, unsafe_allow_html=True)
+
                         # Start with Anticipated Delivery
                         anticipated_delivery = st.selectbox("Anticipated Delivery *", options=["Meeting notes", "Dashboard", "Peer learning facilitation", "TA meeting", "Other"], index=0) 
                         if anticipated_delivery == "Other":
