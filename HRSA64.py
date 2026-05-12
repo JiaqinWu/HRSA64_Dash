@@ -674,159 +674,168 @@ def number_text_input(label, key, value=0.0, min_value=0.0, placeholder="0.00"):
     
     return 0.0
 
+
+def _pil_truetype_best_effort(font_path, size):
+    """Load TTF/TTC; for .ttc try index 0 then 1 (Pillow)."""
+    path = str(font_path)
+    try:
+        if path.lower().endswith(".ttc"):
+            for idx in (0, 1):
+                try:
+                    return ImageFont.truetype(path, size, index=idx)
+                except (OSError, IOError, Exception):
+                    continue
+            return None
+        return ImageFont.truetype(path, size)
+    except (OSError, IOError, Exception):
+        return None
+
+
 def generate_signature_image(text, width=600, height=120, scale_factor=3):
-    """Generate a signature-style image from text with high resolution"""
+    """Generate a signature-style image from text with high resolution."""
     if not text or not text.strip():
         return None
-    
-    # Use scale factor for high-resolution rendering (render at 3x, then scale down)
-    scaled_width = width * scale_factor
-    scaled_height = height * scale_factor
-    
-    # Create an image with white background (blank/transparent-looking) at high resolution
-    img = PILImage.new('RGB', (scaled_width, scaled_height), (255, 255, 255))
+
+    scaled_width = int(width * scale_factor)
+    scaled_height = int(height * scale_factor)
+
+    img = PILImage.new("RGB", (scaled_width, scaled_height), (255, 255, 255))
     draw = ImageDraw.Draw(img)
-    
-    # Try to use a cursive/signature-style font, fallback to default
-    # Include more common paths and try PIL's built-in fonts
+
+    # Bolder / higher x-height first so PDF downscale stays readable.
     font_paths = [
-        '/System/Library/Fonts/Supplemental/SnellRoundhand.ttc',  # macOS
-        '/System/Library/Fonts/Supplemental/Chalkduster.ttf',    # macOS alternative
-        'C:/Windows/Fonts/brushsc.ttf',                           # Windows
-        'C:/Windows/Fonts/BRUSHSCI.TTF',                          # Windows
-        '/usr/share/fonts/truetype/dejavu/DejaVuSans-Oblique.ttf', # Linux
-        '/usr/share/fonts/truetype/liberation/LiberationSans-Italic.ttf', # Linux alternative
-        '/usr/share/fonts/truetype/noto/NotoSans-Italic.ttf',     # Linux alternative
+        "/System/Library/Fonts/Supplemental/Bradley Hand Bold.ttf",
+        "/System/Library/Fonts/Supplemental/Brush Script.ttf",
+        "/System/Library/Fonts/Supplemental/MarkerFelt.ttc",
+        "/System/Library/Fonts/Supplemental/Noteworthy.ttc",
+        "/System/Library/Fonts/Supplemental/SnellRoundhand.ttc",
+        "/System/Library/Fonts/Supplemental/Chalkduster.ttf",
+        "C:/Windows/Fonts/segoesc.ttf",
+        "C:/Windows/Fonts/SEGOESC.TTF",
+        "C:/Windows/Fonts/brushsci.ttf",
+        "C:/Windows/Fonts/BRUSHSCI.TTF",
+        "/usr/share/fonts/truetype/dejavu/DejaVuSans-BoldOblique.ttf",
+        "/usr/share/fonts/truetype/dejavu/DejaVuSans-Oblique.ttf",
+        "/usr/share/fonts/truetype/liberation/LiberationSans-BoldItalic.ttf",
+        "/usr/share/fonts/truetype/liberation/LiberationSans-Italic.ttf",
+        "/usr/share/fonts/truetype/noto/NotoSans-BoldItalic.ttf",
+        "/usr/share/fonts/truetype/noto/NotoSans-Italic.ttf",
     ]
-    
-    # Start with larger font size (scale it too); reads clearly at ~1.4in tall in the PDF
-    font_size = 96 * scale_factor
+
+    font_size = int(115 * scale_factor)
+    min_font_size = int(52 * scale_factor)
     font = None
     font_path_used = None
-    
+
     for font_path in font_paths:
-        try:
-            font = ImageFont.truetype(font_path, font_size)
+        font = _pil_truetype_best_effort(font_path, font_size)
+        if font is not None:
             font_path_used = font_path
             break
-        except (OSError, IOError, Exception):
-            continue
-    
-    # If no system font found, try to use PIL's default font or create a simple signature style
+
     if font is None:
         try:
-            # Try common font names that might be available
             import platform
             system = platform.system()
-            if system == 'Windows':
-                # Try Windows common fonts
-                for font_name in ['arial', 'calibri', 'times']:
-                    try:
-                        font = ImageFont.truetype(f"{font_name}.ttf", font_size)
-                        font_path_used = font_name
-                        break
-                    except:
-                        continue
-            elif system == 'Linux':
-                # Try Linux common fonts
-                for font_path_linux in [
-                    '/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf',
-                    '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',
+            if system == "Windows":
+                for fp in [
+                    "C:/Windows/Fonts/arial.ttf",
+                    "C:/Windows/Fonts/ARIAL.TTF",
+                    "C:/Windows/Fonts/calibri.ttf",
                 ]:
-                    try:
-                        font = ImageFont.truetype(font_path_linux, font_size)
-                        font_path_used = font_path_linux
+                    font = _pil_truetype_best_effort(fp, font_size)
+                    if font is not None:
+                        font_path_used = fp
                         break
-                    except:
-                        continue
-        except:
+            elif system == "Linux":
+                for fp in [
+                    "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+                    "/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf",
+                ]:
+                    font = _pil_truetype_best_effort(fp, font_size)
+                    if font is not None:
+                        font_path_used = fp
+                        break
+        except Exception:
             pass
-        
-        # Final fallback: use PIL's default font
-        if font is None:
-            try:
-                # Try to load default font with larger size
-                font = ImageFont.load_default()
-                font_size = 36 * scale_factor
-            except:
-                # Ultimate fallback
-                font = ImageFont.load_default()
-                font_size = 36 * scale_factor
-    
-    # Calculate text dimensions first
-    try:
-        bbox = draw.textbbox((0, 0), text, font=font)
-        text_width = bbox[2] - bbox[0]
-        text_height = bbox[3] - bbox[1]
-    except:
-        # Fallback if textbbox fails
-        text_width = len(text) * font_size * 0.6
-        text_height = font_size * 1.2
-    
-    # Adjust font size if text is too wide to fit in available width
-    min_font_size = 38 * scale_factor
-    while text_width > scaled_width - (40 * scale_factor) and font_size > min_font_size:
-        font_size -= 3 * scale_factor
-        try:
-            if font_path_used and font_path_used not in ['arial', 'calibri', 'times']:
-                font = ImageFont.truetype(font_path_used, font_size)
-            else:
-                font = ImageFont.load_default()
-        except:
-            font = ImageFont.load_default()
+
+    if font is None:
+        font = ImageFont.load_default()
+        font_path_used = None
+        min_font_size = max(min_font_size, int(28 * scale_factor))
+
+    def _measure():
         try:
             bbox = draw.textbbox((0, 0), text, font=font)
-            text_width = bbox[2] - bbox[0]
-            text_height = bbox[3] - bbox[1]
-        except:
-            text_width = len(text) * font_size * 0.6
-            text_height = font_size * 1.2
-    
-    # Calculate position (left-aligned with padding, vertically centered)
-    padding = 20 * scale_factor
+            return bbox[2] - bbox[0], bbox[3] - bbox[1]
+        except Exception:
+            return len(text) * font_size * 0.6, font_size * 1.2
+
+    text_width, text_height = _measure()
+    max_line = scaled_width - int(12 * scale_factor)
+    shrink_step = max(int(2 * scale_factor), 1)
+    while text_width > max_line and font_size > min_font_size:
+        font_size -= shrink_step
+        if font_path_used:
+            font = _pil_truetype_best_effort(font_path_used, font_size)
+        if font is None:
+            font = ImageFont.load_default()
+        text_width, text_height = _measure()
+
+    padding = int(16 * scale_factor)
     x = padding
     y = (scaled_height - text_height) / 2
-    
-    # Draw the signature text in black with antialiasing
+
     try:
         draw.text((x, y), text, fill=(0, 0, 0), font=font)
-    except Exception as e:
-        # If font drawing fails, try with default font
+    except Exception:
         try:
             font = ImageFont.load_default()
             draw.text((x, y), text, fill=(0, 0, 0), font=font)
-            # Recalculate dimensions with default font
-            try:
-                bbox = draw.textbbox((0, 0), text, font=font)
-                text_width = bbox[2] - bbox[0]
-                text_height = bbox[3] - bbox[1]
-            except:
-                text_width = len(text) * font_size * 0.6
-                text_height = font_size * 1.2
-        except:
-            # Ultimate fallback - draw text without font specification
+            text_width, text_height = _measure()
+        except Exception:
             draw.text((x, y), text, fill=(0, 0, 0))
-    
-    # Add a thicker underline for signature effect (also scaled)
-    line_y = y + text_height + (8 * scale_factor)
-    line_width = 3 * scale_factor
-    draw.line([(x - 5 * scale_factor, line_y), (x + text_width + 5 * scale_factor, line_y)], 
-              fill=(0, 0, 0), width=int(line_width))
-    
-    # Calculate the actual bounds including underline
-    actual_bottom = line_y + 5 * scale_factor
-    actual_right = x + text_width + 30 * scale_factor
-    
-    # Crop to actual content with some padding, but ensure full signature is visible
-    img = img.crop((0, 0, min(scaled_width, max(int(actual_right), int(text_width) + padding * 2)), 
-                    min(scaled_height, max(int(actual_bottom), int(text_height) + padding * 2))))
-    
-    # Scale down using high-quality resampling for sharp, clear output
-    final_width = img.size[0] // scale_factor
-    final_height = img.size[1] // scale_factor
-    img = img.resize((final_width, final_height), PILImage.Resampling.LANCZOS)
-    
+
+    line_y = y + text_height + int(8 * scale_factor)
+    line_w = max(int(3 * scale_factor), 2)
+    draw.line(
+        [(x - 5 * scale_factor, line_y), (x + text_width + 5 * scale_factor, line_y)],
+        fill=(0, 0, 0),
+        width=int(line_w),
+    )
+
+    actual_bottom = line_y + int(6 * scale_factor)
+    actual_right = x + text_width + int(24 * scale_factor)
+
+    img = img.crop(
+        (
+            0,
+            0,
+            min(scaled_width, max(int(actual_right), int(text_width + padding * 2))),
+            min(scaled_height, max(int(actual_bottom), int(text_height + padding * 2))),
+        )
+    )
+
+    final_w = max(1, img.size[0] // scale_factor)
+    final_h = max(1, img.size[1] // scale_factor)
+    img = img.resize((final_w, final_h), PILImage.Resampling.LANCZOS)
     return img
+
+
+def _pil_signature_to_reportlab_image(pil_img, max_width, max_height):
+    """PIL → ReportLab Image; sizes in points. Uses full cell width (fixes px/pt mix-up)."""
+    buf = io.BytesIO()
+    pil_img.save(buf, format="PNG", optimize=False, compress_level=1)
+    buf.seek(0)
+    iw, ih = pil_img.size
+    aspect = ih / float(iw) if iw else 1.0
+    new_width = max_width
+    new_height = new_width * aspect
+    if new_height > max_height:
+        new_height = max_height
+        new_width = new_height / aspect if aspect else max_width
+    return Image(buf, width=new_width, height=new_height)
+
 
 def generate_date_range(start_date, end_date, max_days=7):
     """Generate a list of dates from start_date to end_date, formatted as MM/DD/YY"""
@@ -1488,7 +1497,7 @@ def create_pdf(form_data, ws):
     story.append(Paragraph("<b>Approval Signatures</b>", travel_h2))
     # Signature images: generate large bitmap, then place up to these PDF dimensions (letter content width 7.5in)
     _sig_cell_max_w = 3.05 * inch
-    _sig_cell_max_h = 1.42 * inch
+    _sig_cell_max_h = 1.52 * inch
     # Signature section
     signature_text = form_data.get('signature', '').strip()
     
@@ -1499,7 +1508,7 @@ def create_pdf(form_data, ws):
     if signature_text:
         try:
             # Generate signature image from text with high resolution (3x scale)
-            signature_img_pil = generate_signature_image(signature_text, width=2000, height=520, scale_factor=4)
+            signature_img_pil = generate_signature_image(signature_text, width=2000, height=620, scale_factor=4)
             
             if signature_img_pil:
                 # Ensure it's RGB with white background (blank)
@@ -1513,31 +1522,7 @@ def create_pdf(form_data, ws):
                 
                 max_width = _sig_cell_max_w
                 max_height = _sig_cell_max_h
-                
-                img_width, img_height = signature_img_pil.size
-                aspect_ratio = img_height / img_width if img_width > 0 else 1
-                
-                # Calculate size maintaining aspect ratio but respecting both max width and height
-                new_width = min(img_width, max_width)
-                new_height = new_width * aspect_ratio
-                
-                if new_height > max_height:
-                    new_height = max_height
-                    new_width = new_height / aspect_ratio
-                
-                # Ensure width doesn't exceed cell width
-                new_width = min(new_width, max_width)
-                
-                # Save to buffer for ReportLab with high quality
-                img_buffer = io.BytesIO()
-                # Save at full resolution for maximum clarity
-                signature_img_pil.save(img_buffer, format='PNG', optimize=False, compress_level=1)
-                img_buffer.seek(0)
-                
-                # Create ReportLab Image - use the calculated dimensions
-                # The image will be high-res internally but displayed at the correct size
-                signature_img = Image(img_buffer, width=new_width, height=new_height)
-                signature_cell_value = signature_img
+                signature_cell_value = _pil_signature_to_reportlab_image(signature_img_pil, max_width, max_height)
             else:
                 signature_cell_value = signature_text
         except Exception as e:
@@ -1608,7 +1593,7 @@ def create_pdf(form_data, ws):
     mabintou_signature_cell = ''
     if mabintou_sig_text:
         try:
-            mabintou_img_pil = generate_signature_image(mabintou_sig_text, width=2000, height=520, scale_factor=4)
+            mabintou_img_pil = generate_signature_image(mabintou_sig_text, width=2000, height=620, scale_factor=4)
             if mabintou_img_pil:
                 if mabintou_img_pil.mode != 'RGB':
                     rgb_mabintou = PILImage.new('RGB', mabintou_img_pil.size, (255, 255, 255))
@@ -1620,19 +1605,7 @@ def create_pdf(form_data, ws):
                 
                 max_width = _sig_cell_max_w
                 max_height = _sig_cell_max_h
-                img_width, img_height = mabintou_img_pil.size
-                aspect_ratio = img_height / img_width if img_width > 0 else 1
-                new_width = min(img_width, max_width)
-                new_height = new_width * aspect_ratio
-                if new_height > max_height:
-                    new_height = max_height
-                    new_width = new_height / aspect_ratio
-                new_width = min(new_width, max_width)
-                
-                mabintou_buffer = io.BytesIO()
-                mabintou_img_pil.save(mabintou_buffer, format='PNG', optimize=False, compress_level=1)
-                mabintou_buffer.seek(0)
-                mabintou_signature_cell = Image(mabintou_buffer, width=new_width, height=new_height)
+                mabintou_signature_cell = _pil_signature_to_reportlab_image(mabintou_img_pil, max_width, max_height)
         except Exception:
             mabintou_signature_cell = mabintou_sig_text
     
@@ -1640,7 +1613,7 @@ def create_pdf(form_data, ws):
     kemisha_signature_cell = ''
     if kemisha_sig_text:
         try:
-            kemisha_img_pil = generate_signature_image(kemisha_sig_text, width=2000, height=520, scale_factor=4)
+            kemisha_img_pil = generate_signature_image(kemisha_sig_text, width=2000, height=620, scale_factor=4)
             if kemisha_img_pil:
                 if kemisha_img_pil.mode != 'RGB':
                     rgb_kemisha = PILImage.new('RGB', kemisha_img_pil.size, (255, 255, 255))
@@ -1652,19 +1625,7 @@ def create_pdf(form_data, ws):
                 
                 max_width = _sig_cell_max_w
                 max_height = _sig_cell_max_h
-                img_width, img_height = kemisha_img_pil.size
-                aspect_ratio = img_height / img_width if img_width > 0 else 1
-                new_width = min(img_width, max_width)
-                new_height = new_width * aspect_ratio
-                if new_height > max_height:
-                    new_height = max_height
-                    new_width = new_height / aspect_ratio
-                new_width = min(new_width, max_width)
-                
-                kemisha_buffer = io.BytesIO()
-                kemisha_img_pil.save(kemisha_buffer, format='PNG', optimize=False, compress_level=1)
-                kemisha_buffer.seek(0)
-                kemisha_signature_cell = Image(kemisha_buffer, width=new_width, height=new_height)
+                kemisha_signature_cell = _pil_signature_to_reportlab_image(kemisha_img_pil, max_width, max_height)
         except Exception:
             kemisha_signature_cell = kemisha_sig_text
     
@@ -1679,7 +1640,7 @@ def create_pdf(form_data, ws):
     combined_table = Table(
         combined_data,
         colWidths=[1.15 * inch, 3.28 * inch, 0.68 * inch, 1.39 * inch],
-        rowHeights=[1.5 * inch, 1.5 * inch, 1.5 * inch, 0.34 * inch],
+        rowHeights=[1.62 * inch, 1.62 * inch, 1.62 * inch, 0.34 * inch],
     )
     combined_table.setStyle(TableStyle([
         # Grid and alignment for all rows
@@ -2437,7 +2398,7 @@ def gsa_sheet_row_to_pdf_form_data(row_dict):
     return fd
 
 
-def _gsa_coordinator_signature_flowable(sig_text, sig_para_style, max_width=3.05 * inch, max_height=1.15 * inch):
+def _gsa_coordinator_signature_flowable(sig_text, sig_para_style, max_width=3.05 * inch, max_height=1.35 * inch):
     """
     Same approach as Travel Authorization PDF: render typed name as a signature-style image
     in the GSA table (Program Director / Technical Assistance Lead rows).
@@ -2446,7 +2407,7 @@ def _gsa_coordinator_signature_flowable(sig_text, sig_para_style, max_width=3.05
     if not stxt:
         return Paragraph('', sig_para_style)
     try:
-        pil = generate_signature_image(stxt, width=1600, height=420, scale_factor=3)
+        pil = generate_signature_image(stxt, width=1600, height=520, scale_factor=3)
         if pil is None:
             return Paragraph(_gsa_escape_for_paragraph(stxt), sig_para_style)
         if pil.mode != 'RGB':
@@ -2456,17 +2417,7 @@ def _gsa_coordinator_signature_flowable(sig_text, sig_para_style, max_width=3.05
             else:
                 rgb.paste(pil)
             pil = rgb
-        img_buffer = io.BytesIO()
-        pil.save(img_buffer, format='PNG', optimize=False, compress_level=1)
-        img_buffer.seek(0)
-        img_w_px, img_h_px = pil.size
-        aspect_ratio = img_h_px / float(img_w_px) if img_w_px else 1.0
-        new_width = max_width
-        new_height = new_width * aspect_ratio
-        if new_height > max_height:
-            new_height = max_height
-            new_width = new_height / aspect_ratio if aspect_ratio else max_width
-        return Image(img_buffer, width=new_width, height=new_height)
+        return _pil_signature_to_reportlab_image(pil, max_width, max_height)
     except Exception:
         return Paragraph(_gsa_escape_for_paragraph(stxt), sig_para_style)
 
