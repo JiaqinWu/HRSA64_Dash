@@ -27,10 +27,96 @@ import base64
 import urllib.request
 
 st.set_page_config(
-        page_title="GU TAP System",
-        page_icon="https://raw.githubusercontent.com/JiaqinWu/HRSA64_Dash/main/Georgetown_logo_blueRGB.png", 
-        layout="centered"
-    ) 
+    page_title="GU TAP System",
+    page_icon="https://raw.githubusercontent.com/JiaqinWu/HRSA64_Dash/main/Georgetown_logo_blueRGB.png",
+    layout="wide",
+)
+
+
+def inject_gutap_global_styles():
+    """App-wide typography, cards, expanders, and hero banners."""
+    st.markdown(
+        """
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&display=swap');
+html, body, .stMarkdown, button, textarea, input, label {
+  font-family: 'Source Sans 3', 'Segoe UI', system-ui, sans-serif !important;
+}
+.stApp {
+  background: linear-gradient(165deg, #f0f4fb 0%, #e8edf5 38%, #f7f9fc 100%);
+}
+.block-container {
+  padding-top: 1.1rem !important;
+  padding-bottom: 2.5rem !important;
+  max-width: 1280px !important;
+}
+div[data-testid="stExpander"] {
+  background: rgba(255,255,255,0.94);
+  border-radius: 12px !important;
+  border: 1px solid rgba(15, 42, 98, 0.1);
+  box-shadow: 0 2px 14px rgba(15, 23, 42, 0.05);
+  margin-bottom: 0.65rem !important;
+}
+div[data-testid="stExpander"] details summary {
+  font-weight: 600 !important;
+  font-size: 1.02rem;
+  letter-spacing: -0.01em;
+}
+div[data-testid="stExpander"] details summary:hover {
+  color: #0d47a1;
+}
+.stButton > button {
+  border-radius: 10px !important;
+  font-weight: 600 !important;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+}
+.stButton > button:hover {
+  box-shadow: 0 2px 8px rgba(13, 71, 161, 0.18);
+}
+div[data-testid="stMetric"] {
+  background: #fff !important;
+  border-radius: 12px !important;
+  border: 1px solid #e2e8f0 !important;
+}
+[data-testid="stSidebar"] {
+  background: rgba(255,255,255,0.98) !important;
+}
+hr {
+  margin: 1.35rem 0 !important;
+  border: none !important;
+  border-top: 1px solid #cbd5e1 !important;
+  opacity: 0.9;
+}
+.gutap-hero {
+  background: linear-gradient(118deg, #052e6f 0%, #0d47a1 52%, #1565c0 100%);
+  border-radius: 14px;
+  padding: 1.3rem 1.2rem 1.38rem;
+  margin: 0.35rem 0 1.1rem;
+  box-shadow: 0 8px 28px rgba(13, 71, 161, 0.24);
+}
+.gutap-hero-title {
+  color: #fff;
+  font-weight: 700;
+  font-size: 1.38rem;
+  text-align: center;
+  letter-spacing: -0.02em;
+  line-height: 1.28;
+}
+.gutap-hero-sub {
+  color: rgba(255,255,255,0.9);
+  font-size: 0.97rem;
+  text-align: center;
+  margin-top: 0.42rem;
+  line-height: 1.48;
+  font-weight: 400;
+}
+</style>
+""",
+        unsafe_allow_html=True,
+    )
+
+
+inject_gutap_global_styles()
 
 scope = ["https://spreadsheets.google.com/feeds", 'https://www.googleapis.com/auth/spreadsheets', "https://www.googleapis.com/auth/drive.file", "https://www.googleapis.com/auth/drive"]
 #creds = ServiceAccountCredentials.from_json_keyfile_name('client_secret.json', scope)
@@ -1387,7 +1473,7 @@ def create_pdf(form_data, ws):
     if signature_text:
         try:
             # Generate signature image from text with high resolution (3x scale)
-            signature_img_pil = generate_signature_image(signature_text, width=800, height=150, scale_factor=3)
+            signature_img_pil = generate_signature_image(signature_text, width=1000, height=220, scale_factor=3)
             
             if signature_img_pil:
                 # Ensure it's RGB with white background (blank)
@@ -1399,10 +1485,9 @@ def create_pdf(form_data, ws):
                         rgb_img.paste(signature_img_pil)
                     signature_img_pil = rgb_img
                 
-                # Resize signature to fit the table cell (cell width is 2 inches, accounting for padding)
-                # Cell has 6pt left/right padding, so available width is ~1.88 inches
-                max_width = 1.88 * inch
-                max_height = 0.5 * inch  # Reduced height to fit better in cell
+                # Signature cell matches form scale (wide column, readable height)
+                max_width = 2.75 * inch
+                max_height = 0.88 * inch
                 
                 img_width, img_height = signature_img_pil.size
                 aspect_ratio = img_height / img_width if img_width > 0 else 1
@@ -1439,7 +1524,7 @@ def create_pdf(form_data, ws):
     label_style = ParagraphStyle(
         'LabelStyle',
         parent=styles['Normal'],
-        fontSize=9,
+        fontSize=10,
         fontName='Helvetica',
         alignment=0,  # LEFT
     )
@@ -1498,7 +1583,7 @@ def create_pdf(form_data, ws):
     mabintou_signature_cell = ''
     if mabintou_sig_text:
         try:
-            mabintou_img_pil = generate_signature_image(mabintou_sig_text, width=800, height=150, scale_factor=3)
+            mabintou_img_pil = generate_signature_image(mabintou_sig_text, width=1000, height=220, scale_factor=3)
             if mabintou_img_pil:
                 if mabintou_img_pil.mode != 'RGB':
                     rgb_mabintou = PILImage.new('RGB', mabintou_img_pil.size, (255, 255, 255))
@@ -1508,8 +1593,8 @@ def create_pdf(form_data, ws):
                         rgb_mabintou.paste(mabintou_img_pil)
                     mabintou_img_pil = rgb_mabintou
                 
-                max_width = 1.88 * inch
-                max_height = 0.5 * inch
+                max_width = 2.75 * inch
+                max_height = 0.88 * inch
                 img_width, img_height = mabintou_img_pil.size
                 aspect_ratio = img_height / img_width if img_width > 0 else 1
                 new_width = min(img_width, max_width)
@@ -1530,7 +1615,7 @@ def create_pdf(form_data, ws):
     kemisha_signature_cell = ''
     if kemisha_sig_text:
         try:
-            kemisha_img_pil = generate_signature_image(kemisha_sig_text, width=800, height=150, scale_factor=3)
+            kemisha_img_pil = generate_signature_image(kemisha_sig_text, width=1000, height=220, scale_factor=3)
             if kemisha_img_pil:
                 if kemisha_img_pil.mode != 'RGB':
                     rgb_kemisha = PILImage.new('RGB', kemisha_img_pil.size, (255, 255, 255))
@@ -1540,8 +1625,8 @@ def create_pdf(form_data, ws):
                         rgb_kemisha.paste(kemisha_img_pil)
                     kemisha_img_pil = rgb_kemisha
                 
-                max_width = 1.88 * inch
-                max_height = 0.5 * inch
+                max_width = 2.75 * inch
+                max_height = 0.88 * inch
                 img_width, img_height = kemisha_img_pil.size
                 aspect_ratio = img_height / img_width if img_width > 0 else 1
                 new_width = min(img_width, max_width)
@@ -1565,17 +1650,18 @@ def create_pdf(form_data, ws):
         ['AWD', 'AWD-7776588', 'GR', 'GR428338'],
     ]
     
-    combined_table = Table(combined_data, colWidths=[1.5*inch, 2*inch, 0.8*inch, 1.5*inch])
+    # Label | signature | DATE label | date — wide signature column aligned with letter content width
+    combined_table = Table(combined_data, colWidths=[1.35*inch, 2.85*inch, 0.72*inch, 1.58*inch])
     combined_table.setStyle(TableStyle([
         # Grid and alignment for all rows
         ('GRID', (0, 0), (-1, -1), 1, colors.black),
         ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
         ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
         ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
-        ('FONTSIZE', (0, 0), (-1, -1), 9),
+        ('FONTSIZE', (0, 0), (-1, -1), 10),
         # Padding for all rows
-        ('TOPPADDING', (0, 0), (-1, -1), 8),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+        ('TOPPADDING', (0, 0), (-1, -1), 10),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 10),
         ('LEFTPADDING', (0, 0), (-1, -1), 6),
         ('RIGHTPADDING', (0, 0), (-1, -1), 6),
         # Traveler Signature row (row 0) - all white background, signature/date cells red text
@@ -1716,6 +1802,174 @@ def travel_routing_from_traveler(traveler_name, traveler_email=''):
         'approver2_name': a2_name,
         'approver2_status_col': a2_col,
     }
+
+
+# General travel submitters (not Kemisha/Mabintou themselves): first week = Mabintou + Kemisha only;
+# after TRAVEL_ESCALATION_DAYS, Jen + Lauren are added as alternate approvers (either may cover each role).
+TRAVEL_ESCALATION_COL = 'Travel Escalation Sent'  # Optional on sheet until first write; app creates column if missing.
+TRAVEL_ESCALATION_DAYS = 7
+TRAVEL_ESCALATION_NOTIFY_EMAILS = [
+    ('mo887@georgetown.edu', 'Mabintou Ouattara'),
+    ('kd802@georgetown.edu', 'Kemisha Denny'),
+    ('jenevieve.opoku@georgetown.edu', 'Jenevieve Opoku'),
+    ('lm1353@georgetown.edu', 'Lauren Mathae'),
+]
+
+
+def is_general_travel_submitter(traveler_name, traveler_email):
+    tn = (traveler_name or '').lower()
+    te = (traveler_email or '').lower()
+    if te == 'kd802@georgetown.edu' or 'kemisha' in tn:
+        return False
+    if te == 'mo887@georgetown.edu' or 'mabintou' in tn:
+        return False
+    return True
+
+
+def _travel_approval_status_norm(val):
+    return str(val if val is not None else '').strip().lower()
+
+
+def travel_general_slot1_ok(row) -> bool:
+    """Program Assistant slot: Mabintou or Lauren (after escalation)."""
+    return (
+        _travel_approval_status_norm(row.get('Mabintou Approval Status')) == 'approve'
+        or _travel_approval_status_norm(row.get('Lauren Approval Status')) == 'approve'
+    )
+
+
+def travel_general_slot2_ok(row) -> bool:
+    """Lead TA slot: Kemisha or Jen (after escalation)."""
+    return (
+        _travel_approval_status_norm(row.get('Kemisha Approval Status')) == 'approve'
+        or _travel_approval_status_norm(row.get('Jen Approval Status')) == 'approve'
+    )
+
+
+def travel_general_fully_approved(row) -> bool:
+    if not is_general_travel_submitter(row.get('Name', ''), row.get('Email', '')):
+        return False
+    return travel_general_slot1_ok(row) and travel_general_slot2_ok(row)
+
+
+def _travel_submission_date(row):
+    raw = row.get('Submission Date')
+    if raw is None or (isinstance(raw, float) and pd.isna(raw)):
+        return None
+    s = str(raw).strip()
+    if not s or s.lower() == 'nan':
+        return None
+    try:
+        dt = (
+            pd.to_datetime(s, errors='coerce')
+            if isinstance(raw, str)
+            else pd.to_datetime(raw, errors='coerce')
+        )
+        if pd.isna(dt):
+            return None
+        return dt.date()
+    except Exception:
+        return None
+
+
+def travel_escalation_applied(row) -> bool:
+    return bool(str(row.get(TRAVEL_ESCALATION_COL, '') or '').strip())
+
+
+def travel_row_needs_escalation(row) -> bool:
+    if not is_general_travel_submitter(row.get('Name', ''), row.get('Email', '')):
+        return False
+    if travel_escalation_applied(row):
+        return False
+    if travel_general_fully_approved(row):
+        return False
+    sub_d = _travel_submission_date(row)
+    if sub_d is None:
+        return False
+    age = (datetime.now().date() - sub_d).days
+    return age >= TRAVEL_ESCALATION_DAYS
+
+
+def _travel_needs_action(val) -> bool:
+    v = _travel_approval_status_norm(val)
+    return v in ('', 'pending', 'nan') or val is None or (isinstance(val, float) and pd.isna(val))
+
+
+def process_travel_review_escalations(df_travel, client):
+    """
+    For general travel requests past TRAVEL_ESCALATION_DAYS with incomplete approval and no prior
+    escalation, set alternate approvers (Jen/Lauren) to pending and email all four coordinators.
+    Returns (possibly updated) dataframe; persists sheet when changes occur.
+    """
+    if df_travel is None or df_travel.empty:
+        return df_travel
+    df = df_travel.copy()
+    if TRAVEL_ESCALATION_COL not in df.columns:
+        df[TRAVEL_ESCALATION_COL] = ''
+
+    changed_indices = []
+
+    for idx in df.index:
+        row = df.loc[idx]
+        if not travel_row_needs_escalation(row):
+            continue
+        changed_indices.append(idx)
+
+        df.at[idx, TRAVEL_ESCALATION_COL] = datetime.now().strftime('%Y-%m-%d')
+
+        if not travel_general_slot1_ok(row):
+            if _travel_approval_status_norm(row.get('Lauren Approval Status')) not in ('approve', 'reject'):
+                df.at[idx, 'Lauren Approval Status'] = 'pending'
+        if not travel_general_slot2_ok(row):
+            if _travel_approval_status_norm(row.get('Jen Approval Status')) not in ('approve', 'reject'):
+                df.at[idx, 'Jen Approval Status'] = 'pending'
+
+    if not changed_indices:
+        return df
+
+    df = df.fillna('')
+    try:
+        spreadsheet_travel = client.open('HRSA64_TA_Request')
+        try:
+            worksheet_travel = spreadsheet_travel.worksheet('Travel')
+        except Exception:
+            worksheet_travel = spreadsheet_travel.add_worksheet(title='Travel', rows=1000, cols=40)
+        worksheet_travel.update([df.columns.values.tolist()] + df.values.tolist())
+        st.cache_data.clear()
+    except Exception:
+        pass
+
+    for idx in changed_indices:
+        row = df.loc[idx]
+        pdf_link = str(row.get('PDF Link', '') or '')
+        traveler_name = str(row.get('Name', '') or 'Unknown')
+        destination = str(row.get('Destination', '') or '')
+        sub = str(row.get('Submission Date', '') or '')
+        for to_email, to_name in TRAVEL_ESCALATION_NOTIFY_EMAILS:
+            first = (to_name.split()[0] if to_name else "there").strip()
+            subj = f"GU-TAP: Travel form still needs a signature — {traveler_name}"
+            body = f"""Hi {first},
+
+A travel authorization in GU-TAP is still waiting on signatures. It has been in the queue for a little over a week, so this is a quick reminder.
+
+If it shows up for you, please open GU-TAP when you can, review the PDF, and sign with your typed name to approve (or reach out if something looks off).
+
+Traveler: {traveler_name}
+Destination: {destination}
+Submitted: {sub}
+PDF: {pdf_link if pdf_link else "(open the form in GU-TAP to view it)"}
+
+GU-TAP: https://hrsagutap.streamlit.app/
+
+Thanks,
+GU-TAP
+"""
+            try:
+                send_email_mailjet(to_email=to_email, subject=subj, body=body.strip())
+            except Exception:
+                pass
+
+    return df
 
 
 def gsa_exemption_approver_routing():
@@ -3067,11 +3321,11 @@ else:
                 if not is_mabintou_coordinator:
                     with st.expander("🔎 **MONITOR IN-PROGRESS REQUESTS**"):
                         st.markdown("""
-                        <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 20px; box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3); padding: 2em 1.5em 1.5em 1.5em; margin-bottom: 2em; margin-top: 1em;'>
-                            <div style='color: white; font-family: "Segoe UI", "Arial", sans-serif; font-weight: 800; font-size: 1.6em; margin-bottom: 0.5em; text-align: center;'>
+                        <div class="gutap-hero">
+                            <div class="gutap-hero-title">
                                 🔎 In-Progress Requests Monitor
                             </div>
-                            <div style='color: rgba(255,255,255,0.9); font-size: 1.1em; margin-bottom: 0.8em; text-align: center; line-height: 1.4;'>
+                            <div class="gutap-hero-sub">
                                 Track all active Technical Assistance requests, view staff assignments, and monitor upcoming deadlines. Use interactive charts and filters to stay on top of your team's workload.
                             </div>
                         </div>
@@ -3177,11 +3431,11 @@ else:
                     st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
                     with st.expander("📝 **ASSIGN TA REQUESTS**"):
                         st.markdown("""
-                        <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 20px; box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3); padding: 2em 1.5em 1.5em 1.5em; margin-bottom: 2em; margin-top: 1em;'>
-                            <div style='color: white; font-family: "Segoe UI", "Arial", sans-serif; font-weight: 800; font-size: 1.6em; margin-bottom: 0.5em; text-align: center;'>
+                        <div class="gutap-hero">
+                            <div class="gutap-hero-title">
                                 📝 TA Request Assignment Center
                             </div>
-                            <div style='color: rgba(255,255,255,0.9); font-size: 1.1em; margin-bottom: 0.8em; text-align: center; line-height: 1.4;'>
+                            <div class="gutap-hero-sub">
                                 Review all unassigned Technical Assistance requests and assign them to the appropriate staff member. Use the table and filters below to prioritize and manage new requests efficiently.
                             </div>
                         </div>
@@ -3325,11 +3579,11 @@ else:
                     st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
                     with st.expander("🔄 **TRANSFER TA REQUESTS**"):
                         st.markdown("""
-                            <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 20px; box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3); padding: 2em 1.5em 1.5em 1.5em; margin-bottom: 2em; margin-top: 1em;'>
-                                <div style='color: white; font-family: "Segoe UI", "Arial", sans-serif; font-weight: 800; font-size: 1.6em; margin-bottom: 0.5em; text-align: center;'>
+                            <div class="gutap-hero">
+                                <div class="gutap-hero-title">
                                     🔄 TA Request Transfer Center
                                 </div>
-                                <div style='color: rgba(255,255,255,0.9); font-size: 1.1em; margin-bottom: 0.8em; text-align: center; line-height: 1.4;'>
+                                <div class="gutap-hero-sub">
                                     Reassign in-progress requests to different coaches when needed. Track transfer history and maintain clear communication throughout the process.
                                 </div>
                             </div>
@@ -3503,11 +3757,11 @@ else:
                     st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
                     with st.expander("👍 **DETAILS OF IN-PROGRESS & COMPLETED REQUESTS**"):
                         st.markdown("""
-                            <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 20px; box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3); padding: 2em 1.5em 1.5em 1.5em; margin-bottom: 2em; margin-top: 1em;'>
-                                <div style='color: white; font-family: "Segoe UI", "Arial", sans-serif; font-weight: 800; font-size: 1.6em; margin-bottom: 0.5em; text-align: center;'>
+                            <div class="gutap-hero">
+                                <div class="gutap-hero-title">
                                     👍 Request Management Center
                                 </div>
-                                <div style='color: rgba(255,255,255,0.9); font-size: 1.1em; margin-bottom: 0.8em; text-align: center; line-height: 1.4;'>
+                                <div class="gutap-hero-sub">
                                     Leave comments and updates for in-progress TA requests, and review the status and details of completed requests. Track progress and maintain clear communication.
                                 </div>
                             </div>
@@ -3687,11 +3941,11 @@ else:
                     st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
                     with st.expander("🗒️ **CHECK & SUBMIT INTERACTION LOG**"):
                         st.markdown("""
-                            <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 20px; box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3); padding: 2em 1.5em 1.5em 1.5em; margin-bottom: 2em; margin-top: 1em;'>
-                                <div style='color: white; font-family: "Segoe UI", "Arial", sans-serif; font-weight: 800; font-size: 1.6em; margin-bottom: 0.5em; text-align: center;'>
+                            <div class="gutap-hero">
+                                <div class="gutap-hero-title">
                                     🗒️ Interaction Management Center
                                 </div>
-                                <div style='color: rgba(255,255,255,0.9); font-size: 1.1em; margin-bottom: 0.8em; text-align: center; line-height: 1.4;'>
+                                <div class="gutap-hero-sub">
                                     Review your previous interactions and submit new ones. Track all your communications with jurisdictions and TA requests.
                                 </div>
                             </div>
@@ -3948,11 +4202,11 @@ else:
 
                     with st.expander("📦 **SUBMIT DELIVERY FORM**"):
                         st.markdown("""
-                            <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 20px; box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3); padding: 2em 1.5em 1.5em 1.5em; margin-bottom: 2em; margin-top: 1em;'>
-                                <div style='color: white; font-family: "Segoe UI", "Arial", sans-serif; font-weight: 800; font-size: 1.6em; margin-bottom: 0.5em; text-align: center;'>
+                            <div class="gutap-hero">
+                                <div class="gutap-hero-title">
                                     📦 Delivery Management Center
                                 </div>
-                                <div style='color: rgba(255,255,255,0.9); font-size: 1.1em; margin-bottom: 0.8em; text-align: center; line-height: 1.4;'>
+                                <div class="gutap-hero-sub">
                                     Record new deliveries including reports, dashboards, and data. Upload files and provide comprehensive summaries of completed work.
                                 </div>
                             </div>
@@ -4098,19 +4352,16 @@ else:
                         st.info("This section is not available to you.")
                     else:
                         st.markdown("""
-                        <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 20px; box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3); padding: 2em 1.5em 1.5em 1.5em; margin-bottom: 2em; margin-top: 1em;'>
-                            <div style='color: white; font-family: "Segoe UI", "Arial", sans-serif; font-weight: 800; font-size: 1.6em; margin-bottom: 0.5em; text-align: center;'>
-                                ✈️ Travel Authorization Review Center
-                            </div>
-                            <div style='color: rgba(255,255,255,0.9); font-size: 1.1em; margin-bottom: 0.8em; text-align: center; line-height: 1.4;'>
-                                Review and approve pending travel authorization forms. View PDFs, add signatures, and approve travel requests.
-                            </div>
+                        <div class="gutap-hero">
+                            <div class="gutap-hero-title">Travel authorization review</div>
+                            <div class="gutap-hero-sub">Choose a request below, review the PDF, then submit your decision in GU-TAP.</div>
                         </div>
-                    """, unsafe_allow_html=True)
-                    
+                        """, unsafe_allow_html=True)
+
                         # Load travel sheet data
                         try:
                             df_travel_review = load_travel_sheet()
+                            df_travel_review = process_travel_review_escalations(df_travel_review, client)
                             
                             # Access control: Only Jen, Kemisha, Lauren, Jiaqin, and Mabintou can view this section
                             if not (is_kemisha or is_jen or is_lauren or is_jiaqin or is_mabintou):
@@ -4120,7 +4371,7 @@ else:
                                 # Note: Approval routing is dynamic based on traveler:
                                 # - Kemisha's requests → Mabintou + Jen
                                 # - Mabintou's requests → Lauren + Kemisha
-                                # - Others → Mabintou + Kemisha (or alternatives)
+                                # - Others → Mabintou + Kemisha first; after 7 days, Lauren / Jen may cover each line
                                 if is_kemisha:
                                     status_col = 'Kemisha Approval Status'
                                     approval_date_col = 'Kemisha Approval Date'
@@ -4158,7 +4409,22 @@ else:
                             # Filter for forms pending this coordinator's approval
                             # First, determine which forms are routed to this coordinator based on traveler
                             pending_forms = df_travel_review.copy()
-                            
+
+                            def _travel_row_any_rejected(row):
+                                for c in (
+                                    'Kemisha Approval Status',
+                                    'Mabintou Approval Status',
+                                    'Jen Approval Status',
+                                    'Lauren Approval Status',
+                                ):
+                                    if str(row.get(c, '') or '').lower() == 'reject':
+                                        return True
+                                return False
+
+                            if len(pending_forms) > 0:
+                                pending_forms = pending_forms[
+                                    ~pending_forms.apply(_travel_row_any_rejected, axis=1)
+                                ].copy()
                             # Filter forms that are routed to this coordinator
                             def is_routed_to_coordinator(row):
                                 """Check if form is routed to current coordinator"""
@@ -4188,19 +4454,37 @@ else:
                                     else:
                                         return False
                                 else:
-                                    # Others → Mabintou + Kemisha (or alternatives)
+                                    # General travelers: Mabintou + Kemisha first; after escalation, Lauren / Jen alternate lines
+                                    escalated = travel_escalation_applied(row)
+                                    slot1_ok = travel_general_slot1_ok(row)
+                                    slot2_ok = travel_general_slot2_ok(row)
                                     if is_mabintou:
-                                        return status_col == 'Mabintou Approval Status'
-                                    elif is_kemisha:
-                                        return status_col == 'Kemisha Approval Status'
-                                    elif is_jen:
-                                        # Jen might be alternative for Kemisha
-                                        return status_col == 'Jen Approval Status'
-                                    elif is_lauren:
-                                        # Lauren might be alternative for Mabintou
-                                        return status_col == 'Lauren Approval Status'
-                                    else:
-                                        return False
+                                        return (
+                                            status_col == 'Mabintou Approval Status'
+                                            and (not slot1_ok)
+                                            and _travel_needs_action(row.get('Mabintou Approval Status'))
+                                        )
+                                    if is_kemisha:
+                                        return (
+                                            status_col == 'Kemisha Approval Status'
+                                            and (not slot2_ok)
+                                            and _travel_needs_action(row.get('Kemisha Approval Status'))
+                                        )
+                                    if is_lauren:
+                                        return (
+                                            escalated
+                                            and status_col == 'Lauren Approval Status'
+                                            and (not slot1_ok)
+                                            and _travel_needs_action(row.get('Lauren Approval Status'))
+                                        )
+                                    if is_jen:
+                                        return (
+                                            escalated
+                                            and status_col == 'Jen Approval Status'
+                                            and (not slot2_ok)
+                                            and _travel_needs_action(row.get('Jen Approval Status'))
+                                        )
+                                    return False
                             
                             # Filter by routing
                             if len(pending_forms) > 0:
@@ -4240,13 +4524,12 @@ else:
                                         elif status_col == 'Kemisha Approval Status':
                                             return 'Lauren Approval Status'
                                     else:
-                                        # Others → Mabintou + Kemisha (or alternatives)
                                         if status_col == 'Mabintou Approval Status':
                                             return 'Kemisha Approval Status'
                                         elif status_col == 'Kemisha Approval Status':
                                             return 'Mabintou Approval Status'
                                         elif status_col == 'Jen Approval Status':
-                                            return 'Mabintou Approval Status'
+                                            return 'Kemisha Approval Status'
                                         elif status_col == 'Lauren Approval Status':
                                             return 'Mabintou Approval Status'
                                     return None
@@ -4269,11 +4552,13 @@ else:
                             if pending_forms.empty:
                                 st.info("✅ No travel forms pending your approval at this time.")
                             else:
-                                st.markdown(f"#### 📋 Forms Pending Your Approval ({coordinator_display_name})")
+                                st.markdown(f"#### Forms pending your action ({coordinator_display_name}) · {len(pending_forms)} in queue")
                                 
                                 # Display pending forms - show relevant approval status columns
                                 display_cols = ['Name', 'Destination', 'Departure Date', 'Return Date', 'Purpose of Travel', 
                                               'Submission Date', 'PDF Link']
+                                if TRAVEL_ESCALATION_COL in pending_forms.columns:
+                                    display_cols.append(TRAVEL_ESCALATION_COL)
                                 # Add approval status columns that exist
                                 approval_status_cols = ['Kemisha Approval Status', 'Mabintou Approval Status', 
                                                        'Jen Approval Status', 'Lauren Approval Status']
@@ -4297,8 +4582,7 @@ else:
                                     
                                     selected_form = pending_forms.loc[selected_form_idx]
                                     
-                                    st.markdown("---")
-                                    st.markdown("#### 📄 Form Details")
+                                    st.markdown("### Review selected request")
                                     
                                     col_info1, col_info2 = st.columns(2)
                                     with col_info1:
@@ -4313,16 +4597,19 @@ else:
                                         st.markdown(f"**Deliverables:** {selected_form.get('Deliverables', 'N/A')}")
                                         st.markdown(f"**Submitted:** {selected_form.get('Submission Date', 'N/A')}")
                                     
-                                    # Show approval status
-                                    kemisha_status = selected_form.get('Kemisha Approval Status', 'pending')
-                                    mabintou_status = selected_form.get('Mabintou Approval Status', 'pending')
-                                    # Handle NaN values
-                                    if pd.isna(kemisha_status) or str(kemisha_status).lower() == 'nan':
-                                        kemisha_status = 'pending'
-                                    if pd.isna(mabintou_status) or str(mabintou_status).lower() == 'nan':
-                                        mabintou_status = 'pending'
-                                    st.markdown(f"**Kemisha Status:** {kemisha_status}")
-                                    st.markdown(f"**Mabintou Status:** {mabintou_status}")
+                                    # Show approval status (all coordinator lines)
+                                    kemisha_status = selected_form.get('Kemisha Approval Status', '')
+                                    mabintou_status = selected_form.get('Mabintou Approval Status', '')
+                                    jen_status = selected_form.get('Jen Approval Status', '')
+                                    lauren_status = selected_form.get('Lauren Approval Status', '')
+                                    def _disp(s):
+                                        if pd.isna(s) or str(s).lower() == 'nan' or str(s).strip() == '':
+                                            return '—'
+                                        return str(s).strip()
+                                    st.markdown(
+                                        f"**Approval status:** Mabintou: `{_disp(mabintou_status)}` · Kemisha: `{_disp(kemisha_status)}` · "
+                                        f"Jen: `{_disp(jen_status)}` · Lauren: `{_disp(lauren_status)}`"
+                                    )
                                     
                                     # Display PDF link
                                     pdf_link = selected_form.get('PDF Link', '')
@@ -4374,7 +4661,7 @@ else:
                                         # Show signature preview
                                         if coordinator_signature_text:
                                             try:
-                                                preview_img = generate_signature_image(coordinator_signature_text, width=600, height=120, scale_factor=2)
+                                                preview_img = generate_signature_image(coordinator_signature_text, width=960, height=200, scale_factor=2)
                                                 if preview_img:
                                                     if preview_img.mode != 'RGB':
                                                         rgb_preview = PILImage.new('RGB', preview_img.size, (255, 255, 255))
@@ -4383,8 +4670,7 @@ else:
                                                         else:
                                                             rgb_preview.paste(preview_img)
                                                         preview_img = rgb_preview
-                                                    preview_display = preview_img.resize((400, int(400 * preview_img.size[1] / preview_img.size[0])))
-                                                    st.image(preview_display, caption="Signature Preview", width=400)
+                                                    st.image(preview_img, caption="Signature preview (size similar to PDF)", use_container_width=True)
                                             except Exception as e:
                                                 pass
                                         
@@ -4440,7 +4726,9 @@ else:
                                                     is_mabintou_traveler_check = (traveler_email_check == 'mo887@georgetown.edu' or 
                                                                                  'mabintou' in traveler_name_check)
                                                     
-                                                    # Determine the two approver status columns for this form
+                                                    # Determine if all required approvals are complete (two lines on the PDF)
+                                                    row_after = updated_df_travel.loc[selected_form_idx]
+                                                    
                                                     if is_kemisha_traveler_check:
                                                         approver1_status_col_check = 'Mabintou Approval Status'
                                                         approver2_status_col_check = 'Jen Approval Status'
@@ -4450,6 +4738,12 @@ else:
                                                         approver2_date_col = 'Jen Approval Date'
                                                         approver1_name_final = "Mabintou Ouattara"
                                                         approver2_name_final = "Jenevieve Opoku"
+                                                        for col in [approver1_status_col_check, approver2_status_col_check]:
+                                                            if col not in updated_df_travel.columns:
+                                                                updated_df_travel[col] = ''
+                                                        a1s = str(row_after.get(approver1_status_col_check, '') or '').lower()
+                                                        a2s = str(row_after.get(approver2_status_col_check, '') or '').lower()
+                                                        approvals_complete = a1s == 'approve' and a2s == 'approve'
                                                     elif is_mabintou_traveler_check:
                                                         approver1_status_col_check = 'Lauren Approval Status'
                                                         approver2_status_col_check = 'Kemisha Approval Status'
@@ -4459,92 +4753,77 @@ else:
                                                         approver2_date_col = 'Kemisha Approval Date'
                                                         approver1_name_final = "Lauren Mathae"
                                                         approver2_name_final = "Kemisha Denny"
+                                                        for col in [approver1_status_col_check, approver2_status_col_check]:
+                                                            if col not in updated_df_travel.columns:
+                                                                updated_df_travel[col] = ''
+                                                        a1s = str(row_after.get(approver1_status_col_check, '') or '').lower()
+                                                        a2s = str(row_after.get(approver2_status_col_check, '') or '').lower()
+                                                        approvals_complete = a1s == 'approve' and a2s == 'approve'
                                                     else:
-                                                        # Default routing: Mabintou + Kemisha (or alternatives)
-                                                        # Check for alternatives based on out of office status
-                                                        out_of_office_check = {
-                                                            'kemisha': False,  # Set to True if Kemisha is out
-                                                            'mabintou': False  # Set to True if Mabintou is out
-                                                        }
-                                                        
-                                                        if out_of_office_check.get('mabintou', False):
-                                                            # Mabintou is out, use Lauren
-                                                            approver1_status_col_check = 'Lauren Approval Status'
-                                                            approver1_sig_col = 'Lauren Signature'
-                                                            approver1_date_col = 'Lauren Approval Date'
-                                                            approver1_name_final = "Lauren Mathae"
-                                                        else:
-                                                            approver1_status_col_check = 'Mabintou Approval Status'
-                                                            approver1_sig_col = 'Mabintou Signature'
-                                                            approver1_date_col = 'Mabintou Approval Date'
-                                                            approver1_name_final = "Mabintou Ouattara"
-                                                        
-                                                        if out_of_office_check.get('kemisha', False):
-                                                            # Kemisha is out, use Jen
-                                                            approver2_status_col_check = 'Jen Approval Status'
-                                                            approver2_sig_col = 'Jen Signature'
-                                                            approver2_date_col = 'Jen Approval Date'
-                                                            approver2_name_final = "Jenevieve Opoku"
-                                                        else:
-                                                            approver2_status_col_check = 'Kemisha Approval Status'
-                                                            approver2_sig_col = 'Kemisha Signature'
-                                                            approver2_date_col = 'Kemisha Approval Date'
-                                                            approver2_name_final = "Kemisha Denny"
+                                                        # General: (Mabintou or Lauren) + (Kemisha or Jen)
+                                                        approvals_complete = travel_general_fully_approved(row_after)
+                                                        approver1_name_final = ""
+                                                        approver2_name_final = ""
                                                     
-                                                    # Ensure columns exist
-                                                    for col in [approver1_status_col_check, approver2_status_col_check]:
-                                                        if col not in updated_df_travel.columns:
-                                                            updated_df_travel[col] = ''
-                                                    
-                                                    # Check if both have approved
-                                                    approver1_status_new = updated_df_travel.loc[selected_form_idx, approver1_status_col_check] if approver1_status_col_check in updated_df_travel.columns else ''
-                                                    approver2_status_new = updated_df_travel.loc[selected_form_idx, approver2_status_col_check] if approver2_status_col_check in updated_df_travel.columns else ''
-                                                    
-                                                    # Handle NaN values
-                                                    if pd.isna(approver1_status_new) or str(approver1_status_new).lower() == 'nan':
-                                                        approver1_status_new = ''
-                                                    if pd.isna(approver2_status_new) or str(approver2_status_new).lower() == 'nan':
-                                                        approver2_status_new = ''
-                                                    
-                                                    if str(approver1_status_new).lower() == 'approve' and str(approver2_status_new).lower() == 'approve':
-                                                        # Both approved - generate final PDF with both signatures and send to traveler
+                                                    if approvals_complete:
+                                                        # All required lines approved — generate final PDF with both signatures and send to traveler
                                                         try:
-                                                            # Get both signatures using dynamic columns
-                                                            approver1_sig = updated_df_travel.loc[selected_form_idx, approver1_sig_col] if approver1_sig_col in updated_df_travel.columns else ''
-                                                            approver2_sig = updated_df_travel.loc[selected_form_idx, approver2_sig_col] if approver2_sig_col in updated_df_travel.columns else ''
-                                                            
-                                                            # Get both approval dates
-                                                            approver1_date = updated_df_travel.loc[selected_form_idx, approver1_date_col] if approver1_date_col in updated_df_travel.columns else ''
-                                                            approver2_date = updated_df_travel.loc[selected_form_idx, approver2_date_col] if approver2_date_col in updated_df_travel.columns else ''
-                                                            
-                                                            # Map to PDF format (Mabintou goes to Program Assistant, others to Lead)
-                                                            # For Kemisha's requests: Mabintou (Program Assistant) + Jen (Lead)
-                                                            # For Mabintou's requests: Lauren (Program Assistant) + Kemisha (Lead)
-                                                            # For others: Mabintou (Program Assistant) + Kemisha (Lead)
                                                             if is_kemisha_traveler_check:
-                                                                mabintou_sig = approver1_sig  # Mabintou is approver1
-                                                                kemisha_sig = approver2_sig   # Jen is approver2, but goes to Lead position
-                                                                mabintou_date = approver1_date
-                                                                kemisha_date = approver2_date
-                                                                # Note: Jen's signature goes to Lead position, Mabintou to Program Assistant
-                                                                # We need to adjust this mapping
-                                                                mabintou_sig_pdf = approver1_sig
-                                                                kemisha_sig_pdf = approver2_sig  # Jen's signature
-                                                            elif is_mabintou_traveler_check:
-                                                                mabintou_sig = approver1_sig  # Lauren is approver1, goes to Program Assistant
-                                                                kemisha_sig = approver2_sig   # Kemisha is approver2, goes to Lead
-                                                                mabintou_date = approver1_date
-                                                                kemisha_date = approver2_date
-                                                                mabintou_sig_pdf = approver1_sig  # Lauren's signature
-                                                                kemisha_sig_pdf = approver2_sig  # Kemisha's signature
-                                                            else:
-                                                                mabintou_sig = approver1_sig
-                                                                kemisha_sig = approver2_sig
-                                                                mabintou_date = approver1_date
-                                                                kemisha_date = approver2_date
+                                                                approver1_sig_col = 'Mabintou Signature'
+                                                                approver2_sig_col = 'Jen Signature'
+                                                                approver1_date_col = 'Mabintou Approval Date'
+                                                                approver2_date_col = 'Jen Approval Date'
+                                                                approver1_sig = updated_df_travel.loc[selected_form_idx, approver1_sig_col] if approver1_sig_col in updated_df_travel.columns else ''
+                                                                approver2_sig = updated_df_travel.loc[selected_form_idx, approver2_sig_col] if approver2_sig_col in updated_df_travel.columns else ''
+                                                                approver1_date = updated_df_travel.loc[selected_form_idx, approver1_date_col] if approver1_date_col in updated_df_travel.columns else ''
+                                                                approver2_date = updated_df_travel.loc[selected_form_idx, approver2_date_col] if approver2_date_col in updated_df_travel.columns else ''
                                                                 mabintou_sig_pdf = approver1_sig
                                                                 kemisha_sig_pdf = approver2_sig
-                                                            
+                                                                mabintou_date = approver1_date
+                                                                kemisha_date = approver2_date
+                                                                approver1_name_final = "Mabintou Ouattara"
+                                                                approver2_name_final = "Jenevieve Opoku"
+                                                            elif is_mabintou_traveler_check:
+                                                                approver1_sig_col = 'Lauren Signature'
+                                                                approver2_sig_col = 'Kemisha Signature'
+                                                                approver1_date_col = 'Lauren Approval Date'
+                                                                approver2_date_col = 'Kemisha Approval Date'
+                                                                approver1_sig = updated_df_travel.loc[selected_form_idx, approver1_sig_col] if approver1_sig_col in updated_df_travel.columns else ''
+                                                                approver2_sig = updated_df_travel.loc[selected_form_idx, approver2_sig_col] if approver2_sig_col in updated_df_travel.columns else ''
+                                                                approver1_date = updated_df_travel.loc[selected_form_idx, approver1_date_col] if approver1_date_col in updated_df_travel.columns else ''
+                                                                approver2_date = updated_df_travel.loc[selected_form_idx, approver2_date_col] if approver2_date_col in updated_df_travel.columns else ''
+                                                                mabintou_sig_pdf = approver1_sig
+                                                                kemisha_sig_pdf = approver2_sig
+                                                                mabintou_date = approver1_date
+                                                                kemisha_date = approver2_date
+                                                                approver1_name_final = "Lauren Mathae"
+                                                                approver2_name_final = "Kemisha Denny"
+                                                            else:
+                                                                r = updated_df_travel.loc[selected_form_idx]
+                                                                if _travel_approval_status_norm(r.get('Mabintou Approval Status')) == 'approve':
+                                                                    mabintou_sig_pdf = str(r.get('Mabintou Signature', '') or '')
+                                                                    mabintou_date = str(r.get('Mabintou Approval Date', '') or '')
+                                                                    approver1_name_final = "Mabintou Ouattara"
+                                                                elif _travel_approval_status_norm(r.get('Lauren Approval Status')) == 'approve':
+                                                                    mabintou_sig_pdf = str(r.get('Lauren Signature', '') or '')
+                                                                    mabintou_date = str(r.get('Lauren Approval Date', '') or '')
+                                                                    approver1_name_final = "Lauren Mathae"
+                                                                else:
+                                                                    mabintou_sig_pdf = ''
+                                                                    mabintou_date = ''
+                                                                    approver1_name_final = ''
+                                                                if _travel_approval_status_norm(r.get('Kemisha Approval Status')) == 'approve':
+                                                                    kemisha_sig_pdf = str(r.get('Kemisha Signature', '') or '')
+                                                                    kemisha_date = str(r.get('Kemisha Approval Date', '') or '')
+                                                                    approver2_name_final = "Kemisha Denny"
+                                                                elif _travel_approval_status_norm(r.get('Jen Approval Status')) == 'approve':
+                                                                    kemisha_sig_pdf = str(r.get('Jen Signature', '') or '')
+                                                                    kemisha_date = str(r.get('Jen Approval Date', '') or '')
+                                                                    approver2_name_final = "Jenevieve Opoku"
+                                                                else:
+                                                                    kemisha_sig_pdf = ''
+                                                                    kemisha_date = ''
+                                                                    approver2_name_final = ''
                                                             # Helper function to safely parse JSON from sheet
                                                             def safe_json_loads(value, default=[], data_type='auto'):
                                                                 if pd.isna(value) or value == '' or str(value).lower() == 'nan':
@@ -4724,15 +5003,15 @@ GU-TAP System
                                                                         subject=final_approval_subject,
                                                                         body=final_approval_body.strip()
                                                                     )
-                                                                    st.success(f"✅ Travel form fully approved! Notification sent to {traveler_email}")
+                                                                    st.success("Success. The traveler has been notified.")
                                                                 except Exception as e:
                                                                     st.warning(f"⚠️ Form approved but failed to send email: {str(e)}")
                                                             else:
-                                                                st.success("✅ Travel form fully approved!")
+                                                                st.success("Success.")
                                                         except Exception as e:
                                                             st.warning(f"⚠️ Error processing final approval: {str(e)}")
                                                     else:
-                                                        st.success(f"✅ Your approval has been recorded. Waiting for the other coordinator's approval.")
+                                                        st.success("Saved.")
                                                     
                                                     st.cache_data.clear()
                                                     time.sleep(2)
@@ -4781,16 +5060,14 @@ GU-TAP System
                                                         elif status_col == 'Kemisha Approval Status':
                                                             other_status_col = 'Lauren Approval Status'
                                                     else:
-                                                        # Others → Mabintou + Kemisha (or alternatives)
+                                                        # General: PA line (Mabintou / Lauren); Lead line (Kemisha / Jen)
                                                         if status_col == 'Mabintou Approval Status':
                                                             other_status_col = 'Kemisha Approval Status'
                                                         elif status_col == 'Kemisha Approval Status':
                                                             other_status_col = 'Mabintou Approval Status'
                                                         elif status_col == 'Jen Approval Status':
-                                                            # If Jen is alternative, clear Mabintou or Kemisha
-                                                            other_status_col = 'Mabintou Approval Status'
+                                                            other_status_col = 'Kemisha Approval Status'
                                                         elif status_col == 'Lauren Approval Status':
-                                                            # If Lauren is alternative, clear Mabintou or Kemisha
                                                             other_status_col = 'Mabintou Approval Status'
                                                     
                                                     # Clear the other approver's status (set to blank)
@@ -4845,11 +5122,11 @@ GU-TAP System
                                                                 subject=rejection_subject,
                                                                 body=rejection_body.strip()
                                                             )
-                                                            st.success(f"❌ Travel form rejected. Rejection notification sent to {traveler_email}")
+                                                            st.info("Rejection recorded. The traveler was notified.")
                                                         except Exception as e:
                                                             st.warning(f"⚠️ Form rejected but failed to send email: {str(e)}")
                                                     else:
-                                                        st.success("❌ Travel form rejected.")
+                                                        st.info("Rejection recorded.")
                                                     
                                                     st.cache_data.clear()
                                                     time.sleep(2)
@@ -4885,21 +5162,8 @@ GU-TAP System
                                     kemisha_status = str(row.get('Kemisha Approval Status', '')).lower()
                                     return lauren_status == 'approve' and kemisha_status == 'approve'
                                 else:
-                                    # Others → Mabintou + Kemisha (or alternatives) must both approve
-                                    mabintou_status = str(row.get('Mabintou Approval Status', '')).lower()
-                                    kemisha_status = str(row.get('Kemisha Approval Status', '')).lower()
-                                    jen_status = str(row.get('Jen Approval Status', '')).lower()
-                                    lauren_status = str(row.get('Lauren Approval Status', '')).lower()
-                                    
-                                    # Check primary approvers
-                                    if mabintou_status == 'approve' and kemisha_status == 'approve':
-                                        return True
-                                    # Check alternatives
-                                    if lauren_status == 'approve' and kemisha_status == 'approve':
-                                        return True
-                                    if mabintou_status == 'approve' and jen_status == 'approve':
-                                        return True
-                                    return False
+                                    # General: one approval per line — (Mabintou or Lauren) and (Kemisha or Jen)
+                                    return travel_general_fully_approved(row)
                             
                             if len(df_travel_review) > 0:
                                 approved_mask = df_travel_review.apply(is_fully_approved, axis=1)
@@ -4930,11 +5194,11 @@ GU-TAP System
                         st.info("This section is not available to you.")
                     else:
                         st.markdown("""
-                        <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 20px; box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3); padding: 2em 1.5em 1.5em 1.5em; margin-bottom: 2em; margin-top: 1em;'>
-                            <div style='color: white; font-family: "Segoe UI", "Arial", sans-serif; font-weight: 800; font-size: 1.6em; margin-bottom: 0.5em; text-align: center;'>
+                        <div class="gutap-hero">
+                            <div class="gutap-hero-title">
                                 🧳 GSA Lodging Exemption Review Center
                             </div>
-                            <div style='color: rgba(255,255,255,0.9); font-size: 1.1em; margin-bottom: 0.8em; text-align: center; line-height: 1.4;'>
+                            <div class="gutap-hero-sub">
                                 Review and approve pending GSA Lodging Rate Exemption forms.
                             </div>
                         </div>
@@ -5330,11 +5594,11 @@ GU-TAP System
 
                     with st.expander("📦 **CHECK INTERACTION & DELIVERY PATTERNS**"):
                         st.markdown("""
-                            <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 20px; box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3); padding: 2em 1.5em 1.5em 1.5em; margin-bottom: 2em; margin-top: 1em;'>
-                                <div style='color: white; font-family: "Segoe UI", "Arial", sans-serif; font-weight: 800; font-size: 1.6em; margin-bottom: 0.5em; text-align: center;'>
+                            <div class="gutap-hero">
+                                <div class="gutap-hero-title">
                                     📦 Activity Analytics Center
                                 </div>
-                                <div style='color: rgba(255,255,255,0.9); font-size: 1.1em; margin-bottom: 0.8em; text-align: center; line-height: 1.4;'>
+                                <div class="gutap-hero-sub">
                                     Visualize and analyze communication and delivery patterns for all Technical Assistance requests. Use charts and filters to spot trends and monitor engagement.
                                 </div>
                             </div>
@@ -5517,11 +5781,11 @@ GU-TAP System
                     # --- Section 2: Filter, Sort, Comment
                     with st.expander("🚧 **IN-PROGRESS REQUESTS**"):
                         st.markdown("""
-                            <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 20px; box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3); padding: 2em 1.5em 1.5em 1.5em; margin-bottom: 2em; margin-top: 1em;'>
-                                <div style='color: white; font-family: "Segoe UI", "Arial", sans-serif; font-weight: 800; font-size: 1.6em; margin-bottom: 0.5em; text-align: center;'>
+                            <div class="gutap-hero">
+                                <div class="gutap-hero-title">
                                     🚧 In-Progress Requests Management
                                 </div>
-                                <div style='color: rgba(255,255,255,0.9); font-size: 1.1em; margin-bottom: 0.8em; text-align: center; line-height: 1.4;'>
+                                <div class="gutap-hero-sub">
                                     Manage your assigned requests, add comments, and track progress. Filter and sort your active TA requests efficiently.
                                 </div>
                             </div>
@@ -5633,11 +5897,11 @@ GU-TAP System
 
                     with st.expander("🗒️ **CHECK & SUBMIT INTERACTION LOG**"):
                         st.markdown("""
-                            <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 20px; box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3); padding: 2em 1.5em 1.5em 1.5em; margin-bottom: 2em; margin-top: 1em;'>
-                                <div style='color: white; font-family: "Segoe UI", "Arial", sans-serif; font-weight: 800; font-size: 1.6em; margin-bottom: 0.5em; text-align: center;'>
+                            <div class="gutap-hero">
+                                <div class="gutap-hero-title">
                                     🗒️ Interaction Management Center
                                 </div>
-                                <div style='color: rgba(255,255,255,0.9); font-size: 1.1em; margin-bottom: 0.8em; text-align: center; line-height: 1.4;'>
+                                <div class="gutap-hero-sub">
                                     Review your previous interactions and submit new ones. Track all your communications with jurisdictions and TA requests.
                                 </div>
                             </div>
@@ -5912,11 +6176,11 @@ GU-TAP System
 
                     with st.expander("👨‍💻 **SUBMIT STUDENT SUPPORT REQUEST FORM**"):
                         st.markdown("""
-                            <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 20px; box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3); padding: 2em 1.5em 1.5em 1.5em; margin-bottom: 2em; margin-top: 1em;'>
-                                <div style='color: white; font-family: "Segoe UI", "Arial", sans-serif; font-weight: 800; font-size: 1.6em; margin-bottom: 0.5em; text-align: center;'>
+                            <div class="gutap-hero">
+                                <div class="gutap-hero-title">
                                     👨‍💻 Student Support Request Center
                                 </div>
-                                <div style='color: rgba(255,255,255,0.9); font-size: 1.1em; margin-bottom: 0.8em; text-align: center; line-height: 1.4;'>
+                                <div class="gutap-hero-sub">
                                     Submit new student support requests with time preferences. The system will automatically notify available research assistants.
                                 </div>
                             </div>
@@ -6290,11 +6554,11 @@ GU-TAP System
 
                     with st.expander("🧳 **GENERATE DOMESTIC TRAVEL AUTHORIZATION FORM**"):
                         st.markdown("""
-                            <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 20px; box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3); padding: 2em 1.5em 1.5em 1.5em; margin-bottom: 2em; margin-top: 1em;'>
-                                <div style='color: white; font-family: "Segoe UI", "Arial", sans-serif; font-weight: 800; font-size: 1.6em; margin-bottom: 0.5em; text-align: center;'>
+                            <div class="gutap-hero">
+                                <div class="gutap-hero-title">
                                     🧳 Generate Domestic Travel Authorization Form
                                 </div>
-                                <div style='color: rgba(255,255,255,0.9); font-size: 1.1em; margin-bottom: 0.8em; text-align: center; line-height: 1.4;'>
+                                <div class="gutap-hero-sub">
                                     Input your travel information to generate a domestic travel authorization form.
                                 </div>
                             </div>
@@ -6725,7 +6989,7 @@ GU-TAP System
                             
                                 # Store for review step
                                 st.session_state['travel_review_data'] = form_data
-                                st.success("Please review the information below and approve to finalize.")
+                                st.info("Review the details below, then confirm to continue.")
 
                             # Review & Approve pane
                             if 'travel_review_data' in st.session_state:
@@ -6903,6 +7167,7 @@ GU-TAP System
                                             'Mabintou Note': '',
                                             'Jen Note': '',
                                             'Lauren Note': '',
+                                            'Travel Escalation Sent': '',
                                         }
                                     
                                         new_travel_data = pd.DataFrame([new_travel_row])
@@ -6924,7 +7189,7 @@ GU-TAP System
                                         # Clear cache to refresh data
                                         st.cache_data.clear()
                                     
-                                        st.success("✅ Travel form data saved to Google Sheets!")
+                                        st.success("Saved.")
                                     
                                     except Exception as e:
                                         st.warning(f"⚠️ Error saving to Google Sheets: {str(e)}")
@@ -7068,7 +7333,7 @@ GU-TAP System
                                         
                                             worksheet_travel.update([updated_df_travel.columns.values.tolist()] + updated_df_travel.values.tolist())
                                         
-                                            st.success("✅ Travel form status updated in Google Sheets!")
+                                            st.success("Saved.")
                                         
                                             # Send email notification to both approvers (determined dynamically above)
                                             traveler_name = review.get('name', 'Unknown')
@@ -7125,15 +7390,13 @@ GU-TAP System
                                                 email_success_count += 1
                                             email_messages.append(msg2)
                                         
-                                            # Display email results
+                                            # Display email results (failures only; one summary on success)
                                             for msg in email_messages:
-                                                if msg.startswith("✅"):
-                                                    st.success(msg)
-                                                else:
+                                                if not msg.startswith("✅"):
                                                     st.warning(msg)
                                         
                                             if email_success_count == 2:
-                                                st.success("🎉 Travel form sent for approval! Both coordinators have been notified.")
+                                                st.success("Success. Coordinators have been notified.")
                                             elif email_success_count == 1:
                                                 st.warning("⚠️ PDF uploaded and one email sent, but one email failed. Please check the messages above.")
                                             else:
@@ -7172,11 +7435,11 @@ GU-TAP System
 
                     with st.expander("📦 **CHECK & SUBMIT DELIVERY LOG**"):
                         st.markdown("""
-                            <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 20px; box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3); padding: 2em 1.5em 1.5em 1.5em; margin-bottom: 2em; margin-top: 1em;'>
-                                <div style='color: white; font-family: "Segoe UI", "Arial", sans-serif; font-weight: 800; font-size: 1.6em; margin-bottom: 0.5em; text-align: center;'>
+                            <div class="gutap-hero">
+                                <div class="gutap-hero-title">
                                     📦 Delivery Management Center
                                 </div>
-                                <div style='color: rgba(255,255,255,0.9); font-size: 1.1em; margin-bottom: 0.8em; text-align: center; line-height: 1.4;'>
+                                <div class="gutap-hero-sub">
                                     Review your previous deliveries and submit new ones. Track all your completed work including reports, dashboards, and data.
                                 </div>
                             </div>
@@ -7412,11 +7675,11 @@ GU-TAP System
                     st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
                 with st.expander("🧳 **GENERATE GSA LODGING RATE EXEMPTION FORM**"):
                     st.markdown("""
-                        <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 20px; box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3); padding: 2em 1.5em 1.5em 1.5em; margin-bottom: 2em; margin-top: 1em;'>
-                            <div style='color: white; font-family: "Segoe UI", "Arial", sans-serif; font-weight: 800; font-size: 1.6em; margin-bottom: 0.5em; text-align: center;'>
+                        <div class="gutap-hero">
+                            <div class="gutap-hero-title">
                                 🧳 Generate GSA Lodging Rate Exemption Form
                             </div>
-                            <div style='color: rgba(255,255,255,0.9); font-size: 1.1em; margin-bottom: 0.8em; text-align: center; line-height: 1.4;'>
+                            <div class="gutap-hero-sub">
                                 Input your travel information to generate a GSA Lodging Rate Exemption Form.
                             </div>
                         </div>
@@ -7697,12 +7960,10 @@ GU-TAP System
                                             ok1, msg1 = _send_gsa_pending_email(route['approver1_email'], route['approver1_name'])
                                             ok2, msg2 = _send_gsa_pending_email(route['approver2_email'], route['approver2_name'])
                                             for msg in (msg1, msg2):
-                                                if msg.startswith("✅"):
-                                                    st.success(msg)
-                                                else:
+                                                if not msg.startswith("✅"):
                                                     st.warning(msg)
                                             if ok1 and ok2:
-                                                st.success("🎉 Coordinators notified. Both approvers have been emailed.")
+                                                st.success("Success. Coordinators have been notified.")
                                             try:
                                                 send_email_mailjet(
                                                     to_email=ce,
@@ -7714,7 +7975,7 @@ GU-TAP System
                                                         "GU-TAP System"
                                                     ).strip(),
                                                 )
-                                                st.success("✅ Confirmation email sent to you.")
+                                                st.success("Success.")
                                             except Exception as em_req:
                                                 st.warning(f"⚠️ Could not send confirmation email to you: {str(em_req)}")
                                     except Exception as e:
@@ -7729,11 +7990,11 @@ GU-TAP System
                     # --- Section 1: Mark as Completed
                     with st.expander("✅ **MARK REQUESTS AS COMPLETED**"):
                         st.markdown("""
-                            <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 20px; box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3); padding: 2em 1.5em 1.5em 1.5em; margin-bottom: 2em; margin-top: 1em;'>
-                                <div style='color: white; font-family: "Segoe UI", "Arial", sans-serif; font-weight: 800; font-size: 1.6em; margin-bottom: 0.5em; text-align: center;'>
+                            <div class="gutap-hero">
+                                <div class="gutap-hero-title">
                                     ✅ Request Completion Center
                                 </div>
-                                <div style='color: rgba(255,255,255,0.9); font-size: 1.1em; margin-bottom: 0.8em; text-align: center; line-height: 1.4;'>
+                                <div class="gutap-hero-sub">
                                     Mark your assigned requests as completed when finished. Review request details and finalize your work efficiently.
                                 </div>
                             </div>
@@ -7815,11 +8076,11 @@ GU-TAP System
                     # --- Section: View Completed Requests (Staff)
                     with st.expander("✅ **COMPLETED REQUESTS**"):
                         st.markdown("""
-                            <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 20px; box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3); padding: 2em 1.5em 1.5em 1.5em; margin-bottom: 2em; margin-top: 1em;'>
-                                <div style='color: white; font-family: "Segoe UI", "Arial", sans-serif; font-weight: 800; font-size: 1.6em; margin-bottom: 0.5em; text-align: center;'>
+                            <div class="gutap-hero">
+                                <div class="gutap-hero-title">
                                     ✅ Completed Requests
                                 </div>
-                                <div style='color: rgba(255,255,255,0.9); font-size: 1.1em; margin-bottom: 0.8em; text-align: center; line-height: 1.4;'>
+                                <div class="gutap-hero-sub">
                                     View your completed TA requests.
                                 </div>
                             </div>
@@ -7849,11 +8110,11 @@ GU-TAP System
                     # --- Section: Media Request System
                     with st.expander("📺 **MEDIA REQUEST SYSTEM**"):
                         st.markdown("""
-                            <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 20px; box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3); padding: 2em 1.5em 1.5em 1.5em; margin-bottom: 2em; margin-top: 1em;'>
-                                <div style='color: white; font-family: "Segoe UI", "Arial", sans-serif; font-weight: 800; font-size: 1.6em; margin-bottom: 0.5em; text-align: center;'>
+                            <div class="gutap-hero">
+                                <div class="gutap-hero-title">
                                     📺 Media Request System
                                 </div>
-                                <div style='color: rgba(255,255,255,0.9); font-size: 1.1em; margin-bottom: 0.8em; text-align: center; line-height: 1.4;'>
+                                <div class="gutap-hero-sub">
                                     Submit media requests for your projects and communications.
                                 </div>
                             </div>
@@ -7955,11 +8216,11 @@ GU-TAP System
                 # --- Section: View and Manage Submitted Support Requests
                 with st.expander("📋 **VIEW & MANAGE SUPPORT REQUESTS**"):
                     st.markdown("""
-                        <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 20px; box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3); padding: 2em 1.5em 1.5em 1.5em; margin-bottom: 2em; margin-top: 1em;'>
-                            <div style='color: white; font-family: "Segoe UI", "Arial", sans-serif; font-weight: 800; font-size: 1.6em; margin-bottom: 0.5em; text-align: center;'>
+                        <div class="gutap-hero">
+                            <div class="gutap-hero-title">
                                 📋 Support Request Management Center
                             </div>
-                            <div style='color: rgba(255,255,255,0.9); font-size: 1.1em; margin-bottom: 0.8em; text-align: center; line-height: 1.4;'>
+                            <div class="gutap-hero-sub">
                                 View all submitted support requests and update their status. Assign yourself to requests and track your progress efficiently.
                             </div>
                         </div>
@@ -8107,11 +8368,11 @@ GU-TAP System
                 st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
                 with st.expander("🚧 **MY ASSIGNED REQUESTS**"):
                     st.markdown("""
-                        <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 20px; box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3); padding: 2em 1.5em 1.5em 1.5em; margin-bottom: 2em; margin-top: 1em;'>
-                            <div style='color: white; font-family: "Segoe UI", "Arial", sans-serif; font-weight: 800; font-size: 1.6em; margin-bottom: 0.5em; text-align: center;'>
+                        <div class="gutap-hero">
+                            <div class="gutap-hero-title">
                                 🚧 My Assigned Requests Center
                             </div>
-                            <div style='color: rgba(255,255,255,0.9); font-size: 1.1em; margin-bottom: 0.8em; text-align: center; line-height: 1.4;'>
+                            <div class="gutap-hero-sub">
                                 Manage your assigned support requests. Update status and track your progress efficiently. Mark requests as completed when finished.
                             </div>
                         </div>
@@ -8287,11 +8548,11 @@ GU-TAP System
                 st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
                 with st.expander("🔄 **RE-ASSIGN SUPPORT**"):
                     st.markdown("""
-                        <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 20px; box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3); padding: 2em 1.5em 1.5em 1.5em; margin-bottom: 2em; margin-top: 1em;'>
-                            <div style='color: white; font-family: "Segoe UI", "Arial", sans-serif; font-weight: 800; font-size: 1.6em; margin-bottom: 0.5em; text-align: center;'>
+                        <div class="gutap-hero">
+                            <div class="gutap-hero-title">
                                 🔄 Re-assign Support Center
                             </div>
-                            <div style='color: rgba(255,255,255,0.9); font-size: 1.1em; margin-bottom: 0.8em; text-align: center; line-height: 1.4;'>
+                            <div class="gutap-hero-sub">
                                 If you are unable to complete an assigned support request, you can re-assign it. The request will become unassigned and notifications will be sent to all available students.
                             </div>
                         </div>
@@ -8479,11 +8740,11 @@ GU-TAP System
                 st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
                 with st.expander("✅ **COMPLETED REQUESTS**"):
                     st.markdown("""
-                        <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 20px; box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3); padding: 2em 1.5em 1.5em 1.5em; margin-bottom: 2em; margin-top: 1em;'>
-                            <div style='color: white; font-family: "Segoe UI", "Arial", sans-serif; font-weight: 800; font-size: 1.6em; margin-bottom: 0.5em; text-align: center;'>
+                        <div class="gutap-hero">
+                            <div class="gutap-hero-title">
                                 ✅ Completed Requests Archive
                             </div>
-                            <div style='color: rgba(255,255,255,0.9); font-size: 1.1em; margin-bottom: 0.8em; text-align: center; line-height: 1.4;'>
+                            <div class="gutap-hero-sub">
                                 View all your completed support requests. Track your accomplishments and review past work for reference.
                             </div>
                         </div>
