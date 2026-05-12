@@ -1830,7 +1830,69 @@ def _travel_approval_status_norm(val):
     return str(val if val is not None else '').strip().lower()
 
 
-def travel_general_slot1_ok(row) -> bool:
+TRAVEL_APPROVER_STATUS_COLUMNS = (
+    'Kemisha Approval Status',
+    'Mabintou Approval Status',
+    'Jen Approval Status',
+    'Lauren Approval Status',
+)
+
+
+def _travel_approval_is_reject(val) -> bool:
+    v = _travel_approval_status_norm(val)
+    if not v or v == 'nan':
+        return False
+    return v in ('reject', 'rejected', 'denied', 'declined')
+
+
+def travel_row_has_any_rejection(row) -> bool:
+    """If any coordinator column is a rejection, the request is closed — exclude from pending and escalation."""
+    for c in TRAVEL_APPROVER_STATUS_COLUMNS:
+        try:
+            val = row.get(c, '') if hasattr(row, 'get') else ''
+        except (AttributeError, TypeError):
+            val = ''
+        if val is None or (isinstance(val, float) and pd.isna(val)):
+            val = ''
+        if _travel_approval_is_reject(val):
+            return True
+    return False
+
+
+def _travel_sheet_date_to_date(val):
+    """Parse a Travel sheet date cell to a date, or None if missing/unparseable."""
+    if val is None or (isinstance(val, float) and pd.isna(val)):
+        return None
+    s = str(val).strip()
+    if not s or s.lower() == 'nan':
+        return None
+    try:
+        dt = pd.to_datetime(val, errors='coerce')
+        if pd.isna(dt):
+            return None
+        return dt.date()
+    except Exception:
+        return None
+
+
+def travel_row_is_past_travel(row) -> bool:
+    """
+    True if the trip is already over (return date before today, or departure before today if return blank).
+    No escalation emails; hidden from coordinator pending queue.
+    """
+    today = datetime.now().date()
+    ret = _travel_sheet_date_to_date(row.get('Return Date'))
+    if ret is not None:
+        return ret < today
+    dep = _travel_sheet_date_to_date(row.get('Departure Date'))
+    if dep is not None:
+        return dep < today
+    return False
+
+
+def travel_row_exclude_from_pending_coordinator_queue(row) -> bool:
+    """Rejected, or travel dates already passed — do not show as pending for approvers."""
+    return travel_row_has_any_rejection(row) or travel_row_is_past_travel(row)
     """Program Assistant slot: Mabintou or Lauren (after escalation)."""
     return (
         _travel_approval_status_norm(row.get('Mabintou Approval Status')) == 'approve'
@@ -1878,6 +1940,10 @@ def travel_escalation_applied(row) -> bool:
 
 def travel_row_needs_escalation(row) -> bool:
     if not is_general_travel_submitter(row.get('Name', ''), row.get('Email', '')):
+        return False
+    if travel_row_has_any_rejection(row):
+        return False
+    if travel_row_is_past_travel(row):
         return False
     if travel_escalation_applied(row):
         return False
@@ -4410,20 +4476,9 @@ else:
                             # First, determine which forms are routed to this coordinator based on traveler
                             pending_forms = df_travel_review.copy()
 
-                            def _travel_row_any_rejected(row):
-                                for c in (
-                                    'Kemisha Approval Status',
-                                    'Mabintou Approval Status',
-                                    'Jen Approval Status',
-                                    'Lauren Approval Status',
-                                ):
-                                    if str(row.get(c, '') or '').lower() == 'reject':
-                                        return True
-                                return False
-
                             if len(pending_forms) > 0:
                                 pending_forms = pending_forms[
-                                    ~pending_forms.apply(_travel_row_any_rejected, axis=1)
+                                    ~pending_forms.apply(travel_row_exclude_from_pending_coordinator_queue, axis=1)
                                 ].copy()
                             # Filter forms that are routed to this coordinator
                             def is_routed_to_coordinator(row):
@@ -4500,55 +4555,15 @@ else:
                                     (pending_forms[status_col].astype(str) == 'nan')
                                 ].copy()
                                 
-                                # Filter out forms where the other approver has rejected
-                                # Determine the other approver's status column based on routing
-                                def get_other_approver_status_col(row):
-                                    traveler_name_check = str(row.get('Name', '')).lower()
-                                    traveler_email_check = str(row.get('Email', '')).lower()
-                                    
-                                    is_kemisha_traveler = (traveler_email_check == 'kd802@georgetown.edu' or 
-                                                          'kemisha' in traveler_name_check)
-                                    is_mabintou_traveler = (traveler_email_check == 'mo887@georgetown.edu' or 
-                                                           'mabintou' in traveler_name_check)
-                                    
-                                    if is_kemisha_traveler:
-                                        # Kemisha's requests → Mabintou + Jen
-                                        if status_col == 'Mabintou Approval Status':
-                                            return 'Jen Approval Status'
-                                        elif status_col == 'Jen Approval Status':
-                                            return 'Mabintou Approval Status'
-                                    elif is_mabintou_traveler:
-                                        # Mabintou's requests → Lauren + Kemisha
-                                        if status_col == 'Lauren Approval Status':
-                                            return 'Kemisha Approval Status'
-                                        elif status_col == 'Kemisha Approval Status':
-                                            return 'Lauren Approval Status'
-                                    else:
-                                        if status_col == 'Mabintou Approval Status':
-                                            return 'Kemisha Approval Status'
-                                        elif status_col == 'Kemisha Approval Status':
-                                            return 'Mabintou Approval Status'
-                                        elif status_col == 'Jen Approval Status':
-                                            return 'Kemisha Approval Status'
-                                        elif status_col == 'Lauren Approval Status':
-                                            return 'Mabintou Approval Status'
-                                    return None
-                                
-                                # Filter out forms where other approver has rejected
-                                if len(pending_forms) > 0:
-                                    def not_rejected_by_other(row):
-                                        other_status_col = get_other_approver_status_col(row)
-                                        if other_status_col and other_status_col in pending_forms.columns:
-                                            other_status = str(row.get(other_status_col, '')).lower()
-                                            return other_status != 'reject'
-                                        return True
-                                    
-                                    pending_forms = pending_forms[pending_forms.apply(not_rejected_by_other, axis=1)].copy()
-                                
                             elif status_col not in pending_forms.columns:
                                 # If column doesn't exist, no forms pending
                                 pending_forms = pd.DataFrame()
-                            
+
+                            if len(pending_forms) > 0:
+                                pending_forms = pending_forms[
+                                    ~pending_forms.apply(travel_row_exclude_from_pending_coordinator_queue, axis=1)
+                                ].copy()
+
                             if pending_forms.empty:
                                 st.info("✅ No travel forms pending your approval at this time.")
                             else:
@@ -5143,6 +5158,8 @@ GU-TAP System
                             # A form is fully approved when both approvers (determined by routing) have approved
                             def is_fully_approved(row):
                                 """Check if form is fully approved based on its routing"""
+                                if travel_row_has_any_rejection(row):
+                                    return False
                                 traveler_name_check = str(row.get('Name', '')).lower()
                                 traveler_email_check = str(row.get('Email', '')).lower()
                                 
