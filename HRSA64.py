@@ -184,6 +184,32 @@ hr {
   padding: 0.28rem 0.55rem;
   border-radius: 6px;
 }
+.gutap-sidebar-avatar--muted {
+  background: linear-gradient(145deg, #90a4ae 0%, #607d8b 100%) !important;
+  color: #fff !important;
+  font-size: 1.05rem;
+}
+[data-testid="stSidebar"] [data-testid="stVerticalBlockBorderWrapper"] {
+  background: linear-gradient(145deg, #ffffff 0%, #f5f8fc 100%) !important;
+  border: 1px solid rgba(15, 42, 98, 0.14) !important;
+  border-radius: 14px !important;
+  padding: 0.65rem 0.75rem 0.85rem !important;
+  margin-bottom: 0.35rem !important;
+  box-shadow: 0 4px 18px rgba(15, 23, 42, 0.06);
+}
+[data-testid="stSidebar"] [data-testid="stVerticalBlockBorderWrapper"] .stDivider {
+  margin: 0.65rem 0 0.5rem 0 !important;
+}
+[data-testid="stSidebar"] [data-testid="stVerticalBlockBorderWrapper"] [data-testid="stCaptionContainer"] {
+  color: #64748b !important;
+  font-weight: 600 !important;
+  font-size: 0.72rem !important;
+  text-transform: uppercase;
+  letter-spacing: 0.08em !important;
+}
+[data-testid="stSidebar"] [data-testid="stVerticalBlockBorderWrapper"] .stButton > button {
+  width: 100% !important;
+}
 </style>
 """,
         unsafe_allow_html=True,
@@ -202,31 +228,57 @@ def _gutap_user_initials(display_name: str) -> str:
     return str(parts[0])[:2].upper()
 
 
+def _gutap_df_text_search(df, query, columns=None, max_display=300):
+    """Case-insensitive substring search across string columns; returns filtered dataframe."""
+    if df is None or getattr(df, "empty", True) or not query or not str(query).strip():
+        return df
+    q = str(query).strip().lower()
+    if columns is None:
+        columns = [
+            c
+            for c in df.columns
+            if c in df.columns and (df[c].dtype == object or pd.api.types.is_string_dtype(df[c]))
+        ]
+    mask = pd.Series(False, index=df.index)
+    for c in columns:
+        if c in df.columns:
+            mask |= df[c].astype(str).str.lower().str.contains(q, regex=False, na=False)
+    out = df.loc[mask]
+    if len(out) > max_display:
+        return out.iloc[:max_display].copy()
+    return out
+
+
 def _gutap_sidebar_profile_html() -> str:
     role = st.session_state.get("role") or ""
     name = (st.session_state.get("user_display_name") or "").strip()
     email = (st.session_state.get("user_email") or "").strip()
     auth = st.session_state.get("authenticated", False)
     needs_login = role in ("Coordinator", "Assignee/Staff", "Research Assistant")
+    avatar_extra = ""
+    initials = "?"
     if role == "Requester":
         if not name:
             name = "Guest"
-        sub = "Submit a TA request without signing in."
+        sub = "Public requester — no sign-in required."
+        initials = _gutap_user_initials(name)
     elif needs_login and not auth:
-        name = "Signed out"
-        sub = "Sign in on the main screen to continue."
+        name = "Not signed in"
+        sub = "Enter your email and password on the main workspace to continue."
+        avatar_extra = " gutap-sidebar-avatar--muted"
+        initials = "◐"
     else:
         if not name:
             name = "User"
         sub = email if email else ""
-    initials = _gutap_user_initials(name if name != "Signed out" else "?")
+        initials = _gutap_user_initials(name)
     safe_name = name.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
     safe_sub = sub.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
     safe_role = role.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
     return f"""
-<div class="gutap-sidebar-user">
+<div class="gutap-sidebar-user" style="box-shadow:none;border:none;background:transparent;padding:0;margin:0;">
   <div class="gutap-sidebar-user-row">
-    <div class="gutap-sidebar-avatar">{initials}</div>
+    <div class="gutap-sidebar-avatar{avatar_extra}">{initials}</div>
     <div>
       <div class="gutap-sidebar-user-name">{safe_name}</div>
       <div class="gutap-sidebar-user-meta">{safe_sub}</div>
@@ -3294,19 +3346,34 @@ if st.session_state.role is None:
 
 # --- Show view based on role
 else:
-    st.sidebar.markdown(_gutap_sidebar_profile_html(), unsafe_allow_html=True)
-
-    st.sidebar.button("🔄 Switch Role", on_click=lambda: st.session_state.update({
-        "authenticated": False,
-        "role": None,
-        "user_email": "",
-        "user_display_name": "",
-    }))
-
-    # Sidebar: refresh cached datasets
-    if st.sidebar.button("🔁 Refresh Data"):
-        st.cache_data.clear()
-        st.rerun()
+    with st.sidebar.container(border=True):
+        st.markdown(_gutap_sidebar_profile_html(), unsafe_allow_html=True)
+        st.divider()
+        st.caption("Quick actions")
+        st.button(
+            "Switch role",
+            type="secondary",
+            use_container_width=True,
+            key="gutap_sidebar_switch_role",
+            help="Return to role selection",
+            on_click=lambda: st.session_state.update(
+                {
+                    "authenticated": False,
+                    "role": None,
+                    "user_email": "",
+                    "user_display_name": "",
+                }
+            ),
+        )
+        if st.button(
+            "Refresh data",
+            type="secondary",
+            use_container_width=True,
+            key="gutap_sidebar_refresh_data",
+            help="Reload Google Sheet data from the server",
+        ):
+            st.cache_data.clear()
+            st.rerun()
 
     # Requester: No login needed
     if st.session_state.role == "Requester":
@@ -6231,6 +6298,70 @@ GU-TAP System
 
                     style_metric_cards(border_left_color="#DBF227")
 
+                    with st.expander("🔎 **TA log lookup**", expanded=False):
+                        st.markdown(
+                            """
+                            <div class="gutap-hero">
+                                <div class="gutap-hero-title">Lookup TA requests</div>
+                                <div class="gutap-hero-sub">
+                                    Read-only search across the main TA log—ticket ID, jurisdiction, organization, names, email, or status text.
+                                </div>
+                            </div>
+                            """,
+                            unsafe_allow_html=True,
+                        )
+                        staff_lookup_q = st.text_input(
+                            "Search",
+                            placeholder="e.g. ticket ID, keyword, email…",
+                            key="staff_ta_lookup_q",
+                        )
+                        staff_lookup_scope = st.radio(
+                            "Search scope",
+                            ["My assignments only", "Entire TA log"],
+                            horizontal=True,
+                            key="staff_ta_lookup_scope",
+                        )
+                        _staff_base = df.copy()
+                        if staff_lookup_scope == "My assignments only" and staff_name and "Assigned Coach" in _staff_base.columns:
+                            _staff_base = _staff_base[
+                                _staff_base["Assigned Coach"].astype(str).str.strip()
+                                == str(staff_name).strip()
+                            ]
+                        if staff_lookup_q and str(staff_lookup_q).strip():
+                            _staff_filt = _gutap_df_text_search(
+                                _staff_base, str(staff_lookup_q).strip(), max_display=400
+                            )
+                        else:
+                            _staff_filt = (
+                                _staff_base.head(250) if len(_staff_base) > 250 else _staff_base
+                            )
+                        _staff_cols = [
+                            c
+                            for c in [
+                                "Ticket ID",
+                                "Status",
+                                "Priority",
+                                "Jurisdiction",
+                                "Organization",
+                                "Name",
+                                "Email Address",
+                                "TA Type",
+                                "Focus Area",
+                                "Assigned Coach",
+                                "Targeted Due Date",
+                            ]
+                            if c in getattr(_staff_filt, "columns", [])
+                        ]
+                        if _staff_filt is None or _staff_filt.empty:
+                            st.info("No rows match this search or scope.")
+                        else:
+                            st.dataframe(
+                                _staff_filt[_staff_cols],
+                                use_container_width=True,
+                            )
+                            st.caption(
+                                f"Showing {len(_staff_filt)} row(s). Refine the search to narrow results; data is read-only."
+                            )
 
                     # --- Section 2: Filter, Sort, Comment
                     with st.expander("🚧 **IN-PROGRESS REQUESTS**"):
@@ -8666,6 +8797,76 @@ GU-TAP System
                 col4.metric("📅 Coming in 2 Weeks", due_soon)
 
                 style_metric_cards(border_left_color="#DBF227")
+
+                with st.expander("🔎 **Support log lookup**", expanded=False):
+                    st.markdown(
+                        """
+                        <div class="gutap-hero">
+                            <div class="gutap-hero-title">Lookup support requests</div>
+                            <div class="gutap-hero-sub">
+                                Read-only search across TAP submissions—TAP name, email, description, deliverables, assignment, or status.
+                            </div>
+                        </div>
+                        """,
+                        unsafe_allow_html=True,
+                    )
+                    ra_lookup_q = st.text_input(
+                        "Search",
+                        placeholder="e.g. TAP name, keyword, status…",
+                        key="ra_support_lookup_q",
+                    )
+                    ra_lookup_scope = st.radio(
+                        "Scope",
+                        ["All requests", "Assigned to me only", "Unassigned (open)"],
+                        horizontal=True,
+                        key="ra_support_lookup_scope",
+                    )
+                    _ra_base = df_support.copy()
+                    if ra_lookup_scope == "Assigned to me only" and ga_support_name:
+                        if "Student assigned" in _ra_base.columns:
+                            _ra_base = _ra_base[
+                                _ra_base["Student assigned"].astype(str).str.strip()
+                                == str(ga_support_name).strip()
+                            ]
+                    elif ra_lookup_scope == "Unassigned (open)":
+                        if "Student assigned" in _ra_base.columns and "Request status" in _ra_base.columns:
+                            sa = _ra_base["Student assigned"]
+                            un = (
+                                sa.isna()
+                                | (sa.astype(str).str.strip() == "")
+                                | (sa.astype(str).str.strip().str.lower() == "nan")
+                            )
+                            _ra_base = _ra_base[un & (_ra_base["Request status"] != "Completed")]
+                    if ra_lookup_q and str(ra_lookup_q).strip():
+                        _ra_filt = _gutap_df_text_search(
+                            _ra_base, str(ra_lookup_q).strip(), max_display=400
+                        )
+                    else:
+                        _ra_filt = _ra_base.head(200) if len(_ra_base) > 200 else _ra_base
+                    _ra_cols = [
+                        c
+                        for c in [
+                            "Date",
+                            "Request Type",
+                            "Time request needed",
+                            "Request description",
+                            "Anticipated Deliverable",
+                            "TAP Name",
+                            "TAP email",
+                            "Student assigned",
+                            "Request status",
+                            "Anticipated Deadline",
+                            "Time Commitment",
+                        ]
+                        if c in getattr(_ra_filt, "columns", [])
+                    ]
+                    if _ra_filt is None or _ra_filt.empty:
+                        st.info("No rows match this search or filter.")
+                    else:
+                        st.dataframe(_ra_filt[_ra_cols], use_container_width=True)
+                        st.caption(
+                            f"Showing {len(_ra_filt)} row(s). Refine the search to narrow results; data is read-only here."
+                        )
 
                 # --- Section: View and Manage Submitted Support Requests
                 with st.expander("📋 **VIEW & MANAGE SUPPORT REQUESTS**"):
