@@ -3861,6 +3861,7 @@ else:
                     unsafe_allow_html=True,
                 )
                 col1, col2, col3 = st.columns(3)
+                today = datetime.today()
                 last_week = today - timedelta(days=7)
                 last_month = today - timedelta(days=30)
                 undone_request = df[df['Status'] == 'Submitted']['Ticket ID'].nunique()
