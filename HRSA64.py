@@ -1923,6 +1923,9 @@ def travel_row_is_past_travel(row) -> bool:
 def travel_row_exclude_from_pending_coordinator_queue(row) -> bool:
     """Rejected, or travel dates already passed — do not show as pending for approvers."""
     return travel_row_has_any_rejection(row) or travel_row_is_past_travel(row)
+
+
+def travel_general_slot1_ok(row) -> bool:
     """Program Assistant slot: Mabintou or Lauren (after escalation)."""
     return (
         _travel_approval_status_norm(row.get('Mabintou Approval Status')) == 'approve'
@@ -1942,6 +1945,165 @@ def travel_general_fully_approved(row) -> bool:
     if not is_general_travel_submitter(row.get('Name', ''), row.get('Email', '')):
         return False
     return travel_general_slot1_ok(row) and travel_general_slot2_ok(row)
+
+
+def _travel_pdf_safe_json_loads(value, default=None, data_type='auto'):
+    if default is None:
+        default = []
+    if pd.isna(value) or value == '' or str(value).lower() == 'nan':
+        return default
+    try:
+        parsed = json.loads(str(value))
+        if not isinstance(parsed, list):
+            return default
+        if data_type == 'bool':
+            return [
+                bool(x) if isinstance(x, bool) else (True if str(x).lower() in ['true', '1', 1] else False)
+                for x in parsed
+            ]
+        if data_type == 'int':
+            return [
+                int(float(x))
+                if isinstance(x, (int, float)) or (isinstance(x, str) and x.replace('.', '').replace('-', '').isdigit())
+                else (int(x) if isinstance(x, int) else 0)
+                for x in parsed
+            ]
+        if data_type == 'float':
+            return [
+                float(x)
+                if isinstance(x, (int, float)) or (isinstance(x, str) and x.replace('.', '').replace('-', '').isdigit())
+                else 0.0
+                for x in parsed
+            ]
+        result = []
+        for x in parsed:
+            if isinstance(x, bool):
+                result.append(x)
+            elif isinstance(x, (int, float)):
+                result.append(float(x))
+            elif isinstance(x, str):
+                if '/' in x or '-' in x or len(x) > 10:
+                    result.append(x)
+                elif x.replace('.', '').replace('-', '').isdigit():
+                    result.append(float(x))
+                else:
+                    result.append(x)
+            else:
+                result.append(x)
+        return result
+    except Exception:
+        return default
+
+
+def _travel_pdf_safe_get(value, default=''):
+    if pd.isna(value) or value == '' or str(value).lower() == 'nan':
+        return default
+    return str(value)
+
+
+def _travel_pdf_safe_get_numeric(value, default=0):
+    if pd.isna(value) or value == '' or str(value).lower() == 'nan':
+        return default
+    try:
+        return float(value) if value else default
+    except Exception:
+        return default
+
+
+def travel_sheet_row_to_pdf_form_data(r):
+    """
+    Build the dict expected by create_pdf() from one Travel worksheet row.
+    Coordinator signature cells follow the same routing as final approval (Mabintou/Lauren · Kemisha/Jen).
+    """
+    traveler_name_check = str(r.get('Name', '')).lower()
+    traveler_email_check = str(r.get('Email', '')).lower()
+    is_kemisha_traveler = (
+        traveler_email_check == 'kd802@georgetown.edu' or 'kemisha' in traveler_name_check
+    )
+    is_mabintou_traveler = (
+        traveler_email_check == 'mo887@georgetown.edu' or 'mabintou' in traveler_name_check
+    )
+
+    if is_kemisha_traveler:
+        mabintou_sig_pdf = str(r.get('Mabintou Signature', '') or '')
+        kemisha_sig_pdf = str(r.get('Jen Signature', '') or '')
+        mabintou_date = str(r.get('Mabintou Approval Date', '') or '')
+        kemisha_date = str(r.get('Jen Approval Date', '') or '')
+    elif is_mabintou_traveler:
+        mabintou_sig_pdf = str(r.get('Lauren Signature', '') or '')
+        kemisha_sig_pdf = str(r.get('Kemisha Signature', '') or '')
+        mabintou_date = str(r.get('Lauren Approval Date', '') or '')
+        kemisha_date = str(r.get('Kemisha Approval Date', '') or '')
+    else:
+        if _travel_approval_status_norm(r.get('Mabintou Approval Status')) == 'approve':
+            mabintou_sig_pdf = str(r.get('Mabintou Signature', '') or '')
+            mabintou_date = str(r.get('Mabintou Approval Date', '') or '')
+        elif _travel_approval_status_norm(r.get('Lauren Approval Status')) == 'approve':
+            mabintou_sig_pdf = str(r.get('Lauren Signature', '') or '')
+            mabintou_date = str(r.get('Lauren Approval Date', '') or '')
+        else:
+            mabintou_sig_pdf = ''
+            mabintou_date = ''
+        if _travel_approval_status_norm(r.get('Kemisha Approval Status')) == 'approve':
+            kemisha_sig_pdf = str(r.get('Kemisha Signature', '') or '')
+            kemisha_date = str(r.get('Kemisha Approval Date', '') or '')
+        elif _travel_approval_status_norm(r.get('Jen Approval Status')) == 'approve':
+            kemisha_sig_pdf = str(r.get('Jen Signature', '') or '')
+            kemisha_date = str(r.get('Jen Approval Date', '') or '')
+        else:
+            kemisha_sig_pdf = ''
+            kemisha_date = ''
+
+    return {
+        'name': _travel_pdf_safe_get(r.get('Name', '')),
+        'email': _travel_pdf_safe_get(r.get('Email', '')),
+        'destination': _travel_pdf_safe_get(r.get('Destination', '')),
+        'departure_date': _travel_pdf_safe_get(r.get('Departure Date', '')),
+        'return_date': _travel_pdf_safe_get(r.get('Return Date', '')),
+        'purpose_of_travel': _travel_pdf_safe_get(r.get('Purpose of Travel', '')),
+        'objective': _travel_pdf_safe_get(r.get('Objective', '')),
+        'attendees': _travel_pdf_safe_get(r.get('Attendees', '')),
+        'deliverables': _travel_pdf_safe_get(r.get('Deliverables', '')),
+        'support_files': _travel_pdf_safe_get(r.get('Support Files', '')),
+        'address1': _travel_pdf_safe_get(r.get('Address1', '')),
+        'address2': _travel_pdf_safe_get(r.get('Address2', '')),
+        'city': _travel_pdf_safe_get(r.get('City', '')),
+        'state': _travel_pdf_safe_get(r.get('State', '')),
+        'zip': _travel_pdf_safe_get(r.get('Zip', '')),
+        'organization': _travel_pdf_safe_get(r.get('Organization', 'Georgetown University')),
+        'signature': _travel_pdf_safe_get(r.get('Signature', '')),
+        'signature_date': _travel_pdf_safe_get(r.get('Signature Date', '')),
+        'mileage_dates': _travel_pdf_safe_json_loads(r.get('Mileage Dates', '[]'), data_type='auto'),
+        'mileage_amounts': _travel_pdf_safe_json_loads(r.get('Mileage Amounts', '[]'), data_type='float'),
+        'total_mileage': _travel_pdf_safe_get_numeric(r.get('Total Mileage', 0)),
+        'expense_dates': _travel_pdf_safe_json_loads(r.get('Expense Dates', '[]'), data_type='auto'),
+        'airfare': _travel_pdf_safe_json_loads(r.get('Airfare', '[]'), data_type='float'),
+        'ground_transport': _travel_pdf_safe_json_loads(r.get('Ground Transport', '[]'), data_type='float'),
+        'parking': _travel_pdf_safe_json_loads(r.get('Parking', '[]'), data_type='float'),
+        'lodging': _travel_pdf_safe_json_loads(r.get('Lodging', '[]'), data_type='float'),
+        'baggage': _travel_pdf_safe_json_loads(r.get('Baggage', '[]'), data_type='float'),
+        'misc': _travel_pdf_safe_json_loads(r.get('Misc', '[]'), data_type='float'),
+        'misc2': _travel_pdf_safe_json_loads(r.get('Misc2', '[]'), data_type='float'),
+        'misc_desc1': _travel_pdf_safe_get(r.get('Misc Desc1', '')),
+        'misc_desc2': _travel_pdf_safe_get(r.get('Misc Desc2', '')),
+        'total_airfare': _travel_pdf_safe_get_numeric(r.get('Total Airfare', 0)),
+        'total_ground_transport': _travel_pdf_safe_get_numeric(r.get('Total Ground Transport', 0)),
+        'total_parking': _travel_pdf_safe_get_numeric(r.get('Total Parking', 0)),
+        'total_lodging': _travel_pdf_safe_get_numeric(r.get('Total Lodging', 0)),
+        'total_baggage': _travel_pdf_safe_get_numeric(r.get('Total Baggage', 0)),
+        'total_misc': _travel_pdf_safe_get_numeric(r.get('Total Misc', 0)),
+        'per_diem_dates': _travel_pdf_safe_json_loads(r.get('Per Diem Dates', '[]'), data_type='auto'),
+        'per_diem_amounts': _travel_pdf_safe_json_loads(r.get('Per Diem Amounts', '[]'), data_type='int'),
+        'breakfast_checks': _travel_pdf_safe_json_loads(r.get('Breakfast Checks', '[]'), data_type='bool'),
+        'lunch_checks': _travel_pdf_safe_json_loads(r.get('Lunch Checks', '[]'), data_type='bool'),
+        'dinner_checks': _travel_pdf_safe_json_loads(r.get('Dinner Checks', '[]'), data_type='bool'),
+        'total_per_diem': _travel_pdf_safe_get_numeric(r.get('Total Per Diem', 0)),
+        'total_amount_due': _travel_pdf_safe_get_numeric(r.get('Total Amount Due', 0)),
+        'mabintou_signature': mabintou_sig_pdf,
+        'kemisha_signature': kemisha_sig_pdf,
+        'mabintou_approval_date': _travel_pdf_safe_get(mabintou_date),
+        'kemisha_approval_date': _travel_pdf_safe_get(kemisha_date),
+    }
 
 
 def _travel_submission_date(row):
@@ -2641,6 +2803,77 @@ def upload_file_to_drive(file, filename, folder_id, creds_dict):
 
     # Return the sharable link
     return f"https://drive.google.com/file/d/{uploaded['id']}/view"
+
+
+def drive_file_id_from_share_url(url):
+    """Extract Google Drive file id from a /file/d/<id> or open?id= share URL."""
+    if not url or not str(url).strip():
+        return None
+    s = str(url).strip()
+    if '/d/' in s:
+        try:
+            part = s.split('/d/', 1)[1].split('/')[0].split('?')[0]
+            if part and len(part) > 5:
+                return part
+        except IndexError:
+            pass
+    if 'id=' in s:
+        try:
+            part = s.split('id=', 1)[1].split('&')[0]
+            if part and len(part) > 5:
+                return part
+        except IndexError:
+            pass
+    return None
+
+
+def replace_drive_file_media(file_id, file_bytes, mime_type, creds_dict, new_name=None):
+    """
+    Replace a Drive file's content in place (fileId unchanged, share link /view URL stays valid).
+    """
+    drive_creds = Credentials.from_service_account_info(creds_dict, scopes=[
+        "https://www.googleapis.com/auth/drive",
+    ])
+    drive_service = build('drive', 'v3', credentials=drive_creds)
+    media = MediaIoBaseUpload(io.BytesIO(file_bytes), mimetype=mime_type, resumable=True)
+    kwargs = {'fileId': file_id, 'media_body': media}
+    if new_name:
+        kwargs['body'] = {'name': new_name}
+    drive_service.files().update(**kwargs).execute()
+
+
+def regenerate_travel_pdf_to_drive(pdf_link, form_data, creds_dict, folder_id_travel_pdf):
+    """
+    If pdf_link contains a known Drive file id, replace file contents in place and return (True, same_url).
+    Otherwise upload a new file and return (False, new_url).
+    """
+    try:
+        wb, ws = load_excel_template()
+    except Exception:
+        ws = None
+    buf = create_pdf(form_data, ws)
+    pdf_bytes = buf.getvalue()
+    filename = (
+        f"Travel_Authorization_{form_data.get('name', 'Unknown').replace('/', '-')}_"
+        f"{form_data.get('departure_date', '')}.pdf"
+    )
+    file_id = drive_file_id_from_share_url(pdf_link or '')
+    if file_id:
+        replace_drive_file_media(
+            file_id, pdf_bytes, 'application/pdf', creds_dict, new_name=filename
+        )
+        return True, (pdf_link or '').strip()
+
+    pdf_file_obj = io.BytesIO(pdf_bytes)
+    pdf_file_obj.name = filename
+    pdf_file_obj.type = 'application/pdf'
+    new_url = upload_file_to_drive(
+        file=pdf_file_obj,
+        filename=filename,
+        folder_id=folder_id_travel_pdf,
+        creds_dict=creds_dict,
+    )
+    return False, new_url
 
 
 def _get_records_with_retry(spreadsheet_name, worksheet_name, retries=3, base_delay=0.5):
@@ -4675,6 +4908,49 @@ else:
                                     pdf_link = selected_form.get('PDF Link', '')
                                     if pdf_link:
                                         st.markdown(f"**PDF Link:** [View PDF]({pdf_link})")
+                                    folder_id_travel_pdf_regen = "1_O_L-jPR7bldiryRNB3WxbAaG8VqvmCt"
+                                    if st.button(
+                                        "Regenerate PDF from sheet (latest layout & row data)",
+                                        key="travel_regen_from_sheet_pending",
+                                        help="Rebuilds the PDF from the current Google Sheet row. If PDF Link is a standard Drive URL, the file is replaced in place so the link stays the same.",
+                                    ):
+                                        try:
+                                            fresh_tr = load_travel_sheet()
+                                            if selected_form_idx not in fresh_tr.index:
+                                                st.error("Could not find this row in the Travel sheet; refresh and try again.")
+                                            else:
+                                                row_now = fresh_tr.loc[selected_form_idx]
+                                                fd = travel_sheet_row_to_pdf_form_data(row_now)
+                                                inplace_ok, out_url = regenerate_travel_pdf_to_drive(
+                                                    str(row_now.get('PDF Link', '') or ''),
+                                                    fd,
+                                                    st.secrets["gcp_service_account"],
+                                                    folder_id_travel_pdf_regen,
+                                                )
+                                                if not inplace_ok:
+                                                    upd = fresh_tr.copy()
+                                                    upd.loc[selected_form_idx, 'PDF Link'] = out_url
+                                                    upd = upd.fillna("")
+                                                    spreadsheet_travel = client.open('HRSA64_TA_Request')
+                                                    try:
+                                                        worksheet_travel = spreadsheet_travel.worksheet('Travel')
+                                                    except Exception:
+                                                        worksheet_travel = spreadsheet_travel.add_worksheet(
+                                                            title='Travel', rows=1000, cols=40
+                                                        )
+                                                    worksheet_travel.update(
+                                                        [upd.columns.values.tolist()] + upd.values.tolist()
+                                                    )
+                                                st.success(
+                                                    "PDF replaced on Google Drive; the existing link still works."
+                                                    if inplace_ok
+                                                    else "New PDF uploaded; PDF Link in the sheet was updated."
+                                                )
+                                                st.cache_data.clear()
+                                                time.sleep(1)
+                                                st.rerun()
+                                        except Exception as e:
+                                            st.error(f"Could not regenerate PDF: {e}")
                                     
                                     # Support files
                                     support_files = selected_form.get('Support Files', '')
@@ -5244,6 +5520,62 @@ GU-TAP System
                                         approved_display_cols.append(col)
                                 available_approved_cols = [col for col in approved_display_cols if col in fully_approved.columns]
                                 st.dataframe(fully_approved[available_approved_cols].reset_index(drop=True), use_container_width=True)
+                                st.caption(
+                                    "To refresh an older PDF after template changes, regenerate from the sheet row below "
+                                    "(replaces the Drive file in place when the PDF Link is recognized)."
+                                )
+                                folder_id_travel_pdf_regen = "1_O_L-jPR7bldiryRNB3WxbAaG8VqvmCt"
+                                _appr_ix = fully_approved.index.tolist()
+                                _pick_regen = st.selectbox(
+                                    "Row to refresh",
+                                    options=_appr_ix,
+                                    format_func=lambda i: (
+                                        f"{fully_approved.at[i, 'Name']} | {fully_approved.at[i, 'Destination']} | "
+                                        f"{fully_approved.at[i, 'Departure Date']}"
+                                    ),
+                                    key="travel_regen_fully_approved_pick",
+                                )
+                                if st.button(
+                                    "Regenerate PDF for selected row",
+                                    key="travel_regen_fully_approved_go",
+                                ):
+                                    try:
+                                        fresh_tr = load_travel_sheet()
+                                        if _pick_regen not in fresh_tr.index:
+                                            st.error("Row not found; reload and try again.")
+                                        else:
+                                            row_now = fresh_tr.loc[_pick_regen]
+                                            fd = travel_sheet_row_to_pdf_form_data(row_now)
+                                            inplace_ok, out_url = regenerate_travel_pdf_to_drive(
+                                                str(row_now.get('PDF Link', '') or ''),
+                                                fd,
+                                                st.secrets["gcp_service_account"],
+                                                folder_id_travel_pdf_regen,
+                                            )
+                                            if not inplace_ok:
+                                                upd = fresh_tr.copy()
+                                                upd.loc[_pick_regen, 'PDF Link'] = out_url
+                                                upd = upd.fillna("")
+                                                spreadsheet_travel = client.open('HRSA64_TA_Request')
+                                                try:
+                                                    worksheet_travel = spreadsheet_travel.worksheet('Travel')
+                                                except Exception:
+                                                    worksheet_travel = spreadsheet_travel.add_worksheet(
+                                                        title='Travel', rows=1000, cols=40
+                                                    )
+                                                worksheet_travel.update(
+                                                    [upd.columns.values.tolist()] + upd.values.tolist()
+                                                )
+                                            st.success(
+                                                "PDF replaced on Google Drive; the existing link still works."
+                                                if inplace_ok
+                                                else "New PDF uploaded; PDF Link in the sheet was updated."
+                                            )
+                                            st.cache_data.clear()
+                                            time.sleep(1)
+                                            st.rerun()
+                                    except Exception as e:
+                                        st.error(f"Could not regenerate PDF: {e}")
                             else:
                                 st.info("No fully approved forms yet.")
                     
