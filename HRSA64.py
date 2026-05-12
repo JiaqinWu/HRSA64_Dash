@@ -2771,39 +2771,46 @@ def create_gsa_exemption_pdf(form_data):
     )
     story = []
     styles = getSampleStyleSheet()
-    _gfs = lambda pt: int(max(6, round(pt * 1.15)))
+    # Match Travel Authorization PDF (`create_pdf`) typography scaling
+    _fs = lambda pt: int(max(6, round(pt * 1.15)))
 
     body_wrap = ParagraphStyle(
         'GSA_BodyWrap',
         parent=styles['Normal'],
-        fontSize=_gfs(9),
-        leading=_gfs(12),
+        fontName='Helvetica',
+        fontSize=_fs(10),
+        leading=_fs(12),
         spaceAfter=6,
     )
     title_style = ParagraphStyle(
         'GSA_Title',
         parent=styles['Heading1'],
-        fontSize=_gfs(14),
+        fontName='Helvetica',
+        fontSize=_fs(16),
+        textColor=colors.HexColor('#000000'),
         alignment=1,
-        spaceAfter=12,
+        spaceAfter=14,
     )
     reason_cell_style = ParagraphStyle(
         'GSA_ReasonCell',
         parent=styles['Normal'],
-        fontSize=_gfs(8),
-        leading=_gfs(10),
+        fontName='Helvetica',
+        fontSize=_fs(10),
+        leading=_fs(12),
     )
     gsa_h2 = ParagraphStyle(
         'GSA_SectionH2',
         parent=styles['Heading2'],
-        fontSize=_gfs(14),
+        fontName='Helvetica',
+        fontSize=_fs(14),
         spaceBefore=2,
         spaceAfter=6,
     )
     gsa_h3 = ParagraphStyle(
         'GSA_SectionH3',
         parent=styles['Heading3'],
-        fontSize=_gfs(12),
+        fontName='Helvetica',
+        fontSize=_fs(12),
         spaceBefore=2,
         spaceAfter=4,
     )
@@ -2975,15 +2982,21 @@ def create_gsa_exemption_pdf(form_data):
         sub_raw = datetime.now()
     submission_date_str = _fmt_date(sub_raw)
 
-    label_style = ParagraphStyle('LabelStyle', parent=styles['Normal'], fontSize=_gfs(9), fontName='Helvetica', alignment=0)
-    sig_para_style = ParagraphStyle('GSA_SigCell', parent=label_style, fontSize=_gfs(9), leading=_gfs(11))
+    label_style = ParagraphStyle(
+        'LabelStyle',
+        parent=styles['Normal'],
+        fontName='Helvetica',
+        fontSize=_fs(9),
+        alignment=0,
+    )
+    sig_para_style = ParagraphStyle('GSA_SigCell', parent=label_style, fontSize=_fs(9), leading=_fs(11))
     hdr = ParagraphStyle('GSA_SigHdr', parent=label_style, fontName='Helvetica-Bold')
     auto_sig_style = ParagraphStyle(
         'GSA_AutoSig',
         parent=label_style,
         fontName='Helvetica-Oblique',
-        fontSize=_gfs(13),
-        leading=_gfs(15),
+        fontSize=_fs(13),
+        leading=_fs(15),
         textColor=colors.HexColor('#1c2841'),
     )
 
@@ -3026,7 +3039,7 @@ def create_gsa_exemption_pdf(form_data):
     sig_table.setStyle(TableStyle([
         ('GRID', (0, 0), (-1, -1), 1, colors.black),
         ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#E8E8E8')),
-        ('FONTSIZE', (0, 0), (-1, -1), _gfs(9)),
+        ('FONTSIZE', (0, 0), (-1, -1), _fs(9)),
         ('VALIGN', (0, 0), (-1, -1), 'TOP'),
         ('TOPPADDING', (0, 0), (-1, -1), 8),
         ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
@@ -3151,6 +3164,47 @@ def regenerate_travel_pdf_to_drive(pdf_link, form_data, creds_dict, folder_id_tr
         file=pdf_file_obj,
         filename=filename,
         folder_id=folder_id_travel_pdf,
+        creds_dict=creds_dict,
+    )
+    return False, new_url
+
+
+def regenerate_gsa_pdf_to_drive(pdf_link, row_dict, creds_dict, folder_id_pdf):
+    """
+    Rebuild GSA exemption PDF from a sheet row. If PDF Link maps to a Drive file id, replace in place
+    so the share URL stays the same; otherwise upload a new file and return the new link.
+    """
+    form_data = gsa_sheet_row_to_pdf_form_data(row_dict)
+    buf = create_gsa_exemption_pdf(form_data)
+    pdf_bytes = buf.getvalue()
+    safe_ap = re.sub(
+        r'[^\w\-. ]',
+        '_',
+        f"{row_dict.get('Requester Name') or row_dict.get('Requestor Name', '')}_"
+        f"{row_dict.get('Traveler Name(s)', '')}_{row_dict.get('Travel City/State', '')}",
+    )[:120]
+    a1 = str(row_dict.get('Jen Approval Status', '') or '').lower()
+    a2 = str(row_dict.get('Kemisha Approval Status', '') or '').lower()
+    both_done = a1 == 'approve' and a2 == 'approve'
+    filename = (
+        f"GSA_Lodging_Exemption_Approved_{safe_ap}.pdf"
+        if both_done
+        else f"GSA_Lodging_Exemption_Progress_{safe_ap}.pdf"
+    )
+    file_id = drive_file_id_from_share_url(pdf_link or '')
+    if file_id:
+        replace_drive_file_media(
+            file_id, pdf_bytes, 'application/pdf', creds_dict, new_name=filename
+        )
+        return True, (pdf_link or '').strip()
+
+    pdf_file_obj = io.BytesIO(pdf_bytes)
+    pdf_file_obj.name = filename
+    pdf_file_obj.type = 'application/pdf'
+    new_url = upload_file_to_drive(
+        file=pdf_file_obj,
+        filename=filename,
+        folder_id=folder_id_pdf,
         creds_dict=creds_dict,
     )
     return False, new_url
@@ -5853,6 +5907,69 @@ GU-TAP System
                                         )
                                     else:
                                         st.dataframe(df_gsa_review.reset_index(drop=True), use_container_width=True)
+                                    folder_id_gsa_pdf_regen = "1_O_L-jPR7bldiryRNB3WxbAaG8VqvmCt"
+                                    st.markdown("##### Regenerate GSA PDF from sheet")
+                                    st.caption(
+                                        "Rebuild a PDF from the current Google Sheet row after template or data changes. "
+                                        "When the PDF Link is a standard Google Drive URL, the file is replaced in place so the link stays the same."
+                                    )
+                                    _ix_ro = df_gsa_review.index.tolist()
+                                    if _ix_ro:
+                                        def _gsa_fmt_row_ro(i):
+                                            r = df_gsa_review.loc[i]
+                                            return (
+                                                f"{r.get('Traveler Name(s)', '—')} | "
+                                                f"{r.get('Travel City/State', '—')} | "
+                                                f"{r.get('Dates of Travel', '—')}"
+                                            )
+
+                                        _pick_ro = st.selectbox(
+                                            "Select a GSA exemption row",
+                                            options=_ix_ro,
+                                            format_func=_gsa_fmt_row_ro,
+                                            key="gsa_regen_readonly_pick",
+                                        )
+                                        if st.button(
+                                            "Regenerate PDF for selected row",
+                                            key="gsa_regen_readonly_go",
+                                        ):
+                                            try:
+                                                fresh_gsa = load_gsa_exemption_sheet()
+                                                if _pick_ro not in fresh_gsa.index:
+                                                    st.error("Row not found; reload and try again.")
+                                                else:
+                                                    row_now = fresh_gsa.loc[_pick_ro].to_dict()
+                                                    inplace_ok, out_url = regenerate_gsa_pdf_to_drive(
+                                                        str(row_now.get("PDF Link", "") or ""),
+                                                        row_now,
+                                                        st.secrets["gcp_service_account"],
+                                                        folder_id_gsa_pdf_regen,
+                                                    )
+                                                    if not inplace_ok:
+                                                        upd = fresh_gsa.copy()
+                                                        upd.loc[_pick_ro, "PDF Link"] = out_url
+                                                        upd = upd.fillna("")
+                                                        upd = reorder_gsa_exemption_dataframe(upd)
+                                                        spreadsheet_gsa = client.open("HRSA64_TA_Request")
+                                                        try:
+                                                            ws_gsa = spreadsheet_gsa.worksheet("GSA_exemption")
+                                                        except Exception:
+                                                            ws_gsa = spreadsheet_gsa.add_worksheet(
+                                                                title="GSA_exemption", rows=1000, cols=40
+                                                            )
+                                                        ws_gsa.update(
+                                                            [upd.columns.values.tolist()] + upd.values.tolist()
+                                                        )
+                                                    st.success(
+                                                        "PDF replaced on Google Drive; the existing link still works."
+                                                        if inplace_ok
+                                                        else "New PDF uploaded; PDF Link in the sheet was updated."
+                                                    )
+                                                    st.cache_data.clear()
+                                                    time.sleep(1)
+                                                    st.rerun()
+                                            except Exception as e:
+                                                st.error(f"Could not regenerate PDF: {e}")
                                 else:
 
                                     def is_routed_to_coordinator_gsa(row):
@@ -5892,6 +6009,69 @@ GU-TAP System
                                     st.markdown(f"#### 📋 GSA Forms Pending Your Approval ({coordinator_display_name_gsa})")
                                     if pending_gsa.empty:
                                         st.info("No GSA exemption forms pending your approval.")
+                                        folder_id_gsa_pdf_regen = "1_O_L-jPR7bldiryRNB3WxbAaG8VqvmCt"
+                                        st.markdown("##### Regenerate GSA PDF from sheet")
+                                        st.caption(
+                                            "Rebuild a PDF from the current Google Sheet row after template or data changes. "
+                                            "When the PDF Link is a standard Google Drive URL, the file is replaced in place so the link stays the same."
+                                        )
+                                        _ix_all = df_gsa_review.index.tolist()
+                                        if _ix_all:
+                                            def _gsa_fmt_row_np(i):
+                                                r = df_gsa_review.loc[i]
+                                                return (
+                                                    f"{r.get('Traveler Name(s)', '—')} | "
+                                                    f"{r.get('Travel City/State', '—')} | "
+                                                    f"{r.get('Dates of Travel', '—')}"
+                                                )
+
+                                            _pick_np = st.selectbox(
+                                                "Select a GSA exemption row",
+                                                options=_ix_all,
+                                                format_func=_gsa_fmt_row_np,
+                                                key="gsa_regen_no_pending_pick",
+                                            )
+                                            if st.button(
+                                                "Regenerate PDF for selected row",
+                                                key="gsa_regen_no_pending_go",
+                                            ):
+                                                try:
+                                                    fresh_gsa = load_gsa_exemption_sheet()
+                                                    if _pick_np not in fresh_gsa.index:
+                                                        st.error("Row not found; reload and try again.")
+                                                    else:
+                                                        row_now = fresh_gsa.loc[_pick_np].to_dict()
+                                                        inplace_ok, out_url = regenerate_gsa_pdf_to_drive(
+                                                            str(row_now.get("PDF Link", "") or ""),
+                                                            row_now,
+                                                            st.secrets["gcp_service_account"],
+                                                            folder_id_gsa_pdf_regen,
+                                                        )
+                                                        if not inplace_ok:
+                                                            upd = fresh_gsa.copy()
+                                                            upd.loc[_pick_np, "PDF Link"] = out_url
+                                                            upd = upd.fillna("")
+                                                            upd = reorder_gsa_exemption_dataframe(upd)
+                                                            spreadsheet_gsa = client.open("HRSA64_TA_Request")
+                                                            try:
+                                                                ws_gsa = spreadsheet_gsa.worksheet("GSA_exemption")
+                                                            except Exception:
+                                                                ws_gsa = spreadsheet_gsa.add_worksheet(
+                                                                    title="GSA_exemption", rows=1000, cols=40
+                                                                )
+                                                            ws_gsa.update(
+                                                                [upd.columns.values.tolist()] + upd.values.tolist()
+                                                            )
+                                                        st.success(
+                                                            "PDF replaced on Google Drive; the existing link still works."
+                                                            if inplace_ok
+                                                            else "New PDF uploaded; PDF Link in the sheet was updated."
+                                                        )
+                                                        st.cache_data.clear()
+                                                        time.sleep(1)
+                                                        st.rerun()
+                                                except Exception as e:
+                                                    st.error(f"Could not regenerate PDF: {e}")
                                     else:
                                         gsa_options = list(pending_gsa.index)
                                         gsa_labels = {
@@ -5928,8 +6108,54 @@ GU-TAP System
                                             if val:
                                                 disp = 'Email (requester)' if k == 'Email' else k
                                                 st.write(f"- **{disp}**: {val}")
-                                        if selected_gsa.get('PDF Link'):
-                                            st.markdown(f"**PDF:** [View Form]({selected_gsa['PDF Link']})")
+                                        pdf_link_gsa_sel = str(selected_gsa.get('PDF Link', '') or '')
+                                        if pdf_link_gsa_sel:
+                                            st.markdown(f"**PDF:** [View Form]({pdf_link_gsa_sel})")
+                                        folder_id_gsa_pdf_regen = "1_O_L-jPR7bldiryRNB3WxbAaG8VqvmCt"
+                                        if st.button(
+                                            "Regenerate PDF from sheet (latest layout & row data)",
+                                            key="gsa_regen_from_sheet_pending",
+                                            help="Rebuilds the GSA PDF from the current Google Sheet row. If PDF Link is a standard Drive URL, the file is replaced in place so the link stays the same.",
+                                        ):
+                                            try:
+                                                fresh_gsa = load_gsa_exemption_sheet()
+                                                if selected_gsa_idx not in fresh_gsa.index:
+                                                    st.error(
+                                                        "Could not find this row in the GSA sheet; refresh and try again."
+                                                    )
+                                                else:
+                                                    row_now = fresh_gsa.loc[selected_gsa_idx].to_dict()
+                                                    inplace_ok, out_url = regenerate_gsa_pdf_to_drive(
+                                                        str(row_now.get("PDF Link", "") or ""),
+                                                        row_now,
+                                                        st.secrets["gcp_service_account"],
+                                                        folder_id_gsa_pdf_regen,
+                                                    )
+                                                    if not inplace_ok:
+                                                        upd = fresh_gsa.copy()
+                                                        upd.loc[selected_gsa_idx, "PDF Link"] = out_url
+                                                        upd = upd.fillna("")
+                                                        upd = reorder_gsa_exemption_dataframe(upd)
+                                                        spreadsheet_gsa = client.open("HRSA64_TA_Request")
+                                                        try:
+                                                            ws_gsa = spreadsheet_gsa.worksheet("GSA_exemption")
+                                                        except Exception:
+                                                            ws_gsa = spreadsheet_gsa.add_worksheet(
+                                                                title="GSA_exemption", rows=1000, cols=40
+                                                            )
+                                                        ws_gsa.update(
+                                                            [upd.columns.values.tolist()] + upd.values.tolist()
+                                                        )
+                                                    st.success(
+                                                        "PDF replaced on Google Drive; the existing link still works."
+                                                        if inplace_ok
+                                                        else "New PDF uploaded; PDF Link in the sheet was updated."
+                                                    )
+                                                    st.cache_data.clear()
+                                                    time.sleep(1)
+                                                    st.rerun()
+                                            except Exception as e:
+                                                st.error(f"Could not regenerate PDF: {e}")
                                         if selected_gsa.get('Supporting Material(s)'):
                                             st.markdown(f"**Supporting Materials:** {selected_gsa['Supporting Material(s)']}")
 
