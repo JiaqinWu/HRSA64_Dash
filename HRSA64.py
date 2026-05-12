@@ -34,21 +34,32 @@ st.set_page_config(
 
 
 def inject_gutap_global_styles():
-    """App-wide typography, cards, expanders, and hero banners."""
+    """App-wide typography, cards, expanders, hero banners, sidebar, and landing."""
     st.markdown(
         """
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&display=swap');
-html, body, .stMarkdown, button, textarea, input, label {
-  font-family: 'Source Sans 3', 'Segoe UI', system-ui, sans-serif !important;
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Instrument+Serif:ital@0;1&display=swap');
+html, body, .stMarkdown, button, textarea, input, label, [data-baseweb="select"] {
+  font-family: 'Instrument Sans', 'Source Sans 3', 'Segoe UI', system-ui, sans-serif !important;
 }
 .stApp {
-  background: linear-gradient(165deg, #f0f4fb 0%, #e8edf5 38%, #f7f9fc 100%);
+  background:
+    radial-gradient(1200px 600px at 12% -10%, rgba(13, 71, 161, 0.09), transparent 55%),
+    radial-gradient(900px 480px at 88% 0%, rgba(21, 101, 192, 0.08), transparent 50%),
+    linear-gradient(168deg, #eef3fa 0%, #e4eaf4 42%, #f6f8fc 100%);
 }
 .block-container {
-  padding-top: 1.1rem !important;
-  padding-bottom: 2.5rem !important;
-  max-width: 1280px !important;
+  padding-top: 1.25rem !important;
+  padding-bottom: 2.75rem !important;
+  max-width: 1200px !important;
+}
+[data-testid="stSidebar"] {
+  background: linear-gradient(180deg, #fafbfd 0%, #f0f4fa 100%) !important;
+  border-right: 1px solid rgba(15, 42, 98, 0.08) !important;
+  box-shadow: 4px 0 24px rgba(15, 23, 42, 0.04);
+}
+[data-testid="stSidebar"] [data-testid="stVerticalBlock"] {
+  padding-top: 0.5rem;
 }
 div[data-testid="stExpander"] {
   background: rgba(255,255,255,0.94);
@@ -69,17 +80,28 @@ div[data-testid="stExpander"] details summary:hover {
   border-radius: 10px !important;
   font-weight: 600 !important;
   box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+  border: 1px solid rgba(13, 71, 161, 0.18) !important;
+  background: linear-gradient(180deg, #e3f0ff 0%, #cfe2ff 100%) !important;
+  color: #0d2d5c !important;
 }
 .stButton > button:hover {
-  box-shadow: 0 2px 8px rgba(13, 71, 161, 0.18);
+  box-shadow: 0 4px 14px rgba(13, 71, 161, 0.22);
+  border-color: rgba(13, 71, 161, 0.35) !important;
+  filter: brightness(1.02);
+}
+button[kind="primary"],
+.stButton > button[kind="primary"] {
+  background: linear-gradient(180deg, #1565c0 0%, #0d47a1 100%) !important;
+  color: #fff !important;
+  border: 1px solid #0a3d7a !important;
+}
+button[kind="primary"]:hover {
+  filter: brightness(1.06);
 }
 div[data-testid="stMetric"] {
   background: #fff !important;
   border-radius: 12px !important;
   border: 1px solid #e2e8f0 !important;
-}
-[data-testid="stSidebar"] {
-  background: rgba(255,255,255,0.98) !important;
 }
 hr {
   margin: 1.35rem 0 !important;
@@ -89,10 +111,10 @@ hr {
 }
 .gutap-hero {
   background: linear-gradient(118deg, #052e6f 0%, #0d47a1 52%, #1565c0 100%);
-  border-radius: 14px;
-  padding: 1.3rem 1.2rem 1.38rem;
+  border-radius: 16px;
+  padding: 1.35rem 1.25rem 1.45rem;
   margin: 0.35rem 0 1.1rem;
-  box-shadow: 0 8px 28px rgba(13, 71, 161, 0.24);
+  box-shadow: 0 12px 36px rgba(13, 71, 161, 0.28);
 }
 .gutap-hero-title {
   color: #fff;
@@ -110,6 +132,120 @@ hr {
   line-height: 1.48;
   font-weight: 400;
 }
+/* Landing (role selection) */
+.gutap-landing-wrap {
+  max-width: 920px;
+  margin: 0 auto 2rem;
+}
+.gutap-landing-badge {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #1565c0;
+  background: rgba(13, 71, 161, 0.12);
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  margin-bottom: 1rem;
+}
+.gutap-landing-title {
+  font-family: 'Instrument Serif', Georgia, serif;
+  font-size: clamp(1.85rem, 4vw, 2.45rem);
+  font-weight: 400;
+  color: #0a1f44;
+  line-height: 1.15;
+  margin: 0 0 0.65rem 0;
+  letter-spacing: -0.02em;
+}
+.gutap-landing-lead {
+  font-size: 1.08rem;
+  color: #415a7a;
+  line-height: 1.55;
+  margin: 0 0 1.25rem 0;
+  max-width: 36rem;
+}
+.gutap-landing-list {
+  margin: 0;
+  padding-left: 1.15rem;
+  color: #334e6c;
+  line-height: 1.65;
+  font-size: 0.98rem;
+}
+.gutap-landing-list li {
+  margin-bottom: 0.35rem;
+}
+.gutap-landing-panel {
+  background: rgba(255,255,255,0.92);
+  border: 1px solid rgba(15, 42, 98, 0.1);
+  border-radius: 16px;
+  padding: 1.35rem 1.35rem 1.15rem;
+  box-shadow: 0 8px 32px rgba(15, 23, 42, 0.08);
+  margin-top: 0.25rem;
+}
+.gutap-landing-panel h3 {
+  margin: 0 0 0.2rem 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #0a1f44;
+}
+.gutap-landing-panel .sub {
+  font-size: 0.88rem;
+  color: #5c6f85;
+  margin-bottom: 0.85rem;
+}
+/* Sidebar user */
+.gutap-sidebar-user {
+  background: linear-gradient(145deg, #ffffff 0%, #f2f6fc 100%);
+  border: 1px solid rgba(15, 42, 98, 0.12);
+  border-radius: 14px;
+  padding: 1rem 0.95rem 1rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 4px 18px rgba(15, 23, 42, 0.06);
+}
+.gutap-sidebar-user-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.gutap-sidebar-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #0d47a1, #1565c0);
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  letter-spacing: 0.02em;
+}
+.gutap-sidebar-user-name {
+  font-weight: 700;
+  font-size: 1.02rem;
+  color: #0a1f44;
+  line-height: 1.25;
+}
+.gutap-sidebar-user-meta {
+  font-size: 0.8rem;
+  color: #5c6f85;
+  margin-top: 0.15rem;
+  word-break: break-all;
+}
+.gutap-sidebar-role-pill {
+  display: inline-block;
+  margin-top: 0.65rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #0d47a1;
+  background: rgba(13, 71, 161, 0.1);
+  padding: 0.28rem 0.55rem;
+  border-radius: 6px;
+}
 </style>
 """,
         unsafe_allow_html=True,
@@ -117,6 +253,51 @@ hr {
 
 
 inject_gutap_global_styles()
+
+
+def _gutap_user_initials(display_name: str) -> str:
+    if not display_name or not str(display_name).strip():
+        return "?"
+    parts = str(display_name).strip().split()
+    if len(parts) >= 2:
+        return (parts[0][0] + parts[-1][0]).upper()
+    return str(parts[0])[:2].upper()
+
+
+def _gutap_sidebar_profile_html() -> str:
+    role = st.session_state.get("role") or ""
+    name = (st.session_state.get("user_display_name") or "").strip()
+    email = (st.session_state.get("user_email") or "").strip()
+    auth = st.session_state.get("authenticated", False)
+    needs_login = role in ("Coordinator", "Assignee/Staff", "Research Assistant")
+    if role == "Requester":
+        if not name:
+            name = "Guest"
+        sub = "Submit a TA request without signing in."
+    elif needs_login and not auth:
+        name = "Signed out"
+        sub = "Sign in on the main screen to continue."
+    else:
+        if not name:
+            name = "User"
+        sub = email if email else ""
+    initials = _gutap_user_initials(name if name != "Signed out" else "?")
+    safe_name = name.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+    safe_sub = sub.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+    safe_role = role.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+    return f"""
+<div class="gutap-sidebar-user">
+  <div class="gutap-sidebar-user-row">
+    <div class="gutap-sidebar-avatar">{initials}</div>
+    <div>
+      <div class="gutap-sidebar-user-name">{safe_name}</div>
+      <div class="gutap-sidebar-user-meta">{safe_sub}</div>
+    </div>
+  </div>
+  <div class="gutap-sidebar-role-pill">{safe_role}</div>
+</div>
+"""
+
 
 scope = ["https://spreadsheets.google.com/feeds", 'https://www.googleapis.com/auth/spreadsheets', "https://www.googleapis.com/auth/drive.file", "https://www.googleapis.com/auth/drive"]
 #creds = ServiceAccountCredentials.from_json_keyfile_name('client_secret.json', scope)
@@ -3130,44 +3311,74 @@ if "role" not in st.session_state:
     st.session_state.role = None
 if "user_email" not in st.session_state:
     st.session_state.user_email = ""
+if "user_display_name" not in st.session_state:
+    st.session_state.user_display_name = ""
 
-# --- Role selection
+# --- Role selection (landing)
 if st.session_state.role is None:
-    #st.image("Georgetown_logo_blueRGB.png",width=200)
-    #st.title("Welcome to the GU Technical Assistance Provider System")
+    role = None
     st.markdown(
         """
-        <div style='
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            background: #f8f9fa;
-            padding: 2em 0 1em 0;
-            border-radius: 18px;
-            box-shadow: 0 4px 24px rgba(0,0,0,0.07);
-            margin-bottom: 2em;
-        '>
-            <img src='https://raw.githubusercontent.com/JiaqinWu/HRSA64_Dash/main/Georgetown_logo_blueRGB.png' width='200' style='margin-bottom: 1em;'/>
-            <h1 style='
-                color: #1a237e;
-                font-family: "Segoe UI", "Arial", sans-serif;
-                font-weight: 700;
-                margin: 0;
-                font-size: 2.2em;
-                text-align: center;
-            '>Welcome to the GU Technical Assistance Provider System</h1>
+        <style>
+        [data-testid="stSidebar"] { display: none !important; }
+        section[data-testid="stSidebar"] + div [data-testid="stMain"] { margin-left: 0 !important; }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+    st.markdown(
+        """
+        <div class="gutap-landing-wrap">
+          <div style="text-align:center;margin-bottom:0.5rem;">
+            <img src="https://raw.githubusercontent.com/JiaqinWu/HRSA64_Dash/main/Georgetown_logo_blueRGB.png"
+                 alt="Georgetown" width="168" style="max-width:42%;height:auto;"/>
+          </div>
+          <div class="gutap-landing-badge">GU-TAP Portal</div>
+          <h1 class="gutap-landing-title">Technical Assistance Provider</h1>
+          <p class="gutap-landing-lead">
+            One entry point for TA requests, coordinator workflows, staff assignments, and travel tools — aligned with Georgetown and HRSA guidelines.
+          </p>
+          <ul class="gutap-landing-list">
+            <li>Requesters submit structured TA needs and attachments</li>
+            <li>Coordinators triage, assign, and track HRSA64 tickets</li>
+            <li>Staff and research assistants manage workloads in one dashboard</li>
+          </ul>
         </div>
         """,
-        unsafe_allow_html=True
+        unsafe_allow_html=True,
     )
-
-    role = st.selectbox(
-        "Select your role",
-        ["Requester", "Coordinator", "Assignee/Staff","Research Assistant"],
-        index=None,
-        placeholder="Select option..."
-    )
+    c_landing_left, c_landing_right = st.columns([1.05, 1], gap="large")
+    with c_landing_left:
+        st.markdown(
+            """
+            <div class="gutap-hero" style="text-align:left;padding:1.35rem 1.4rem;margin-top:0;">
+              <div class="gutap-hero-title" style="text-align:left;font-size:1.2rem;">
+                Welcome
+              </div>
+              <div class="gutap-hero-sub" style="text-align:left;margin-top:0.5rem;">
+                Choose your role on the right to open the right workspace. Requesters can submit right away; coordinators, staff, and research assistants sign in with email after selecting a role.
+              </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+    with c_landing_right:
+        st.markdown(
+            """
+            <div class="gutap-landing-panel">
+              <h3>Get started</h3>
+              <p class="sub">Pick how you use GU-TAP. You can switch roles anytime from the sidebar.</p>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        role = st.selectbox(
+            "Select your role",
+            ["Requester", "Coordinator", "Assignee/Staff", "Research Assistant"],
+            index=None,
+            placeholder="Choose your role…",
+            label_visibility="collapsed",
+        )
 
     if role:
         st.session_state.role = role
@@ -3175,60 +3386,19 @@ if st.session_state.role is None:
 
 # --- Show view based on role
 else:
-    st.sidebar.markdown(
-        f"""
-        <div style='
-            background: #f8f9fa;
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-            padding: 1.2em 1em 1em 1em;
-            margin-bottom: 1.5em;
-            text-align: center;
-            font-family: Arial, "Segoe UI", sans-serif;
-        '>
-            <span style='
-                font-size: 1.15em;
-                font-weight: 700;
-                color: #1a237e;
-                letter-spacing: 0.5px;
-            '>
-                Role: {st.session_state.role}
-            </span>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
+    st.sidebar.markdown(_gutap_sidebar_profile_html(), unsafe_allow_html=True)
 
     st.sidebar.button("🔄 Switch Role", on_click=lambda: st.session_state.update({
         "authenticated": False,
         "role": None,
-        "user_email": ""
+        "user_email": "",
+        "user_display_name": "",
     }))
 
     # Sidebar: refresh cached datasets
     if st.sidebar.button("🔁 Refresh Data"):
         st.cache_data.clear()
         st.rerun()
-
-    st.markdown("""
-        <style>
-        .stButton > button {
-            width: 100%;
-            background-color: #cdb4db;
-            color: black;
-            font-family: Arial, "Segoe UI", sans-serif;
-            font-weight: 600;
-            border-radius: 8px;
-            padding: 0.6em;
-            margin-top: 1em;
-            transition: background 0.2s;
-        }
-        .stButton > button:hover {
-            background-color: #b197fc;
-            color: #222;
-        }
-        </style>
-    """, unsafe_allow_html=True)
 
     # Requester: No login needed
     if st.session_state.role == "Requester":
@@ -3344,24 +3514,8 @@ else:
                 key="requester_priority"
             )
 
-        # Submit button
-        st.markdown("""
-            <style>
-            .stButton > button {
-                width: 100%;
-                background-color: #cdb4db;
-                color: black;
-                font-family: Arial, "Segoe UI", sans-serif;
-                font-weight: 600;
-                border-radius: 8px;
-                padding: 0.6em;
-                margin-top: 1em;
-            }
-            </style>
-        """, unsafe_allow_html=True)
-
         # Submit logic
-        if st.button("Submit", key="requester_submit"):
+        if st.button("Submit", key="requester_submit", type="primary"):
             email_pattern = r'^[\w\.-]+@[\w\.-]+\.\w+$'
             def clean_and_format_us_phone(phone_input):
                 digits = re.sub(r'\D', '', phone_input)
@@ -3571,6 +3725,7 @@ else:
                     if user["password"] == password:
                         st.session_state.authenticated = True
                         st.session_state.user_email = email_normalized
+                        st.session_state.user_display_name = user.get("name", "")
                         st.success("Login successful!")
                         st.rerun()
                     else:
