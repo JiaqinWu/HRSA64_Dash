@@ -8,6 +8,7 @@ import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 import altair as alt
 import json
+import html
 import time
 from google.oauth2.service_account import Credentials
 from googleapiclient.discovery import build
@@ -143,8 +144,12 @@ hr {
 }
 .gutap-sidebar-user-row {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 0.75rem;
+}
+.gutap-sidebar-user-text {
+  flex: 1;
+  min-width: 0;
 }
 .gutap-sidebar-avatar {
   width: 44px;
@@ -164,13 +169,21 @@ hr {
   font-weight: 700;
   font-size: 1.02rem;
   color: #0a1f44;
-  line-height: 1.25;
+  line-height: 1.3;
+  word-break: normal;
+  overflow-wrap: break-word;
 }
 .gutap-sidebar-user-meta {
   font-size: 0.8rem;
   color: #5c6f85;
-  margin-top: 0.15rem;
-  word-break: break-all;
+  margin-top: 0.2rem;
+  line-height: 1.45;
+  word-break: normal;
+  overflow-wrap: break-word;
+  hyphens: none;
+}
+.gutap-sidebar-user.gutap-sidebar-user--signedout .gutap-sidebar-user-meta {
+  color: #4a5f7a;
 }
 .gutap-sidebar-role-pill {
   display: inline-block;
@@ -183,6 +196,11 @@ hr {
   background: rgba(13, 71, 161, 0.1);
   padding: 0.28rem 0.55rem;
   border-radius: 6px;
+}
+.gutap-sidebar-role-pill--muted {
+  background: rgba(96, 125, 139, 0.14);
+  color: #37474f;
+  border: 1px solid rgba(69, 90, 100, 0.2);
 }
 .gutap-sidebar-avatar--muted {
   background: linear-gradient(145deg, #90a4ae 0%, #607d8b 100%) !important;
@@ -209,6 +227,71 @@ hr {
 }
 [data-testid="stSidebar"] [data-testid="stVerticalBlockBorderWrapper"] .stButton > button {
   width: 100% !important;
+}
+/* Role workspace headers (Coordinator / Staff / RA) — not the public landing */
+.gutap-dashboard-header {
+  background: linear-gradient(145deg, #ffffff 0%, #f2f6fc 42%, #e8f0fa 100%);
+  border: 1px solid rgba(15, 42, 98, 0.12);
+  border-radius: 20px;
+  padding: 1.65rem 1.5rem 1.85rem;
+  margin-bottom: 1.25rem;
+  box-shadow: 0 10px 36px rgba(13, 71, 161, 0.1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+.gutap-dash-kicker {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: #1565c0;
+  margin-bottom: 0.5rem;
+}
+.gutap-dashboard-header-logo {
+  margin-bottom: 0.85rem;
+  filter: drop-shadow(0 4px 12px rgba(13, 71, 161, 0.12));
+}
+.gutap-dashboard-header-title {
+  font-family: 'Instrument Sans', 'Segoe UI', system-ui, sans-serif !important;
+  font-weight: 700;
+  font-size: clamp(1.45rem, 3vw, 1.95rem);
+  color: #0a1f44 !important;
+  margin: 0 !important;
+  letter-spacing: -0.03em;
+  line-height: 1.2;
+  word-break: normal;
+  overflow-wrap: break-word;
+}
+.gutap-welcome-strip {
+  background: linear-gradient(92deg, rgba(13, 71, 161, 0.09) 0%, rgba(66, 165, 245, 0.08) 100%);
+  border: 1px solid rgba(13, 71, 161, 0.16);
+  border-radius: 14px;
+  padding: 0.95rem 1.15rem;
+  margin-bottom: 1.35rem;
+  text-align: center;
+  font-weight: 600;
+  font-size: 1.06rem;
+  color: #0d47a1;
+  box-shadow: 0 2px 12px rgba(15, 23, 42, 0.05);
+}
+.gutap-section-label {
+  font-size: 0.76rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.11em;
+  color: #64748b;
+  margin: 0.35rem 0 0.65rem;
+}
+.gutap-login-lead p {
+  margin: 0 0 0.5rem 0;
+  color: #475569;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+.gutap-login-lead strong {
+  color: #0d47a1;
 }
 </style>
 """,
@@ -264,7 +347,7 @@ def _gutap_sidebar_profile_html() -> str:
         initials = _gutap_user_initials(name)
     elif needs_login and not auth:
         name = "Not signed in"
-        sub = "Enter your email and password on the main workspace to continue."
+        sub = "Sign in on the main workspace with your Georgetown email and password."
         avatar_extra = " gutap-sidebar-avatar--muted"
         initials = "◐"
     else:
@@ -275,18 +358,47 @@ def _gutap_sidebar_profile_html() -> str:
     safe_name = name.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
     safe_sub = sub.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
     safe_role = role.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+    user_extra_class = ""
+    pill_class = "gutap-sidebar-role-pill"
+    if needs_login and not auth:
+        user_extra_class = " gutap-sidebar-user--signedout"
+        pill_class += " gutap-sidebar-role-pill--muted"
     return f"""
-<div class="gutap-sidebar-user" style="box-shadow:none;border:none;background:transparent;padding:0;margin:0;">
+<div class="gutap-sidebar-user{user_extra_class}" style="box-shadow:none;border:none;background:transparent;padding:0;margin:0;">
   <div class="gutap-sidebar-user-row">
     <div class="gutap-sidebar-avatar{avatar_extra}">{initials}</div>
-    <div>
+    <div class="gutap-sidebar-user-text">
       <div class="gutap-sidebar-user-name">{safe_name}</div>
       <div class="gutap-sidebar-user-meta">{safe_sub}</div>
     </div>
   </div>
-  <div class="gutap-sidebar-role-pill">{safe_role}</div>
+  <div class="{pill_class}">{safe_role}</div>
 </div>
 """
+
+
+_GU_TAP_LOGO = "https://raw.githubusercontent.com/JiaqinWu/HRSA64_Dash/main/Georgetown_logo_blueRGB.png"
+
+
+def gutap_dashboard_header(title: str, *, kicker: str = "GU Technical Assistance") -> None:
+    """Branded header for Coordinator / Staff / RA workspaces (not the public landing)."""
+    st.markdown(
+        f"""
+<div class="gutap-dashboard-header">
+  <span class="gutap-dash-kicker">{html.escape(kicker)}</span>
+  <img class="gutap-dashboard-header-logo" src="{_GU_TAP_LOGO}" width="172" alt="Georgetown University" />
+  <h1 class="gutap-dashboard-header-title">{html.escape(title)}</h1>
+</div>
+""",
+        unsafe_allow_html=True,
+    )
+
+
+def gutap_welcome_strip(display_name: str) -> None:
+    st.markdown(
+        f'<div class="gutap-welcome-strip">Welcome, {html.escape(display_name)}</div>',
+        unsafe_allow_html=True,
+    )
 
 
 scope = ["https://spreadsheets.google.com/feeds", 'https://www.googleapis.com/auth/spreadsheets', "https://www.googleapis.com/auth/drive.file", "https://www.googleapis.com/auth/drive"]
@@ -3685,11 +3797,21 @@ else:
     # --- Coordinator or Staff: Require login
     elif st.session_state.role in ["Coordinator", "Assignee/Staff", "Research Assistant"]:
         if not st.session_state.authenticated:
-            st.subheader("🔐 Login Required")
-
-            email = st.text_input("Email")
-            password = st.text_input("Password", type="password")
-            login = st.button("Login")
+            _, login_mid, _ = st.columns([1, 2.1, 1])
+            with login_mid:
+                with st.container(border=True):
+                    st.markdown(
+                        """
+                        <div class="gutap-login-lead">
+                            <p><strong>Sign in</strong> to open this workspace.</p>
+                            <p>Use the Georgetown email and password associated with your selected role.</p>
+                        </div>
+                        """,
+                        unsafe_allow_html=True,
+                    )
+                    email = st.text_input("Email")
+                    password = st.text_input("Password", type="password")
+                    login = st.button("Log in", type="primary", use_container_width=True)
 
             if login:
                 # Normalize email to lowercase for case-insensitive lookup
@@ -3715,55 +3837,14 @@ else:
                 coordinator_name = user_info["Coordinator"]["name"]
                 # Check if current coordinator is Mabintou (only sees Travel Authorization Review Center)
                 is_mabintou_coordinator = st.session_state.user_email == "mo887@georgetown.edu"
-                st.markdown(
-                    """
-                    <div style='
-                        display: flex;
-                        flex-direction: column;
-                        align-items: center;
-                        justify-content: center;
-                        background: #f8f9fa;
-                        padding: 2em 0 1em 0;
-                        border-radius: 18px;
-                        box-shadow: 0 4px 24px rgba(0,0,0,0.07);
-                        margin-bottom: 2em;
-                    '>
-                        <img src='https://raw.githubusercontent.com/JiaqinWu/HRSA64_Dash/main/Georgetown_logo_blueRGB.png' width='200' style='margin-bottom: 1em;'/>
-                        <h1 style='
-                            color: #1a237e;
-                            font-family: "Segoe UI", "Arial", sans-serif;
-                            font-weight: 700;
-                            margin: 0;
-                            font-size: 2.2em;
-                            text-align: center;
-                        '>📬 Coordinator Dashboard</h1>
-                    </div>
-                    """,
-                    unsafe_allow_html=True
-                )
-                #st.header("📬 Coordinator Dashboard")
-                # Personalized greeting
+                gutap_dashboard_header("📬 Coordinator Dashboard", kicker="Coordinator workspace")
                 if user_info and "Coordinator" in user_info:
-                    st.markdown(f"""
-                    <div style='                      
-                    background: #f8f9fa;                        
-                    border-radius: 12px;                        
-                    box-shadow: 0 2px 8px rgba(0,0,0,0.04);                        
-                    padding: 1.2em 1em 1em 1em;                        
-                    margin-bottom: 1.5em;                        
-                    text-align: center;                        
-                    font-family: Arial, "Segoe UI", sans-serif;                    
-                    '>
-                        <span style='                           
-                        font-size: 1.15em;
-                        font-weight: 700;
-                        color: #1a237e;
-                        letter-spacing: 0.5px;'>
-                            👋 Welcome, {coordinator_name}!
-                        </span>
-                    </div>
-                    """, unsafe_allow_html=True)
-                
+                    gutap_welcome_strip(coordinator_name)
+
+                st.markdown(
+                    '<p class="gutap-section-label">Request pipeline</p>',
+                    unsafe_allow_html=True,
+                )
                 # Dashboard Overview Metrics - visible to all coordinators (no header, just show metrics directly)
                 col1, col2, col3 = st.columns(3)
                 total_request = df['Ticket ID'].nunique()
@@ -3775,9 +3856,11 @@ else:
                 col3.metric(label="# of Completed Requests", value= millify(completed_request, precision=2))
                 style_metric_cards(border_left_color="#DBF227")
 
+                st.markdown(
+                    '<p class="gutap-section-label">Recent activity</p>',
+                    unsafe_allow_html=True,
+                )
                 col1, col2, col3 = st.columns(3)
-                # create column span
-                today = datetime.today()
                 last_week = today - timedelta(days=7)
                 last_month = today - timedelta(days=30)
                 undone_request = df[df['Status'] == 'Submitted']['Ticket ID'].nunique()
@@ -6211,54 +6294,9 @@ GU-TAP System
                 user_info = USERS.get(st.session_state.user_email)
                 user_email = st.session_state.user_email
                 staff_name = user_info["Assignee/Staff"]["name"] if user_info and "Assignee/Staff" in user_info else None
-                st.markdown(
-                    """
-                    <div style='
-                        display: flex;
-                        flex-direction: column;
-                        align-items: center;
-                        justify-content: center;
-                        background: #f8f9fa;
-                        padding: 2em 0 1em 0;
-                        border-radius: 18px;
-                        box-shadow: 0 4px 24px rgba(0,0,0,0.07);
-                        margin-bottom: 2em;
-                    '>
-                        <img src='https://raw.githubusercontent.com/JiaqinWu/HRSA64_Dash/main/Georgetown_logo_blueRGB.png' width='200' style='margin-bottom: 1em;'/>
-                        <h1 style='
-                            color: #1a237e;
-                            font-family: "Segoe UI", "Arial", sans-serif;
-                            font-weight: 700;
-                            margin: 0;
-                            font-size: 2.2em;
-                            text-align: center;
-                        '>👷 Staff Dashboard</h1>
-                    </div>
-                    """,
-                    unsafe_allow_html=True
-                )
-                #st.header("👷 Staff Dashboard")
-                # Personalized greeting
+                gutap_dashboard_header("👷 Staff Dashboard", kicker="Staff workspace")
                 if staff_name:
-                    st.markdown(f"""
-                    <div style='                      
-                    background: #f8f9fa;                        
-                    border-radius: 12px;                        
-                    box-shadow: 0 2px 8px rgba(0,0,0,0.04);                        
-                    padding: 1.2em 1em 1em 1em;                        
-                    margin-bottom: 1.5em;                        
-                    text-align: center;                        
-                    font-family: Arial, "Segoe UI", sans-serif;                    
-                    '>
-                        <span style='                           
-                        font-size: 1.15em;
-                        font-weight: 700;
-                        color: #1a237e;
-                        letter-spacing: 0.5px;'>
-                            👋 Welcome, {staff_name}!
-                        </span>
-                    </div>
-                    """, unsafe_allow_html=True)
+                    gutap_welcome_strip(staff_name)
 
                 staff_gsa_only = (user_email == "mo887@georgetown.edu")
                 if staff_gsa_only:
@@ -6276,6 +6314,10 @@ GU-TAP System
                     staff_df["Targeted Due Date"] = pd.to_datetime(staff_df["Targeted Due Date"], errors="coerce")
                     staff_df["Assigned Date"] = pd.to_datetime(staff_df["Assigned Date"], errors="coerce")
 
+                    st.markdown(
+                        '<p class="gutap-section-label">Your workload</p>',
+                        unsafe_allow_html=True,
+                    )
                     # --- Top Summary Cards
                     col1, col2 = st.columns(2)
                     col3, col4 = st.columns(2)
@@ -8719,53 +8761,9 @@ GU-TAP System
                 user_info = USERS.get(st.session_state.user_email)
                 user_email = st.session_state.user_email
                 ga_support_name = user_info["Research Assistant"]["name"] if user_info and "Research Assistant" in user_info else None
-                st.markdown(
-                    """
-                    <div style='
-                        display: flex;
-                        flex-direction: column;
-                        align-items: center;
-                        justify-content: center;
-                        background: #f8f9fa;
-                        padding: 2em 0 1em 0;
-                        border-radius: 18px;
-                        box-shadow: 0 4px 24px rgba(0,0,0,0.07);
-                        margin-bottom: 2em;
-                    '>
-                        <img src='https://raw.githubusercontent.com/JiaqinWu/HRSA64_Dash/main/Georgetown_logo_blueRGB.png' width='200' style='margin-bottom: 1em;'/>
-                        <h1 style='
-                            color: #1a237e;
-                            font-family: "Segoe UI", "Arial", sans-serif;
-                            font-weight: 700;
-                            margin: 0;
-                            font-size: 2.2em;
-                            text-align: center;
-                        '>🧑‍🎓 Research Assistant Dashboard</h1>
-                    </div>
-                    """,
-                    unsafe_allow_html=True
-                )
-                # Personalized greeting
+                gutap_dashboard_header("🧑‍🎓 Research Assistant Dashboard", kicker="Research assistant workspace")
                 if ga_support_name:
-                    st.markdown(f"""
-                    <div style='                      
-                    background: #f8f9fa;                        
-                    border-radius: 12px;                        
-                    box-shadow: 0 2px 8px rgba(0,0,0,0.04);                        
-                    padding: 1.2em 1em 1em 1em;                        
-                    margin-bottom: 1.5em;                        
-                    text-align: center;                        
-                    font-family: Arial, "Segoe UI", sans-serif;                    
-                    '>
-                        <span style='                           
-                        font-size: 1.15em;
-                        font-weight: 700;
-                        color: #1a237e;
-                        letter-spacing: 0.5px;'>
-                            👋 Welcome, {ga_support_name}!
-                        </span>
-                    </div>
-                    """, unsafe_allow_html=True)
+                    gutap_welcome_strip(ga_support_name)
 
 
                 # Filter requests assigned to current staff and In Progress
@@ -8776,6 +8774,10 @@ GU-TAP System
                 # Ensure date columns are datetime
                 ga_in_progress_df["Date"] = pd.to_datetime(ga_in_progress_df["Date"], errors="coerce")
 
+                st.markdown(
+                    '<p class="gutap-section-label">Your workload</p>',
+                    unsafe_allow_html=True,
+                )
                 # --- Top Summary Cards
                 col1, col2 = st.columns(2)
                 col3, col4 = st.columns(2)
