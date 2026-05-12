@@ -132,68 +132,6 @@ hr {
   line-height: 1.48;
   font-weight: 400;
 }
-/* Landing (role selection) */
-.gutap-landing-wrap {
-  max-width: 920px;
-  margin: 0 auto 2rem;
-}
-.gutap-landing-badge {
-  display: inline-block;
-  font-size: 0.72rem;
-  font-weight: 600;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: #1565c0;
-  background: rgba(13, 71, 161, 0.12);
-  padding: 0.35rem 0.75rem;
-  border-radius: 999px;
-  margin-bottom: 1rem;
-}
-.gutap-landing-title {
-  font-family: 'Instrument Serif', Georgia, serif;
-  font-size: clamp(1.85rem, 4vw, 2.45rem);
-  font-weight: 400;
-  color: #0a1f44;
-  line-height: 1.15;
-  margin: 0 0 0.65rem 0;
-  letter-spacing: -0.02em;
-}
-.gutap-landing-lead {
-  font-size: 1.08rem;
-  color: #415a7a;
-  line-height: 1.55;
-  margin: 0 0 1.25rem 0;
-  max-width: 36rem;
-}
-.gutap-landing-list {
-  margin: 0;
-  padding-left: 1.15rem;
-  color: #334e6c;
-  line-height: 1.65;
-  font-size: 0.98rem;
-}
-.gutap-landing-list li {
-  margin-bottom: 0.35rem;
-}
-.gutap-landing-panel {
-  background: rgba(255,255,255,0.92);
-  border: 1px solid rgba(15, 42, 98, 0.1);
-  border-radius: 16px;
-  padding: 1.35rem 1.35rem 1.15rem;
-  box-shadow: 0 8px 32px rgba(15, 23, 42, 0.08);
-  margin-top: 0.25rem;
-}
-.gutap-landing-panel h3 {
-  margin: 0 0 0.2rem 0;
-  font-size: 1.05rem;
-  font-weight: 700;
-  color: #0a1f44;
-}
-.gutap-landing-panel .sub {
-  font-size: 0.88rem;
-  color: #5c6f85;
-  margin-bottom: 0.85rem;
-}
 /* Sidebar user */
 .gutap-sidebar-user {
   background: linear-gradient(145deg, #ffffff 0%, #f2f6fc 100%);
@@ -3314,71 +3252,41 @@ if "user_email" not in st.session_state:
 if "user_display_name" not in st.session_state:
     st.session_state.user_display_name = ""
 
-# --- Role selection (landing)
+# --- Role selection (simple landing)
 if st.session_state.role is None:
-    role = None
     st.markdown(
         """
-        <style>
-        [data-testid="stSidebar"] { display: none !important; }
-        section[data-testid="stSidebar"] + div [data-testid="stMain"] { margin-left: 0 !important; }
-        </style>
-        """,
-        unsafe_allow_html=True,
-    )
-    st.markdown(
-        """
-        <div class="gutap-landing-wrap">
-          <div style="text-align:center;margin-bottom:0.5rem;">
-            <img src="https://raw.githubusercontent.com/JiaqinWu/HRSA64_Dash/main/Georgetown_logo_blueRGB.png"
-                 alt="Georgetown" width="168" style="max-width:42%;height:auto;"/>
-          </div>
-          <div class="gutap-landing-badge">GU-TAP Portal</div>
-          <h1 class="gutap-landing-title">Technical Assistance Provider</h1>
-          <p class="gutap-landing-lead">
-            One entry point for TA requests, coordinator workflows, staff assignments, and travel tools — aligned with Georgetown and HRSA guidelines.
-          </p>
-          <ul class="gutap-landing-list">
-            <li>Requesters submit structured TA needs and attachments</li>
-            <li>Coordinators triage, assign, and track HRSA64 tickets</li>
-            <li>Staff and research assistants manage workloads in one dashboard</li>
-          </ul>
+        <div style='
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: #f8f9fa;
+            padding: 2em 0 1em 0;
+            border-radius: 18px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.07);
+            margin-bottom: 2em;
+        '>
+            <img src='https://raw.githubusercontent.com/JiaqinWu/HRSA64_Dash/main/Georgetown_logo_blueRGB.png' width='200' style='margin-bottom: 1em;'/>
+            <h1 style='
+                color: #1a237e;
+                font-family: "Segoe UI", "Arial", sans-serif;
+                font-weight: 700;
+                margin: 0;
+                font-size: 2.2em;
+                text-align: center;
+            '>Welcome to the GU Technical Assistance Provider System</h1>
         </div>
         """,
         unsafe_allow_html=True,
     )
-    c_landing_left, c_landing_right = st.columns([1.05, 1], gap="large")
-    with c_landing_left:
-        st.markdown(
-            """
-            <div class="gutap-hero" style="text-align:left;padding:1.35rem 1.4rem;margin-top:0;">
-              <div class="gutap-hero-title" style="text-align:left;font-size:1.2rem;">
-                Welcome
-              </div>
-              <div class="gutap-hero-sub" style="text-align:left;margin-top:0.5rem;">
-                Choose your role on the right to open the right workspace. Requesters can submit right away; coordinators, staff, and research assistants sign in with email after selecting a role.
-              </div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-    with c_landing_right:
-        st.markdown(
-            """
-            <div class="gutap-landing-panel">
-              <h3>Get started</h3>
-              <p class="sub">Pick how you use GU-TAP. You can switch roles anytime from the sidebar.</p>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-        role = st.selectbox(
-            "Select your role",
-            ["Requester", "Coordinator", "Assignee/Staff", "Research Assistant"],
-            index=None,
-            placeholder="Choose your role…",
-            label_visibility="collapsed",
-        )
+
+    role = st.selectbox(
+        "Select your role",
+        ["Requester", "Coordinator", "Assignee/Staff", "Research Assistant"],
+        index=None,
+        placeholder="Select option...",
+    )
 
     if role:
         st.session_state.role = role
