@@ -22,7 +22,7 @@ from reportlab.lib.utils import ImageReader
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Image
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import inch
-from PIL import Image as PILImage, ImageDraw, ImageFont
+from PIL import Image as PILImage, ImageDraw, ImageFont, ImageChops
 import base64
 import urllib.request
 
@@ -675,6 +675,30 @@ def number_text_input(label, key, value=0.0, min_value=0.0, placeholder="0.00"):
     return 0.0
 
 
+_SIGNATURE_PACIFICO_FONT_BYTES = None
+
+
+def _get_pacifico_signature_font_bytes():
+    """Download Pacifico (OFL) once; works on Linux/Streamlit where local script fonts often fail."""
+    global _SIGNATURE_PACIFICO_FONT_BYTES
+    if _SIGNATURE_PACIFICO_FONT_BYTES is not None:
+        return _SIGNATURE_PACIFICO_FONT_BYTES
+    url = (
+        "https://raw.githubusercontent.com/google/fonts/main/ofl/pacifico/"
+        "Pacifico-Regular.ttf"
+    )
+    try:
+        req = urllib.request.Request(url, headers={"User-Agent": "GU-TAP-PDF/1.0"})
+        with urllib.request.urlopen(req, timeout=25) as r:
+            data = r.read()
+        if data and len(data) > 8000:
+            _SIGNATURE_PACIFICO_FONT_BYTES = data
+            return data
+    except Exception:
+        pass
+    return None
+
+
 def _pil_truetype_best_effort(font_path, size):
     """Load TTF/TTC; for .ttc try index 0 then 1 (Pillow)."""
     path = str(font_path)
@@ -691,6 +715,58 @@ def _pil_truetype_best_effort(font_path, size):
         return None
 
 
+def _signature_load_font(font_size, font_paths):
+    """Return (font, source) where source is ('web',) or ('path', str) or (None,)."""
+    data = _get_pacifico_signature_font_bytes()
+    if data:
+        try:
+            return ImageFont.truetype(io.BytesIO(data), font_size), ("web", data)
+        except Exception:
+            pass
+    for font_path in font_paths:
+        font = _pil_truetype_best_effort(font_path, font_size)
+        if font is not None:
+            return font, ("path", font_path)
+    try:
+        import platform
+        system = platform.system()
+        if system == "Windows":
+            for fp in [
+                "C:/Windows/Fonts/arial.ttf",
+                "C:/Windows/Fonts/ARIAL.TTF",
+                "C:/Windows/Fonts/calibri.ttf",
+            ]:
+                f = _pil_truetype_best_effort(fp, font_size)
+                if f is not None:
+                    return f, ("path", fp)
+        elif system == "Linux":
+            for fp in [
+                "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+                "/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf",
+            ]:
+                f = _pil_truetype_best_effort(fp, font_size)
+                if f is not None:
+                    return f, ("path", fp)
+    except Exception:
+        pass
+    return ImageFont.load_default(), (None, None)
+
+
+def _signature_resize_font(font_size, source, font_paths_fallback):
+    kind, payload = source
+    if kind == "web" and payload is not None:
+        try:
+            return ImageFont.truetype(io.BytesIO(payload), font_size)
+        except Exception:
+            return ImageFont.load_default()
+    if kind == "path" and payload:
+        f = _pil_truetype_best_effort(payload, font_size)
+        if f is not None:
+            return f
+    f2, _ = _signature_load_font(font_size, font_paths_fallback)
+    return f2
+
+
 def generate_signature_image(text, width=600, height=120, scale_factor=3):
     """Generate a signature-style image from text with high resolution."""
     if not text or not text.strip():
@@ -698,11 +774,9 @@ def generate_signature_image(text, width=600, height=120, scale_factor=3):
 
     scaled_width = int(width * scale_factor)
     scaled_height = int(height * scale_factor)
-
     img = PILImage.new("RGB", (scaled_width, scaled_height), (255, 255, 255))
     draw = ImageDraw.Draw(img)
 
-    # Bolder / higher x-height first so PDF downscale stays readable.
     font_paths = [
         "/System/Library/Fonts/Supplemental/Bradley Hand Bold.ttf",
         "/System/Library/Fonts/Supplemental/Brush Script.ttf",
@@ -724,97 +798,61 @@ def generate_signature_image(text, width=600, height=120, scale_factor=3):
 
     font_size = int(115 * scale_factor)
     min_font_size = int(52 * scale_factor)
-    font = None
-    font_path_used = None
+    font, src = _signature_load_font(font_size, font_paths)
 
-    for font_path in font_paths:
-        font = _pil_truetype_best_effort(font_path, font_size)
-        if font is not None:
-            font_path_used = font_path
-            break
-
-    if font is None:
+    def _measure(f):
         try:
-            import platform
-            system = platform.system()
-            if system == "Windows":
-                for fp in [
-                    "C:/Windows/Fonts/arial.ttf",
-                    "C:/Windows/Fonts/ARIAL.TTF",
-                    "C:/Windows/Fonts/calibri.ttf",
-                ]:
-                    font = _pil_truetype_best_effort(fp, font_size)
-                    if font is not None:
-                        font_path_used = fp
-                        break
-            elif system == "Linux":
-                for fp in [
-                    "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
-                    "/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf",
-                ]:
-                    font = _pil_truetype_best_effort(fp, font_size)
-                    if font is not None:
-                        font_path_used = fp
-                        break
+            left, top, right, bottom = draw.textbbox((0, 0), text, font=f)
+            return max(1.0, right - left), max(1.0, bottom - top), (left, top, right, bottom)
         except Exception:
-            pass
+            est = max(1.0, len(text) * font_size * 0.55)
+            return est, font_size * 1.15, (0, 0, int(est), int(font_size * 1.15))
 
-    if font is None:
-        font = ImageFont.load_default()
-        font_path_used = None
-        min_font_size = max(min_font_size, int(28 * scale_factor))
-
-    def _measure():
-        try:
-            bbox = draw.textbbox((0, 0), text, font=font)
-            return bbox[2] - bbox[0], bbox[3] - bbox[1]
-        except Exception:
-            return len(text) * font_size * 0.6, font_size * 1.2
-
-    text_width, text_height = _measure()
+    tw, th, _ = _measure(font)
     max_line = scaled_width - int(12 * scale_factor)
     shrink_step = max(int(2 * scale_factor), 1)
-    while text_width > max_line and font_size > min_font_size:
+    while tw > max_line and font_size > min_font_size:
         font_size -= shrink_step
-        if font_path_used:
-            font = _pil_truetype_best_effort(font_path_used, font_size)
-        if font is None:
-            font = ImageFont.load_default()
-        text_width, text_height = _measure()
+        font = _signature_resize_font(font_size, src, font_paths)
+        tw, th, _ = _measure(font)
 
     padding = int(16 * scale_factor)
-    x = padding
-    y = (scaled_height - text_height) / 2
+    left, top, right, bottom = draw.textbbox((0, 0), text, font=font)
+    text_w = right - left
+    text_h = bottom - top
+    x = int(padding - left)
+    y = int((scaled_height - text_h) / 2 - top)
 
     try:
         draw.text((x, y), text, fill=(0, 0, 0), font=font)
     except Exception:
-        try:
-            font = ImageFont.load_default()
-            draw.text((x, y), text, fill=(0, 0, 0), font=font)
-            text_width, text_height = _measure()
-        except Exception:
-            draw.text((x, y), text, fill=(0, 0, 0))
+        font = ImageFont.load_default()
+        draw.text((padding, scaled_height // 2), text, fill=(0, 0, 0), font=font)
 
-    line_y = y + text_height + int(8 * scale_factor)
+    try:
+        l2, t2, r2, b2 = draw.textbbox((x, y), text, font=font)
+    except Exception:
+        l2, t2, r2, b2 = padding, y, padding + text_w, y + text_h
+    line_y = int(b2 + max(int(8 * scale_factor), 4))
     line_w = max(int(3 * scale_factor), 2)
     draw.line(
-        [(x - 5 * scale_factor, line_y), (x + text_width + 5 * scale_factor, line_y)],
+        [(l2 - int(5 * scale_factor), line_y), (r2 + int(5 * scale_factor), line_y)],
         fill=(0, 0, 0),
         width=int(line_w),
     )
 
-    actual_bottom = line_y + int(6 * scale_factor)
-    actual_right = x + text_width + int(24 * scale_factor)
-
-    img = img.crop(
-        (
-            0,
-            0,
-            min(scaled_width, max(int(actual_right), int(text_width + padding * 2))),
-            min(scaled_height, max(int(actual_bottom), int(text_height + padding * 2))),
+    white = PILImage.new("RGB", img.size, (255, 255, 255))
+    bb = ImageChops.difference(img, white).getbbox()
+    if bb:
+        pad = max(int(8 * scale_factor), 6)
+        img = img.crop(
+            (
+                max(0, bb[0] - pad),
+                max(0, bb[1] - pad),
+                min(img.size[0], bb[2] + pad),
+                min(img.size[1], bb[3] + pad),
+            )
         )
-    )
 
     final_w = max(1, img.size[0] // scale_factor)
     final_h = max(1, img.size[1] // scale_factor)
@@ -823,18 +861,26 @@ def generate_signature_image(text, width=600, height=120, scale_factor=3):
 
 
 def _pil_signature_to_reportlab_image(pil_img, max_width, max_height):
-    """PIL → ReportLab Image; sizes in points. Uses full cell width (fixes px/pt mix-up)."""
+    """PIL → ReportLab Image; sizes in points. Avoids hairline-tall images when aspect is very wide."""
     buf = io.BytesIO()
     pil_img.save(buf, format="PNG", optimize=False, compress_level=1)
     buf.seek(0)
     iw, ih = pil_img.size
     aspect = ih / float(iw) if iw else 1.0
-    new_width = max_width
+    min_h = max(32.0, float(max_height) * 0.22)
+    new_width = float(max_width)
     new_height = new_width * aspect
-    if new_height > max_height:
-        new_height = max_height
-        new_width = new_height / aspect if aspect else max_width
+    if aspect > 1e-6 and new_height < min_h:
+        new_height = min(min_h, float(max_height))
+        new_width = new_height / aspect
+        if new_width > float(max_width):
+            new_width = float(max_width)
+            new_height = new_width * aspect
+    if new_height > float(max_height):
+        new_height = float(max_height)
+        new_width = new_height / aspect if aspect else float(max_width)
     return Image(buf, width=new_width, height=new_height)
+
 
 
 def generate_date_range(start_date, end_date, max_days=7):
