@@ -699,8 +699,8 @@ def generate_signature_image(text, width=600, height=120, scale_factor=3):
         '/usr/share/fonts/truetype/noto/NotoSans-Italic.ttf',     # Linux alternative
     ]
     
-    # Start with larger font size (scale it too)
-    font_size = 72 * scale_factor  # Larger base font size
+    # Start with larger font size (scale it too); reads clearly at ~1.4in tall in the PDF
+    font_size = 96 * scale_factor
     font = None
     font_path_used = None
     
@@ -764,7 +764,7 @@ def generate_signature_image(text, width=600, height=120, scale_factor=3):
         text_height = font_size * 1.2
     
     # Adjust font size if text is too wide to fit in available width
-    min_font_size = 30 * scale_factor
+    min_font_size = 38 * scale_factor
     while text_width > scaled_width - (40 * scale_factor) and font_size > min_font_size:
         font_size -= 3 * scale_factor
         try:
@@ -863,21 +863,44 @@ def create_pdf(form_data, ws):
     
     story = []
     styles = getSampleStyleSheet()
+    # Scale PDF typography to match larger signature rows (~15% bump; keeps page layout on letter)
+    _fs = lambda pt: int(max(6, round(pt * 1.15)))
+
     title_style = ParagraphStyle(
         'CustomTitle',
         parent=styles['Heading1'],
-        fontSize=16,
+        fontSize=_fs(16),
         textColor=colors.HexColor('#000000'),
-        spaceAfter=12,
+        spaceAfter=14,
         alignment=1  # Center
     )
     subtitle_style = ParagraphStyle(
         'CustomSubtitle',
         parent=styles['Normal'],
-        fontSize=10,
+        fontSize=_fs(10),
         textColor=colors.HexColor('#000000'),
         spaceAfter=12,
         alignment=1  # Center
+    )
+    travel_h2 = ParagraphStyle(
+        'TravelSectionH2',
+        parent=styles['Heading2'],
+        fontSize=_fs(14),
+        spaceBefore=2,
+        spaceAfter=6,
+    )
+    travel_h3 = ParagraphStyle(
+        'TravelSectionH3',
+        parent=styles['Heading3'],
+        fontSize=_fs(12),
+        spaceBefore=2,
+        spaceAfter=4,
+    )
+    travel_body = ParagraphStyle(
+        'TravelBody',
+        parent=styles['Normal'],
+        fontSize=_fs(10),
+        leading=_fs(12),
     )
     
     # Helper to load, trim and whiten logo from URL and size by target height
@@ -918,8 +941,8 @@ def create_pdf(form_data, ws):
     georgetown_logo_url = 'https://raw.githubusercontent.com/JiaqinWu/HRSA64_Dash/main/Georgetown_logo_blueRGB.png'
     advance_logo_url = 'https://raw.githubusercontent.com/JiaqinWu/HRSA64_Dash/main/ADVANCE%20Logo_Horizontal%20Blue.png'
 
-    left_logo = load_logo_image(georgetown_logo_url, target_height_inch=0.8)
-    right_logo = load_logo_image(advance_logo_url, target_height_inch=0.4)
+    left_logo = load_logo_image(georgetown_logo_url, target_height_inch=0.88)
+    right_logo = load_logo_image(advance_logo_url, target_height_inch=0.44)
 
     title_para = Paragraph("Domestic Travel Authorization Form", title_style)
 
@@ -960,7 +983,7 @@ def create_pdf(form_data, ws):
     story.append(Spacer(1, 0.1*inch))
     
     # Traveler Information Section
-    story.append(Paragraph("<b>Traveler Information</b>", styles['Heading2']))
+    story.append(Paragraph("<b>Traveler Information</b>", travel_h2))
     story.append(Spacer(1, 0.1*inch))
     
     # Create traveler info table
@@ -985,15 +1008,15 @@ def create_pdf(form_data, ws):
         ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
         ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
         ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
-        ('FONTSIZE', (0, 0), (-1, -1), 8),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
-        ('TOPPADDING', (0, 0), (-1, -1), 4),
+        ('FONTSIZE', (0, 0), (-1, -1), _fs(8)),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
+        ('TOPPADDING', (0, 0), (-1, -1), 5),
     ]))
     story.append(traveler_table)
     story.append(Spacer(1, 0.1*inch))
     
     # Purpose of Travel Section
-    story.append(Paragraph("<b>Purpose of Travel</b>", styles['Heading2']))
+    story.append(Paragraph("<b>Purpose of Travel</b>", travel_h2))
     story.append(Spacer(1, 0.1*inch))
     
     purpose_of_travel = form_data.get('purpose_of_travel', '')
@@ -1006,10 +1029,10 @@ def create_pdf(form_data, ws):
     purpose_data = []
     purpose_style = ParagraphStyle(
         'PurposeStyle',
-        parent=styles['Normal'],
-        fontSize=9,
+        parent=travel_body,
+        fontSize=_fs(9),
         textColor=colors.red,
-        leading=11,
+        leading=_fs(11),
     )
     
     if purpose_of_travel:
@@ -1034,7 +1057,7 @@ def create_pdf(form_data, ws):
             ('ALIGN', (1, 0), (1, -1), 'LEFT'),
             ('VALIGN', (0, 0), (-1, -1), 'TOP'),
             ('FONTNAME', (0, 0), (0, -1), 'Helvetica'),
-            ('FONTSIZE', (0, 0), (0, -1), 9),
+            ('FONTSIZE', (0, 0), (0, -1), _fs(9)),
             ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
             ('TOPPADDING', (0, 0), (-1, -1), 6),
             ('LEFTPADDING', (0, 0), (-1, -1), 4),
@@ -1044,12 +1067,12 @@ def create_pdf(form_data, ws):
         story.append(Spacer(1, 0.1*inch))
     
     # Traveler Paid Expenses Section
-    story.append(Paragraph("<b>Traveler Paid Expenses</b>", styles['Heading2']))
+    story.append(Paragraph("<b>Traveler Paid Expenses</b>", travel_h2))
     
     # Mileage Section
-    story.append(Paragraph("<b>Mileage</b>", styles['Heading3']))
-    story.append(Paragraph("The Mileage (Per Day) should be rounded to the nearest mile.", styles['Normal']))
-    story.append(Paragraph("Mileage for 2025 is $0.70 per mile.", styles['Normal']))
+    story.append(Paragraph("<b>Mileage</b>", travel_h3))
+    story.append(Paragraph("The Mileage (Per Day) should be rounded to the nearest mile.", travel_body))
+    story.append(Paragraph("Mileage for 2025 is $0.70 per mile.", travel_body))
     story.append(Spacer(1, 0.1*inch))
     
     # Mileage: build multiple tables, 7 days per table
@@ -1107,8 +1130,8 @@ def create_pdf(form_data, ws):
             ('ALIGN', (1, 0), (-1, -1), 'CENTER'),
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
             ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
-            ('FONTSIZE', (0, 0), (-1, -1), 8),
-            ('FONTSIZE', (0, 0), (-1, 0), 9),
+            ('FONTSIZE', (0, 0), (-1, -1), _fs(8)),
+            ('FONTSIZE', (0, 0), (-1, 0), _fs(9)),
             ('TEXTCOLOR', (8, 2), (8, 2), colors.red),
             ('BACKGROUND', (8, 2), (8, 2), colors.HexColor('#FFF5F5')),
         ]))
@@ -1118,9 +1141,9 @@ def create_pdf(form_data, ws):
         story.append(Spacer(1, 0.1*inch))
     
     # Expenses Section - 7 days + total column
-    story.append(Paragraph("<b>Airfare, Transportation, Parking, Lodging, Miscellaneous.</b>", styles['Heading3']))
-    story.append(Paragraph("Ground Transportation Includes: Taxi, Uber, etc.", styles['Normal']))
-    story.append(Paragraph("Miscellaneous/Other: Pre-approved travel expenses not listed in this form", styles['Normal']))
+    story.append(Paragraph("<b>Airfare, Transportation, Parking, Lodging, Miscellaneous.</b>", travel_h3))
+    story.append(Paragraph("Ground Transportation Includes: Taxi, Uber, etc.", travel_body))
+    story.append(Paragraph("Miscellaneous/Other: Pre-approved travel expenses not listed in this form", travel_body))
     story.append(Spacer(1, 0.1*inch))
     expense_dates = form_data.get('expense_dates', [])
     airfare = form_data.get('airfare', [])
@@ -1139,11 +1162,11 @@ def create_pdf(form_data, ws):
     # Column width is 1.3*inch, so set width slightly less to account for padding
     misc_label_style = ParagraphStyle(
         'MiscLabelStyle',
-        parent=styles['Normal'],
-        fontSize=8,
+        parent=travel_body,
+        fontSize=_fs(8),
         fontName='Helvetica',
         alignment=0,  # LEFT
-        leading=10,  # Line spacing
+        leading=_fs(10),  # Line spacing
         leftIndent=0,
         rightIndent=0,
     )
@@ -1244,8 +1267,8 @@ def create_pdf(form_data, ws):
             ('ALIGN', (8, 0), (8, -1), 'CENTER'),
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
             ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
-            ('FONTSIZE', (0, 0), (-1, -1), 8),
-            ('FONTSIZE', (0, 0), (-1, 0), 9),
+            ('FONTSIZE', (0, 0), (-1, -1), _fs(8)),
+            ('FONTSIZE', (0, 0), (-1, 0), _fs(9)),
         ])
         
         expenses_table.setStyle(TableStyle(table_style))
@@ -1255,8 +1278,8 @@ def create_pdf(form_data, ws):
         story.append(Spacer(1, 0.1*inch))
     
     # Meals and Incidentals Section
-    story.append(Paragraph("<b>Meals and Incidentals Per Diem</b>", styles['Heading3']))
-    story.append(Paragraph("Federal Guidelines: On the first and last travel day, travelers are only eligible for 75 percent of the total M&amp;IE rate.", styles['Normal']))
+    story.append(Paragraph("<b>Meals and Incidentals Per Diem</b>", travel_h3))
+    story.append(Paragraph("Federal Guidelines: On the first and last travel day, travelers are only eligible for 75 percent of the total M&amp;IE rate.", travel_body))
     story.append(Spacer(1, 0.1*inch))
     
     per_diem_dates = form_data.get('per_diem_dates', [])
@@ -1394,8 +1417,8 @@ def create_pdf(form_data, ws):
             ('ALIGN', (1, 0), (-1, -1), 'CENTER'),
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
             ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
-            ('FONTSIZE', (0, 0), (-1, -1), 8),
-            ('FONTSIZE', (0, 0), (-1, 0), 9),
+            ('FONTSIZE', (0, 0), (-1, -1), _fs(8)),
+            ('FONTSIZE', (0, 0), (-1, 0), _fs(9)),
             ('SPAN', (0, 2), (7, 2)),
             ('BACKGROUND', (0, 2), (7, 2), colors.HexColor('#FFF5F5')),
             ('TEXTCOLOR', (0, 2), (7, 2), colors.red),
@@ -1424,7 +1447,7 @@ def create_pdf(form_data, ws):
     # Ensure total_amount_due is not negative
     total_amount_due = max(0, total_amount_due)
 
-    story.append(Paragraph("<b>Sub-Totals</b>", styles['Heading3']))
+    story.append(Paragraph("<b>Sub-Totals</b>", travel_h3))
 
     totals_data = [
         ['Mileage', f"${int(total_mileage)}"],
@@ -1435,7 +1458,7 @@ def create_pdf(form_data, ws):
         ['Baggage Fees', f"${total_baggage:.2f}"],
         ['Miscellaneous/Other', f"${total_misc:.2f}"],
         ['Per Diem', f"${total_per_diem:.2f}"],
-        [Paragraph('<b>Total Amount Due</b>', styles['Normal']), Paragraph(f'<b>${total_amount_due:.2f}</b>', styles['Normal'])]
+        [Paragraph('<b>Total Amount Due</b>', travel_body), Paragraph(f'<b>${total_amount_due:.2f}</b>', travel_body)]
     ]
     
     totals_table = Table(totals_data, colWidths=[3*inch, 1.5*inch])
@@ -1452,7 +1475,7 @@ def create_pdf(form_data, ws):
         ('ALIGN', (1, 0), (1, -1), 'RIGHT'),
         ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
         ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
-        ('FONTSIZE', (0, 0), (-1, -1), 10),
+        ('FONTSIZE', (0, 0), (-1, -1), _fs(10)),
         ('ROWBACKGROUNDS', (0, 0), (-1, -1), [colors.white, colors.white]),
         ('TEXTCOLOR', (0, 9), (1, 9), colors.red),
         ('BACKGROUND', (0, 9), (1, 9), colors.white),
@@ -1462,7 +1485,10 @@ def create_pdf(form_data, ws):
     story.append(Spacer(1, 0.1*inch))
 
 
-    story.append(Paragraph("<b>Approval Signatures</b>", styles['Heading2']))
+    story.append(Paragraph("<b>Approval Signatures</b>", travel_h2))
+    # Signature images: generate large bitmap, then place up to these PDF dimensions (letter content width 7.5in)
+    _sig_cell_max_w = 3.05 * inch
+    _sig_cell_max_h = 1.42 * inch
     # Signature section
     signature_text = form_data.get('signature', '').strip()
     
@@ -1473,7 +1499,7 @@ def create_pdf(form_data, ws):
     if signature_text:
         try:
             # Generate signature image from text with high resolution (3x scale)
-            signature_img_pil = generate_signature_image(signature_text, width=1000, height=220, scale_factor=3)
+            signature_img_pil = generate_signature_image(signature_text, width=2000, height=520, scale_factor=4)
             
             if signature_img_pil:
                 # Ensure it's RGB with white background (blank)
@@ -1485,9 +1511,8 @@ def create_pdf(form_data, ws):
                         rgb_img.paste(signature_img_pil)
                     signature_img_pil = rgb_img
                 
-                # Signature cell matches form scale (wide column, readable height)
-                max_width = 2.75 * inch
-                max_height = 0.88 * inch
+                max_width = _sig_cell_max_w
+                max_height = _sig_cell_max_h
                 
                 img_width, img_height = signature_img_pil.size
                 aspect_ratio = img_height / img_width if img_width > 0 else 1
@@ -1523,8 +1548,8 @@ def create_pdf(form_data, ws):
     # Use Paragraph for all labels to ensure consistent font size and width
     label_style = ParagraphStyle(
         'LabelStyle',
-        parent=styles['Normal'],
-        fontSize=10,
+        parent=travel_body,
+        fontSize=_fs(10),
         fontName='Helvetica',
         alignment=0,  # LEFT
     )
@@ -1583,7 +1608,7 @@ def create_pdf(form_data, ws):
     mabintou_signature_cell = ''
     if mabintou_sig_text:
         try:
-            mabintou_img_pil = generate_signature_image(mabintou_sig_text, width=1000, height=220, scale_factor=3)
+            mabintou_img_pil = generate_signature_image(mabintou_sig_text, width=2000, height=520, scale_factor=4)
             if mabintou_img_pil:
                 if mabintou_img_pil.mode != 'RGB':
                     rgb_mabintou = PILImage.new('RGB', mabintou_img_pil.size, (255, 255, 255))
@@ -1593,8 +1618,8 @@ def create_pdf(form_data, ws):
                         rgb_mabintou.paste(mabintou_img_pil)
                     mabintou_img_pil = rgb_mabintou
                 
-                max_width = 2.75 * inch
-                max_height = 0.88 * inch
+                max_width = _sig_cell_max_w
+                max_height = _sig_cell_max_h
                 img_width, img_height = mabintou_img_pil.size
                 aspect_ratio = img_height / img_width if img_width > 0 else 1
                 new_width = min(img_width, max_width)
@@ -1615,7 +1640,7 @@ def create_pdf(form_data, ws):
     kemisha_signature_cell = ''
     if kemisha_sig_text:
         try:
-            kemisha_img_pil = generate_signature_image(kemisha_sig_text, width=1000, height=220, scale_factor=3)
+            kemisha_img_pil = generate_signature_image(kemisha_sig_text, width=2000, height=520, scale_factor=4)
             if kemisha_img_pil:
                 if kemisha_img_pil.mode != 'RGB':
                     rgb_kemisha = PILImage.new('RGB', kemisha_img_pil.size, (255, 255, 255))
@@ -1625,8 +1650,8 @@ def create_pdf(form_data, ws):
                         rgb_kemisha.paste(kemisha_img_pil)
                     kemisha_img_pil = rgb_kemisha
                 
-                max_width = 2.75 * inch
-                max_height = 0.88 * inch
+                max_width = _sig_cell_max_w
+                max_height = _sig_cell_max_h
                 img_width, img_height = kemisha_img_pil.size
                 aspect_ratio = img_height / img_width if img_width > 0 else 1
                 new_width = min(img_width, max_width)
@@ -1650,18 +1675,23 @@ def create_pdf(form_data, ws):
         ['AWD', 'AWD-7776588', 'GR', 'GR428338'],
     ]
     
-    # Label | signature | DATE label | date — wide signature column aligned with letter content width
-    combined_table = Table(combined_data, colWidths=[1.35*inch, 2.85*inch, 0.72*inch, 1.58*inch])
+    # Label | signature | DATE | date — wide signature column, tall rows for large rendered names
+    combined_table = Table(
+        combined_data,
+        colWidths=[1.15 * inch, 3.28 * inch, 0.68 * inch, 1.39 * inch],
+        rowHeights=[1.5 * inch, 1.5 * inch, 1.5 * inch, 0.34 * inch],
+    )
     combined_table.setStyle(TableStyle([
         # Grid and alignment for all rows
         ('GRID', (0, 0), (-1, -1), 1, colors.black),
         ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
         ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
         ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
-        ('FONTSIZE', (0, 0), (-1, -1), 10),
-        # Padding for all rows
-        ('TOPPADDING', (0, 0), (-1, -1), 10),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 10),
+        ('FONTSIZE', (0, 0), (-1, -1), _fs(10)),
+        ('TOPPADDING', (0, 0), (-1, 2), 12),
+        ('BOTTOMPADDING', (0, 0), (-1, 2), 12),
+        ('TOPPADDING', (0, 3), (-1, 3), 8),
+        ('BOTTOMPADDING', (0, 3), (-1, 3), 8),
         ('LEFTPADDING', (0, 0), (-1, -1), 6),
         ('RIGHTPADDING', (0, 0), (-1, -1), 6),
         # Traveler Signature row (row 0) - all white background, signature/date cells red text
@@ -2245,7 +2275,7 @@ def gsa_sheet_row_to_pdf_form_data(row_dict):
     return fd
 
 
-def _gsa_coordinator_signature_flowable(sig_text, sig_para_style, max_width=2.95 * inch, max_height=0.5 * inch):
+def _gsa_coordinator_signature_flowable(sig_text, sig_para_style, max_width=3.05 * inch, max_height=1.15 * inch):
     """
     Same approach as Travel Authorization PDF: render typed name as a signature-style image
     in the GSA table (Program Director / Technical Assistance Lead rows).
@@ -2254,7 +2284,7 @@ def _gsa_coordinator_signature_flowable(sig_text, sig_para_style, max_width=2.95
     if not stxt:
         return Paragraph('', sig_para_style)
     try:
-        pil = generate_signature_image(stxt, width=800, height=150, scale_factor=2)
+        pil = generate_signature_image(stxt, width=1600, height=420, scale_factor=3)
         if pil is None:
             return Paragraph(_gsa_escape_for_paragraph(stxt), sig_para_style)
         if pil.mode != 'RGB':
@@ -2299,26 +2329,41 @@ def create_gsa_exemption_pdf(form_data):
     )
     story = []
     styles = getSampleStyleSheet()
+    _gfs = lambda pt: int(max(6, round(pt * 1.15)))
 
     body_wrap = ParagraphStyle(
         'GSA_BodyWrap',
         parent=styles['Normal'],
-        fontSize=9,
-        leading=12,
+        fontSize=_gfs(9),
+        leading=_gfs(12),
         spaceAfter=6,
     )
     title_style = ParagraphStyle(
         'GSA_Title',
         parent=styles['Heading1'],
-        fontSize=14,
+        fontSize=_gfs(14),
         alignment=1,
         spaceAfter=12,
     )
     reason_cell_style = ParagraphStyle(
         'GSA_ReasonCell',
         parent=styles['Normal'],
-        fontSize=8,
-        leading=10,
+        fontSize=_gfs(8),
+        leading=_gfs(10),
+    )
+    gsa_h2 = ParagraphStyle(
+        'GSA_SectionH2',
+        parent=styles['Heading2'],
+        fontSize=_gfs(14),
+        spaceBefore=2,
+        spaceAfter=6,
+    )
+    gsa_h3 = ParagraphStyle(
+        'GSA_SectionH3',
+        parent=styles['Heading3'],
+        fontSize=_gfs(12),
+        spaceBefore=2,
+        spaceAfter=4,
     )
 
     story.append(Paragraph("EXEMPTION FORM FOR LODGING RATES OVER GSA-APPROVED LIMIT", title_style))
@@ -2433,7 +2478,7 @@ def create_gsa_exemption_pdf(form_data):
         story.append(other_box)
 
     story.append(Spacer(1, 0.12 * inch))
-    story.append(Paragraph("<b>Supporting materials</b>", styles['Heading3']))
+    story.append(Paragraph("<b>Supporting materials</b>", gsa_h3))
     supporting_links = form_data.get('supporting_drive_links') or []
     if supporting_links:
         link_parts = []
@@ -2454,7 +2499,7 @@ def create_gsa_exemption_pdf(form_data):
         ))
 
     story.append(Spacer(1, 0.15*inch))
-    story.append(Paragraph("<b>Signatures</b>", styles['Heading2']))
+    story.append(Paragraph("<b>Signatures</b>", gsa_h2))
 
     def _fmt_date(d):
         if not d:
@@ -2488,15 +2533,15 @@ def create_gsa_exemption_pdf(form_data):
         sub_raw = datetime.now()
     submission_date_str = _fmt_date(sub_raw)
 
-    label_style = ParagraphStyle('LabelStyle', parent=styles['Normal'], fontSize=9, fontName='Helvetica', alignment=0)
-    sig_para_style = ParagraphStyle('GSA_SigCell', parent=label_style, fontSize=9, leading=11)
+    label_style = ParagraphStyle('LabelStyle', parent=styles['Normal'], fontSize=_gfs(9), fontName='Helvetica', alignment=0)
+    sig_para_style = ParagraphStyle('GSA_SigCell', parent=label_style, fontSize=_gfs(9), leading=_gfs(11))
     hdr = ParagraphStyle('GSA_SigHdr', parent=label_style, fontName='Helvetica-Bold')
     auto_sig_style = ParagraphStyle(
         'GSA_AutoSig',
         parent=label_style,
         fontName='Helvetica-Oblique',
-        fontSize=13,
-        leading=15,
+        fontSize=_gfs(13),
+        leading=_gfs(15),
         textColor=colors.HexColor('#1c2841'),
     )
 
@@ -2539,7 +2584,7 @@ def create_gsa_exemption_pdf(form_data):
     sig_table.setStyle(TableStyle([
         ('GRID', (0, 0), (-1, -1), 1, colors.black),
         ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#E8E8E8')),
-        ('FONTSIZE', (0, 0), (-1, -1), 9),
+        ('FONTSIZE', (0, 0), (-1, -1), _gfs(9)),
         ('VALIGN', (0, 0), (-1, -1), 'TOP'),
         ('TOPPADDING', (0, 0), (-1, -1), 8),
         ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
@@ -4676,7 +4721,7 @@ else:
                                         # Show signature preview
                                         if coordinator_signature_text:
                                             try:
-                                                preview_img = generate_signature_image(coordinator_signature_text, width=960, height=200, scale_factor=2)
+                                                preview_img = generate_signature_image(coordinator_signature_text, width=1600, height=400, scale_factor=2)
                                                 if preview_img:
                                                     if preview_img.mode != 'RGB':
                                                         rgb_preview = PILImage.new('RGB', preview_img.size, (255, 255, 255))
