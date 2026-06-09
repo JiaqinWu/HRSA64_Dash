@@ -2606,6 +2606,8 @@ GSA_EXEMPTION_FRONT_COLUMNS = [
     'Requester Signature',
     'Submission Date',
 ]
+GSA_REMINDER_DAYS = 7
+GSA_REMINDER_LAST_SENT_COL = 'GSA Reminder Last Sent'
 
 
 def gsa_exemption_full_column_order():
@@ -3291,6 +3293,105 @@ def load_gsa_exemption_sheet():
     except Exception:
         return pd.DataFrame()
 
+
+def gsa_row_still_pending_approval(row):
+    """True when Jen/Kemisha have not both approved and neither has rejected."""
+    jen = _travel_approval_status_norm(row.get('Jen Approval Status'))
+    kem = _travel_approval_status_norm(row.get('Kemisha Approval Status'))
+    if jen == 'reject' or kem == 'reject':
+        return False
+    if jen == 'approve' and kem == 'approve':
+        return False
+    return (
+        _travel_needs_action(row.get('Jen Approval Status'))
+        or _travel_needs_action(row.get('Kemisha Approval Status'))
+    )
+
+
+def maybe_send_gsa_exemption_reminders():
+    """Email Jen and Kemisha when a GSA exemption is pending approval for more than GSA_REMINDER_DAYS. At most once per request per calendar day (tracked in GSA Reminder Last Sent)."""
+    today = datetime.today().date()
+    today_str = today.strftime('%Y-%m-%d')
+    try:
+        df = pd.DataFrame(_get_records_with_retry('HRSA64_TA_Request', 'GSA_exemption'))
+        df = normalize_gsa_exemption_dataframe(df)
+    except Exception:
+        return
+    if df.empty:
+        return
+    if GSA_REMINDER_LAST_SENT_COL not in df.columns:
+        df[GSA_REMINDER_LAST_SENT_COL] = ''
+    route = gsa_exemption_approver_routing()
+    notify = [
+        (route['approver1_email'], route['approver1_name']),
+        (route['approver2_email'], route['approver2_name']),
+    ]
+    sheet_updated = False
+    for idx, row in df.iterrows():
+        if not gsa_row_still_pending_approval(row):
+            continue
+        sub_d = _travel_submission_date(row)
+        if sub_d is None:
+            continue
+        if (today - sub_d).days < GSA_REMINDER_DAYS:
+            continue
+        last = str(row.get(GSA_REMINDER_LAST_SENT_COL, '') or '').strip()
+        if last == today_str:
+            continue
+        traveler = str(row.get('Traveler Name(s)', '') or 'Unknown')
+        requester = str(row.get('Requester Name', '') or row.get('Requestor Name', '') or '')
+        city = str(row.get('Travel City/State', '') or '')
+        dates = str(row.get('Dates of Travel', '') or '')
+        pdf_link = str(row.get('PDF Link', '') or '')
+        sub = str(row.get('Submission Date', '') or '')
+        jen_st = str(row.get('Jen Approval Status', '') or 'pending')
+        kem_st = str(row.get('Kemisha Approval Status', '') or 'pending')
+        all_ok = True
+        for i, (to_email, to_name) in enumerate(notify):
+            first = (to_name.split()[0] if to_name else 'there').strip()
+            subj = f"GU-TAP: GSA Lodging Exemption still pending — {traveler}"
+            body = f"""Hi {first},
+
+This is an automated reminder: a GSA Lodging Rate Exemption form has been pending approval for more than {GSA_REMINDER_DAYS} days.
+
+Please open GU-TAP when you can, review the PDF, and sign with your typed name to approve (or reach out if something looks off).
+
+Requester: {requester}
+Traveler(s): {traveler}
+City/State: {city}
+Dates of travel: {dates}
+Submitted: {sub}
+Jen Approval Status: {jen_st}
+Kemisha Approval Status: {kem_st}
+PDF: {pdf_link if pdf_link else "(open the form in GU-TAP to view it)"}
+
+GU-TAP: https://hrsagutap.streamlit.app/
+
+Thanks,
+GU-TAP
+"""
+            try:
+                ok = send_email_mailjet(to_email=to_email, subject=subj, body=body.strip())
+                if not ok:
+                    all_ok = False
+            except Exception:
+                all_ok = False
+            if i < len(notify) - 1:
+                time.sleep(0.8)
+        if all_ok:
+            df.loc[idx, GSA_REMINDER_LAST_SENT_COL] = today_str
+            sheet_updated = True
+    if sheet_updated:
+        try:
+            df_out = df.fillna('')
+            spreadsheet_gsa = client.open('HRSA64_TA_Request')
+            worksheet_gsa = spreadsheet_gsa.worksheet('GSA_exemption')
+            worksheet_gsa.update([df_out.columns.values.tolist()] + df_out.values.tolist())
+            st.cache_data.clear()
+        except Exception:
+            pass
+
+
 df_travel = load_travel_sheet()
 
 # Extract last Ticket ID from the existing sheet
@@ -3886,6 +3987,7 @@ else:
 
         else:
             maybe_send_ga_unassigned_reminders()
+            maybe_send_gsa_exemption_reminders()
             if st.session_state.role == "Coordinator":
                 user_info = USERS.get(st.session_state.user_email)
                 coordinator_name = user_info["Coordinator"]["name"]
