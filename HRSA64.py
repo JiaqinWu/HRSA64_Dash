@@ -474,66 +474,56 @@ STUDENT_SCHEDULE = {
             "Tuesday": "9am - 12pm", 
             "Wednesday": "9am - 5pm",
             "Thursday": "9am - 5pm",
-            "Friday": ""
+            "Friday": "9am - 5pm"
         }
     },
     "Hang Nguyen": {
         "email": "htn16@georgetown.edu",
         "schedule": {
-            "Monday": "9am - 4pm",
-            "Tuesday": "9am - 4pm",
-            "Wednesday": "9am - 4pm", 
-            "Thursday": "9am - 4pm",
-            "Friday": "9am - 4pm"
-        }
-    },
-    "Olayinka Adedeji": {
-        "email": "ooa36@georgetown.edu",
-        "schedule": {
-            "Monday": "1pm - 5pm",
+            "Monday": "9am - 5pm",
             "Tuesday": "9am - 5pm",
-            "Wednesday": "9am - 11am, 3pm - 5pm",
-            "Thursday": "9am - 4pm",
-            "Friday": ""
-        }
-    },
-    "Saara Bidiwala": {
-        "email": "ssb120@georgetown.edu", 
-        "schedule": {
-            "Monday": "",
-            "Tuesday": "11am - 2pm",
-            "Wednesday": "9am - 5pm",
-            "Thursday": "1pm - 2pm, 3pm - 5pm", 
-            "Friday": "9am - 1pm, 3pm - 5pm"
-        }
-    },
-    "Ziqiao Shan": {
-        "email": "zs352@georgetown.edu",
-        "schedule": {
-            "Monday": "1pm - 5pm",
-            "Tuesday": "10am - 12pm",
-            "Wednesday": "10am - 5pm",
-            "Thursday": "10am - 5pm",
-            "Friday": "10am - 5pm"
-        }
-    },
-    "Yannis Ying": {
-        "email": "sy803@georgetown.edu",
-        "schedule": {
-            "Monday": "",
-            "Tuesday": "",
-            "Wednesday": "9am - 4pm",
+            "Wednesday": "9am - 5pm", 
             "Thursday": "9am - 5pm",
             "Friday": "9am - 5pm"
         }
     },
-    "Shedrack Osuji": {
-        "email": "sco47@georgetown.edu",
+    "Jocelin Diaz": {
+        "email": "jd2262@georgetown.edu",
         "schedule": {
-            "Monday": "11am - 5pm",
-            "Tuesday": "",
-            "Wednesday": "11am - 5pm",
-            "Thursday": "",
+            "Monday": "9am - 5pm",
+            "Tuesday": "9am - 5pm",
+            "Wednesday": "9am - 5pm", 
+            "Thursday": "9am - 5pm",
+            "Friday": "9am - 5pm"
+        }
+    },
+    "Spoorthi Vallamkonda": {
+        "email": "ssv23@georgetown.edu", 
+        "schedule": {
+            "Monday": "9am - 5pm",
+            "Tuesday": "9am - 5pm",
+            "Wednesday": "9am - 5pm", 
+            "Thursday": "9am - 5pm",
+            "Friday": "9am - 5pm"
+        }
+    },
+    "Desiree Butler": {
+        "email": "db1718@georgetown.edu",
+        "schedule": {
+            "Monday": "9am - 5pm",
+            "Tuesday": "9am - 5pm",
+            "Wednesday": "9am - 5pm", 
+            "Thursday": "9am - 5pm",
+            "Friday": "9am - 5pm"
+        }
+    },
+    "Japhet Osuji": {
+        "email": "jo903@georgetown.edu",
+        "schedule": {
+            "Monday": "9am - 5pm",
+            "Tuesday": "9am - 5pm",
+            "Wednesday": "9am - 5pm",
+            "Thursday": "9am - 5pm",
             "Friday": "9am - 5pm"
         }
     }
@@ -3514,24 +3504,21 @@ USERS = {
     'htn16@georgetown.edu':{
         "Research Assistant": {"password": "Hang123!", "name": "Hang Nguyen"}
     },
-    'ooa36@georgetown.edu':{
-        "Research Assistant": {"password": "Olayinka123!", "name": "Olayinka Adedeji"}
-    },
-    'zs352@georgetown.edu':{
-        "Research Assistant": {"password": "Ziqiao123!", "name": "Ziqiao Shan"}
-    },
     'ap2349@georgetown.edu':{
         "Research Assistant": {"password": "Asha123!", "name": "Asha Patel"}
     },
-    'sy803@georgetown.edu':{
-        "Research Assistant": {"password": "Yannis123!", "name": "Yannis Ying"}
+    'jo903@georgetown.edu':{
+        "Research Assistant": {"password": "Japhet123!", "name": "Japhet Osuji"}
     },
-    'ssb120@georgetown.edu':{
-        "Research Assistant": {"password": "Saara123!", "name": "Saara Bidiwala"}
+    'jd2262@georgetown.edu':{
+        "Research Assistant": {"password": "Jocelin123!", "name": "Jocelin Diaz"}
     },
-    'sco47@georgetown.edu':{
-        "Research Assistant": {"password": "Shedrack123!", "name": "Shedrack Osuji"}
-    }
+    'ssv23@georgetown.edu':{
+        "Research Assistant": {"password": "Spoorthi123!", "name": "Spoorthi Vallamkonda"}
+    },
+    'db1718@georgetown.edu':{
+        "Research Assistant": {"password": "Desiree123!", "name": "Desiree Butler"}
+    },
 }
 
 lis_location = ["Maricopa Co. - Arizona", "Alameda Co. - California", "Los Angeles Co. - California", "Orange Co. - California", "Riverside Co. - California",\
