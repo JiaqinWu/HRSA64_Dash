@@ -7059,26 +7059,36 @@ GU-TAP System
 
                         date_support = None
                         meeting_time = ""
+                        meeting_start_time = ""
+                        meeting_end_time = ""
                         time_commitment = ""
                         anticipated_deadline = None
 
                         # Conditional form fields based on delivery type
                         if anticipated_delivery == "Meeting notes":
                             st.markdown("**📅 Meeting Details**")
-                            col1, col2 = st.columns(2)
+                            meeting_time_options = [
+                                "9:00 AM", "10:00 AM", "11:00 AM", "12:00 PM",
+                                "1:00 PM", "2:00 PM", "3:00 PM", "4:00 PM", "5:00 PM",
+                            ]
+                            col1, col2, col3 = st.columns(3)
                             with col1:
                                 date_support = st.date_input("Date of Meeting *", value=datetime.today().date())
                             with col2:
-                                meeting_time_options = [
-                                    "9:00 AM", "10:00 AM", "11:00 AM", "12:00 PM",
-                                    "1:00 PM", "2:00 PM", "3:00 PM", "4:00 PM", "5:00 PM",
-                                ]
-                                meeting_time = st.selectbox(
-                                    "Meeting Time *",
+                                meeting_start_time = st.selectbox(
+                                    "Start Time *",
                                     options=meeting_time_options,
                                     index=0,
-                                    key="support_meeting_time",
+                                    key="support_meeting_start_time",
                                 )
+                            with col3:
+                                meeting_end_time = st.selectbox(
+                                    "End Time *",
+                                    options=meeting_time_options,
+                                    index=len(meeting_time_options) - 1,
+                                    key="support_meeting_end_time",
+                                )
+                            meeting_time = f"{meeting_start_time}-{meeting_end_time}"
                             request_description = st.text_area("Meeting Description *", placeholder='Describe the meeting topic, agenda, or specific requirements...', height=150, key='meeting_description')
                         
                         else:
@@ -7139,8 +7149,16 @@ GU-TAP System
                             if anticipated_delivery == "Meeting notes":
                                 if not date_support: 
                                     errors.append("Date of meeting is required.")
-                                if not meeting_time:
-                                    errors.append("Meeting time is required.")
+                                if not meeting_start_time:
+                                    errors.append("Start time is required.")
+                                if not meeting_end_time:
+                                    errors.append("End time is required.")
+                                if (
+                                    meeting_start_time
+                                    and meeting_end_time
+                                    and meeting_time_options.index(meeting_start_time) >= meeting_time_options.index(meeting_end_time)
+                                ):
+                                    errors.append("End time must be after start time.")
                             else:
                                 if not time_commitment: 
                                     errors.append("Time commitment is required.")
