@@ -7068,24 +7068,40 @@ GU-TAP System
                         if anticipated_delivery == "Meeting notes":
                             st.markdown("**📅 Meeting Details**")
                             meeting_time_options = [
-                                "9:00 AM", "10:00 AM", "11:00 AM", "12:00 PM",
-                                "1:00 PM", "2:00 PM", "3:00 PM", "4:00 PM", "5:00 PM",
+                                (
+                                    datetime.combine(
+                                        datetime.today().date(),
+                                        datetime.strptime("9:00 AM", "%I:%M %p").time(),
+                                    )
+                                    + timedelta(minutes=30 * i)
+                                ).strftime("%I:%M %p").lstrip("0")
+                                for i in range(17)
                             ]
+                            meeting_start_options = meeting_time_options[:-2]
                             col1, col2, col3 = st.columns(3)
                             with col1:
                                 date_support = st.date_input("Date of Meeting *", value=datetime.today().date())
                             with col2:
                                 meeting_start_time = st.selectbox(
                                     "Start Time *",
-                                    options=meeting_time_options,
+                                    options=meeting_start_options,
                                     index=0,
                                     key="support_meeting_start_time",
                                 )
+                            start_time_index = meeting_time_options.index(meeting_start_time)
+                            default_end_time = meeting_time_options[start_time_index + 2]
+                            meeting_end_options = meeting_time_options[start_time_index + 1:]
+                            if (
+                                st.session_state.get("support_meeting_start_time_previous") != meeting_start_time
+                                or st.session_state.get("support_meeting_end_time") not in meeting_end_options
+                            ):
+                                st.session_state["support_meeting_end_time"] = default_end_time
+                            st.session_state["support_meeting_start_time_previous"] = meeting_start_time
                             with col3:
                                 meeting_end_time = st.selectbox(
                                     "End Time *",
-                                    options=meeting_time_options,
-                                    index=len(meeting_time_options) - 1,
+                                    options=meeting_end_options,
+                                    index=meeting_end_options.index(st.session_state["support_meeting_end_time"]),
                                     key="support_meeting_end_time",
                                 )
                             meeting_time = f"{meeting_start_time}-{meeting_end_time}"
@@ -7153,12 +7169,6 @@ GU-TAP System
                                     errors.append("Start time is required.")
                                 if not meeting_end_time:
                                     errors.append("End time is required.")
-                                if (
-                                    meeting_start_time
-                                    and meeting_end_time
-                                    and meeting_time_options.index(meeting_start_time) >= meeting_time_options.index(meeting_end_time)
-                                ):
-                                    errors.append("End time must be after start time.")
                             else:
                                 if not time_commitment: 
                                     errors.append("Time commitment is required.")
