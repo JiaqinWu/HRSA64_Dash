@@ -482,6 +482,7 @@ def send_ga_support_notifications_to_all(
     tap_name,
     tap_email,
     date_str=None,
+    meeting_time=None,
     time_commitment=None,
     anticipated_deadline=None,
 ):
@@ -505,6 +506,7 @@ A new support request has been submitted and is available for assignment.
 
 Request Details:
 - Date: {date_str or 'N/A'}
+- Time: {meeting_time or 'N/A'}
 - TAP Name: {tap_name}
 - TAP Email: {tap_email}
 - Request Description: {request_description}
@@ -7055,10 +7057,28 @@ GU-TAP System
                             if anticipated_delivery_other:
                                 anticipated_delivery = anticipated_delivery_other
 
+                        date_support = None
+                        meeting_time = ""
+                        time_commitment = ""
+                        anticipated_deadline = None
+
                         # Conditional form fields based on delivery type
                         if anticipated_delivery == "Meeting notes":
                             st.markdown("**📅 Meeting Details**")
-                            date_support = st.date_input("Date of Meeting *", value=datetime.today().date())
+                            col1, col2 = st.columns(2)
+                            with col1:
+                                date_support = st.date_input("Date of Meeting *", value=datetime.today().date())
+                            with col2:
+                                meeting_time_options = [
+                                    "9:00 AM", "10:00 AM", "11:00 AM", "12:00 PM",
+                                    "1:00 PM", "2:00 PM", "3:00 PM", "4:00 PM", "5:00 PM",
+                                ]
+                                meeting_time = st.selectbox(
+                                    "Meeting Time *",
+                                    options=meeting_time_options,
+                                    index=0,
+                                    key="support_meeting_time",
+                                )
                             request_description = st.text_area("Meeting Description *", placeholder='Describe the meeting topic, agenda, or specific requirements...', height=150, key='meeting_description')
                         
                         else:
@@ -7119,6 +7139,8 @@ GU-TAP System
                             if anticipated_delivery == "Meeting notes":
                                 if not date_support: 
                                     errors.append("Date of meeting is required.")
+                                if not meeting_time:
+                                    errors.append("Meeting time is required.")
                             else:
                                 if not time_commitment: 
                                     errors.append("Time commitment is required.")
@@ -7139,7 +7161,7 @@ GU-TAP System
                                 submit_ts = datetime.now().strftime("%Y-%m-%d %H:%M")
                                 new_row_support = {
                                     "Date": date_support.strftime("%Y-%m-%d") if date_support else "",
-                                    "Time request needed": "",
+                                    "Time request needed": meeting_time if anticipated_delivery == "Meeting notes" else "",
                                     "Request description": request_description,
                                     "Anticipated Deliverable": anticipated_delivery,
                                     "TAP Name": staff_name,
@@ -7194,6 +7216,7 @@ GU-TAP System
 
     Request Details:
     - Date: {date_str_email if date_str_email else 'N/A'}
+    {f"- Time: {meeting_time}" if meeting_time else ""}
     - TAP Name: {staff_name}
     - TAP Email: {user_email}
     - Request Description: {request_description}
@@ -7238,6 +7261,7 @@ GU-TAP System
                                             tap_name=staff_name,
                                             tap_email=user_email,
                                             date_str=date_support.strftime("%Y-%m-%d") if date_support else "",
+                                            meeting_time=meeting_time if anticipated_delivery == "Meeting notes" else "",
                                             time_commitment=time_commitment if anticipated_delivery != "Meeting notes" else "",
                                             anticipated_deadline=(
                                                 anticipated_deadline.strftime("%Y-%m-%d")
@@ -9006,6 +9030,7 @@ GU-TAP System
                             "Submission Date",
                             "Assigned Date",
                             "Date",
+                            "Time request needed",
                             "Request description",
                             "Anticipated Deliverable",
                             "TAP Name",
@@ -9532,4 +9557,3 @@ GU-TAP System
                             "Date", "Time request needed", "Request description", "Anticipated Deliverable", 
                             "TAP Name", "TAP email", "Request status"
                         ]].reset_index(drop=True))
-
