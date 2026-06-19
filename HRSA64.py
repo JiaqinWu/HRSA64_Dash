@@ -133,6 +133,56 @@ hr {
   line-height: 1.48;
   font-weight: 400;
 }
+.support-section-header {
+  background: rgba(255,255,255,0.86);
+  border: 1px solid rgba(15, 42, 98, 0.11);
+  border-left: 5px solid #1565c0;
+  border-radius: 10px;
+  padding: 0.95rem 1rem;
+  margin: 1.4rem 0 0.95rem;
+  box-shadow: 0 4px 18px rgba(15, 23, 42, 0.05);
+}
+.support-section-kicker {
+  color: #64748b;
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 0.2rem;
+}
+.support-section-title {
+  color: #0f2a62;
+  font-size: 1.08rem;
+  font-weight: 700;
+  line-height: 1.28;
+}
+.support-helper {
+  color: #64748b;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  margin: -0.25rem 0 0.9rem;
+}
+.support-time-summary {
+  background: linear-gradient(135deg, #eef6ff 0%, #f8fbff 100%);
+  border: 1px solid #bfdbfe;
+  border-radius: 10px;
+  padding: 0.75rem 0.9rem;
+  margin: 0.2rem 0 0.95rem;
+  color: #0f2a62;
+  font-weight: 650;
+  text-align: center;
+}
+.support-time-summary span {
+  color: #64748b;
+  font-weight: 600;
+  margin-right: 0.35rem;
+}
+.support-subtle-note {
+  color: #64748b;
+  font-size: 0.84rem;
+  line-height: 1.35;
+  margin-top: 0.25rem;
+}
 /* Sidebar user */
 .gutap-sidebar-user {
   background: linear-gradient(145deg, #ffffff 0%, #f2f6fc 100%);
@@ -7043,10 +7093,9 @@ GU-TAP System
                             """, unsafe_allow_html=True)
 
                         st.markdown("""
-                            <div style='background: #f8f9fa; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); padding: 1.5em; margin-bottom: 1em; margin-top: 2em;'>
-                                <h3 style='color: #1a237e; font-family: "Segoe UI", sans-serif; font-weight: 700; margin-bottom: 1em; text-align: center;'>
-                                    ✍️ Submit New Student Support Request
-                                </h3>
+                            <div class="support-section-header">
+                                <div class="support-section-kicker">New request</div>
+                                <div class="support-section-title">Submit Student Support Request</div>
                             </div>
                         """, unsafe_allow_html=True)
 
@@ -7066,7 +7115,15 @@ GU-TAP System
 
                         # Conditional form fields based on delivery type
                         if anticipated_delivery == "Meeting notes":
-                            st.markdown("**📅 Meeting Details**")
+                            st.markdown("""
+                                <div class="support-section-header" style="margin-top: 1rem;">
+                                    <div class="support-section-kicker">Meeting schedule</div>
+                                    <div class="support-section-title">Date and time window</div>
+                                </div>
+                                <div class="support-helper">
+                                    Choose the meeting start time first. The end time defaults to one hour later and can be adjusted in 30-minute increments.
+                                </div>
+                            """, unsafe_allow_html=True)
                             meeting_time_options = [
                                 (
                                     datetime.combine(
@@ -7105,10 +7162,23 @@ GU-TAP System
                                     key="support_meeting_end_time",
                                 )
                             meeting_time = f"{meeting_start_time}-{meeting_end_time}"
+                            st.markdown(
+                                f"""
+                                <div class="support-time-summary">
+                                    <span>Time requested</span>{meeting_time}
+                                </div>
+                                """,
+                                unsafe_allow_html=True,
+                            )
                             request_description = st.text_area("Meeting Description *", placeholder='Describe the meeting topic, agenda, or specific requirements...', height=150, key='meeting_description')
                         
                         else:
-                            st.markdown("**⏰ Project Timeline**")
+                            st.markdown("""
+                                <div class="support-section-header" style="margin-top: 1rem;">
+                                    <div class="support-section-kicker">Project timeline</div>
+                                    <div class="support-section-title">Estimate effort and deadline</div>
+                                </div>
+                            """, unsafe_allow_html=True)
                             col1, col2 = st.columns(2)
                         
                             with col1:
@@ -7126,33 +7196,27 @@ GU-TAP System
                             date_support = None
 
                         # Preferred RA Selection
-                        st.markdown("**👤 Preferred Research Assistant Assignment (Optional)**")
+                        st.markdown("""
+                            <div class="support-section-header">
+                                <div class="support-section-kicker">Assignment</div>
+                                <div class="support-section-title">Preferred Research Assistant</div>
+                            </div>
+                            <div class="support-helper">
+                                Leave this as No preference to notify all research assistants.
+                            </div>
+                        """, unsafe_allow_html=True)
                         ra_list = ["No preference"] + sorted([name for name in STUDENT_SCHEDULE.keys()])
                         preferred_ra = st.selectbox(
-                            "Select a preferred Research Assistant to assign (or leave as 'No preference' to notify all RAs)",
+                            "Research Assistant",
                             options=ra_list,
                             index=0,
                             key='preferred_ra_selection'
                         )
 
-                        # Submit button
-                        st.markdown("""
-                            <style>
-                            .stButton > button {
-                                width: 100%;
-                                background-color: #cdb4db;
-                                color: black;
-                                font-family: Arial, "Segoe UI", sans-serif;
-                                font-weight: 600;
-                                border-radius: 8px;
-                                padding: 0.6em;
-                                margin-top: 1em;
-                            }
-                            </style>
-                        """, unsafe_allow_html=True)
+                        st.markdown('<div class="support-subtle-note">Review the details before submitting. Assigned requests are emailed directly; unassigned requests notify all RAs.</div>', unsafe_allow_html=True)
 
                         # Submit logic
-                        if st.button("Submit",key='support_submit1'):
+                        if st.button("Submit Student Support Request", key='support_submit1', type="primary"):
                             errors = []
                             drive_links_del = ""  # Ensure always defined
                         
