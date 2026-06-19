@@ -465,181 +465,46 @@ def send_email_mailjet(to_email, subject, body):
         st.error(f"❗ Mailjet error: {e}")
         return False
 
-# Student schedule data
+# Research assistant roster (email only; all RAs are notified for new requests)
 STUDENT_SCHEDULE = {
-    "Asha Patel": {
-        "email": "ap2349@georgetown.edu",
-        "schedule": {
-            "Monday": "9am - 5pm",
-            "Tuesday": "9am - 12pm", 
-            "Wednesday": "9am - 5pm",
-            "Thursday": "9am - 5pm",
-            "Friday": "9am - 5pm"
-        }
-    },
-    "Hang Nguyen": {
-        "email": "htn16@georgetown.edu",
-        "schedule": {
-            "Monday": "9am - 5pm",
-            "Tuesday": "9am - 5pm",
-            "Wednesday": "9am - 5pm", 
-            "Thursday": "9am - 5pm",
-            "Friday": "9am - 5pm"
-        }
-    },
-    "Jocelin Diaz": {
-        "email": "jd2262@georgetown.edu",
-        "schedule": {
-            "Monday": "9am - 5pm",
-            "Tuesday": "9am - 5pm",
-            "Wednesday": "9am - 5pm", 
-            "Thursday": "9am - 5pm",
-            "Friday": "9am - 5pm"
-        }
-    },
-    "Spoorthi Vallamkonda": {
-        "email": "ssv23@georgetown.edu", 
-        "schedule": {
-            "Monday": "9am - 5pm",
-            "Tuesday": "9am - 5pm",
-            "Wednesday": "9am - 5pm", 
-            "Thursday": "9am - 5pm",
-            "Friday": "9am - 5pm"
-        }
-    },
-    "Desiree Butler": {
-        "email": "db1718@georgetown.edu",
-        "schedule": {
-            "Monday": "9am - 5pm",
-            "Tuesday": "9am - 5pm",
-            "Wednesday": "9am - 5pm", 
-            "Thursday": "9am - 5pm",
-            "Friday": "9am - 5pm"
-        }
-    },
-    "Japhet Osuji": {
-        "email": "jo903@georgetown.edu",
-        "schedule": {
-            "Monday": "9am - 5pm",
-            "Tuesday": "9am - 5pm",
-            "Wednesday": "9am - 5pm",
-            "Thursday": "9am - 5pm",
-            "Friday": "9am - 5pm"
-        }
-    }
+    "Asha Patel": {"email": "ap2349@georgetown.edu"},
+    "Hang Nguyen": {"email": "htn16@georgetown.edu"},
+    "Jocelin Diaz": {"email": "jd2262@georgetown.edu"},
+    "Spoorthi Vallamkonda": {"email": "ssv23@georgetown.edu"},
+    "Desiree Butler": {"email": "db1718@georgetown.edu"},
+    "Japhet Osuji": {"email": "jo903@georgetown.edu"},
 }
 
-def parse_time_range(time_str):
-    """Parse time range string like '9am - 5pm' or '10am - 12pm, 2pm - 5pm'"""
-    if not time_str or time_str.strip() == "":
-        return []
-    
-    time_ranges = []
-    # Handle multiple ranges separated by comma
-    ranges = time_str.split(',')
-    
-    for range_str in ranges:
-        range_str = range_str.strip()
-        if ' - ' in range_str:
-            start_time, end_time = range_str.split(' - ')
-            time_ranges.append((start_time.strip(), end_time.strip()))
-    
-    return time_ranges
 
-def time_to_24h(time_str):
-    """Convert time string like '9am' or '2pm' to 24-hour format"""
-    time_str = time_str.strip().lower()
-    
-    # Remove 'am'/'pm' and convert
-    if 'am' in time_str:
-        hour = int(time_str.replace('am', '').strip())
-        if hour == 12:
-            hour = 0
-    elif 'pm' in time_str:
-        hour = int(time_str.replace('pm', '').strip())
-        if hour != 12:
-            hour += 12
-    else:
-        hour = int(time_str)
-    
-    return hour
-
-def is_time_overlap(request_time, student_availability):
-    """Check if request time overlaps with student availability"""
-    if not student_availability:
-        return False
-    
-    # Parse request time (format: "09:00 - 17:00")
-    try:
-        if ' - ' not in request_time:
-            return False
-        request_start, request_end = request_time.split(' - ')
-        # Handle both "09:00" and "9:00" formats
-        req_start_hour = int(request_start.split(':')[0])
-        req_end_hour = int(request_end.split(':')[0])
-    except Exception as e:
-        st.warning(f"⚠️ Error parsing request time '{request_time}': {e}")
-        return False
-    
-    for avail_start, avail_end in student_availability:
-        avail_start_hour = time_to_24h(avail_start)
-        avail_end_hour = time_to_24h(avail_end)
-        
-        # Check for overlap
-        if req_start_hour < avail_end_hour and req_end_hour > avail_start_hour:
-            return True
-    
-    return False
-
-def get_available_students(date_str, time_str):
-    """Get list of students available for the given date and time"""
-    try:
-        # Get day of week from date
-        date_obj = datetime.strptime(date_str, "%Y-%m-%d")
-        day_name = date_obj.strftime("%A")  # Monday, Tuesday, etc.
-        
-        available_students = []
-        
-        for student_name, student_info in STUDENT_SCHEDULE.items():
-            schedule = student_info["schedule"]
-            if day_name in schedule:
-                availability = parse_time_range(schedule[day_name])
-                if is_time_overlap(time_str, availability):
-                    available_students.append({
-                        "name": student_name,
-                        "email": student_info["email"],
-                        "availability": schedule[day_name]
-                    })
-        
-        return available_students
-    except Exception as e:
-        st.error(f"❌ Error getting available students: {e}")
-        st.exception(e)
-        return []
-
-def send_support_request_notifications(date_str, time_str, request_description, anticipated_delivery, tap_name, tap_email):
-    """Send email notifications to available students"""
-    available_students = get_available_students(date_str, time_str)
-    
-    if not available_students:
-        st.warning("⚠️ No students are available during the requested time slot. Sending notifications to all research assistants instead.")
-        # Fallback: send to all students if none are available
-        available_students = [{"name": name, "email": info["email"], "availability": ""} 
-                             for name, info in STUDENT_SCHEDULE.items()]
-    
-    subject = f"New Support Request Available - {date_str} at {time_str}"
+def send_ga_support_notifications_to_all(
+    request_description,
+    anticipated_delivery,
+    tap_name,
+    tap_email,
+    date_str=None,
+    time_commitment=None,
+    anticipated_deadline=None,
+):
+    """Send email notifications to all research assistants for a new support request."""
+    is_meeting = anticipated_delivery == "Meeting notes"
+    subject = (
+        f"New Support Request Available - {date_str}"
+        if is_meeting and date_str
+        else f"New Project Request Available - {anticipated_delivery}"
+    )
+    student_list = list(STUDENT_SCHEDULE.items())
     success_count = 0
-    total_count = len(available_students)
-    
-    for i, student in enumerate(available_students, 1):
-        body = f"""
-Dear {student['name']},
+    total_count = len(student_list)
 
-A new support request has been submitted and you are available during the requested time slot.
+    for i, (student_name, student_info) in enumerate(student_list, 1):
+        if is_meeting:
+            body = f"""
+Dear {student_name},
+
+A new support request has been submitted and is available for assignment.
 
 Request Details:
-- Date: {date_str}
-- Time: {time_str}
+- Date: {date_str or 'N/A'}
 - TAP Name: {tap_name}
 - TAP Email: {tap_email}
 - Request Description: {request_description}
@@ -651,64 +516,29 @@ GU-TAP System: https://hrsagutap.streamlit.app/
 
 Best regards,
 GU-TAP System
-        """
-        
-        try:
-            status = send_email_mailjet(
-                to_email=student['email'],
-                subject=subject,
-                body=body.strip()
-            )
-            if status:
-                success_count += 1
-                st.success(f"📧 ({i}/{total_count}) Sent to {student['name']} ({student['email']})")
-            else:
-                st.warning(f"⚠️ ({i}/{total_count}) Failed to send to {student['name']} ({student['email']})")
-            
-            # Add delay between emails to avoid rate limiting (except after the last email)
-            if i < total_count:
-                time.sleep(0.8)  # 0.8 second delay between emails
-                
-        except Exception as e:
-            st.error(f"❌ Error sending notification to {student['name']} ({student['email']}): {e}")
-            st.exception(e)
-    
-    if success_count == total_count:
-        return True
-    else:
-        st.warning(f"⚠️ Sent {success_count}/{total_count} emails successfully")
-        return False
-
-def send_project_request_notifications(request_description, anticipated_delivery, time_commitment, anticipated_deadline, tap_name, tap_email):
-    """Send email notifications to all students for non-meeting project requests"""
-    subject = f"New Project Request Available - {anticipated_delivery}"
-    
-    student_list = list(STUDENT_SCHEDULE.items())
-    success_count = 0
-    total_count = len(student_list)
-    
-    for i, (student_name, student_info) in enumerate(student_list, 1):
-        body = f"""
+            """
+        else:
+            body = f"""
 Dear {student_name},
 
 A new project support request has been submitted and is available for assignment.
 
 Project Details:
 - Project Type: {anticipated_delivery}
-- Time Commitment: {time_commitment}
-- Anticipated Deadline: {anticipated_deadline}
+- Time Commitment: {time_commitment or 'N/A'}
+- Anticipated Deadline: {anticipated_deadline or 'N/A'}
 - TAP Name: {tap_name}
 - TAP Email: {tap_email}
 - Project Description: {request_description}
 
-This is a flexible project that can be completed according to your schedule. If you are interested in taking this project, please log into the GU-TAP System and assign it to yourself.
+If you are interested in taking this project, please log into the GU-TAP System and assign it to yourself.
 
 GU-TAP System: https://hrsagutap.streamlit.app/
 
 Best regards,
 GU-TAP System
-        """
-        
+            """
+
         try:
             status = send_email_mailjet(
                 to_email=student_info['email'],
@@ -720,20 +550,18 @@ GU-TAP System
                 st.success(f"📧 ({i}/{total_count}) Sent to {student_name} ({student_info['email']})")
             else:
                 st.warning(f"⚠️ ({i}/{total_count}) Failed to send to {student_name} ({student_info['email']})")
-            
-            # Add delay between emails to avoid rate limiting (except after the last email)
+
             if i < total_count:
-                time.sleep(0.8)  # 0.8 second delay between emails
-                
+                time.sleep(0.8)
+
         except Exception as e:
-            st.error(f"❌ Error sending project notification to {student_name} ({student_info['email']}): {e}")
+            st.error(f"❌ Error sending notification to {student_name} ({student_info['email']}): {e}")
             st.exception(e)
-    
+
     if success_count == total_count:
         return True
-    else:
-        st.warning(f"⚠️ Sent {success_count}/{total_count} emails successfully")
-        return False
+    st.warning(f"⚠️ Sent {success_count}/{total_count} emails successfully")
+    return False
 
 
 def _student_assigned_missing(val):
@@ -7124,7 +6952,7 @@ GU-TAP System
                                     👨‍💻 Student Support Request Center
                                 </div>
                                 <div class="gutap-hero-sub">
-                                    Submit new student support requests with time preferences. The system will automatically notify available research assistants.
+                                    Submit new student support requests. The system will automatically notify all research assistants.
                                 </div>
                             </div>
                         """, unsafe_allow_html=True)
@@ -7156,8 +6984,12 @@ GU-TAP System
                             df_support_prev_disp = df_support_staff_prev[_display_cols].copy()
 
                             _sort_ts = pd.Series(pd.NaT, index=df_support_prev_disp.index)
+                            if "Submission Date" in df_support_prev_disp.columns:
+                                _sort_ts = pd.to_datetime(df_support_prev_disp["Submission Date"], errors="coerce")
                             if "Date" in df_support_prev_disp.columns:
-                                _sort_ts = pd.to_datetime(df_support_prev_disp["Date"], errors="coerce")
+                                _sort_ts = _sort_ts.fillna(
+                                    pd.to_datetime(df_support_prev_disp["Date"], errors="coerce")
+                                )
                             if "Anticipated Deadline" in df_support_prev_disp.columns:
                                 _sort_ts = _sort_ts.fillna(
                                     pd.to_datetime(df_support_prev_disp["Anticipated Deadline"], errors="coerce")
@@ -7227,61 +7059,6 @@ GU-TAP System
                         if anticipated_delivery == "Meeting notes":
                             st.markdown("**📅 Meeting Details**")
                             date_support = st.date_input("Date of Meeting *", value=datetime.today().date())
-                            col1, col2 = st.columns(2)
-                        
-                            # Create time options every 15 minutes from 8 AM to 6 PM
-                            time_options = []
-                            for hour in range(8, 18):  # 8 AM to 5 PM
-                                for minute in [0, 15, 30, 45]:
-                                    time_str = f"{hour:02d}:{minute:02d}"
-                                    time_options.append(time_str)
-                        
-                            # Default to current time if within range, otherwise 9 AM
-                            current_time_str = datetime.now().strftime("%H:%M")
-                            if current_time_str in time_options:
-                                default_start_idx = time_options.index(current_time_str)
-                            else:
-                                default_start_idx = time_options.index("09:00")
-
-                            with col1:
-                                start_time_idx = st.selectbox("Start Time *", 
-                                                            options=range(len(time_options)), 
-                                                            index=default_start_idx,
-                                                            format_func=lambda x: time_options[x])
-                                start_time = time_options[start_time_idx]
-                        
-                            with col2:
-                                # Calculate default end time (1 hour later)
-                                start_hour, start_min = map(int, start_time.split(":"))
-                                end_hour = start_hour + 1
-                                end_min = start_min
-                            
-                                # Handle hour overflow and cap at 18:00
-                                if end_hour >= 18:
-                                    end_time = "18:00"
-                                else:
-                                    end_time = f"{end_hour:02d}:{end_min:02d}"
-                            
-                                # End time options (from start time to 18:00)
-                                end_time_options = []
-                                for i, time_str in enumerate(time_options):
-                                    if i > start_time_idx and time_str <= "18:00":
-                                        end_time_options.append((i, time_str))
-                            
-                                if end_time_options:
-                                    default_end_idx = 0
-                                    if end_time in [t[1] for t in end_time_options]:
-                                        default_end_idx = next(i for i, t in enumerate(end_time_options) if t[1] == end_time)
-                                
-                                    end_time_idx = st.selectbox("End Time *",
-                                                                options=range(len(end_time_options)),
-                                                                index=default_end_idx,
-                                                                format_func=lambda x: end_time_options[x][1])
-                                    end_time = end_time_options[end_time_idx][1]
-                                else:
-                                    end_time = "18:00"
-
-                            time_support = f"{start_time} - {end_time}"
                             request_description = st.text_area("Meeting Description *", placeholder='Describe the meeting topic, agenda, or specific requirements...', height=150, key='meeting_description')
                         
                         else:
@@ -7301,13 +7078,12 @@ GU-TAP System
                         
                             # Set default values for non-meeting requests
                             date_support = None
-                            time_support = None 
 
                         # Preferred RA Selection
                         st.markdown("**👤 Preferred Research Assistant Assignment (Optional)**")
                         ra_list = ["No preference"] + sorted([name for name in STUDENT_SCHEDULE.keys()])
                         preferred_ra = st.selectbox(
-                            "Select a preferred Research Assistant to assign (or leave as 'No preference' to notify all available RAs)",
+                            "Select a preferred Research Assistant to assign (or leave as 'No preference' to notify all RAs)",
                             options=ra_list,
                             index=0,
                             key='preferred_ra_selection'
@@ -7343,8 +7119,6 @@ GU-TAP System
                             if anticipated_delivery == "Meeting notes":
                                 if not date_support: 
                                     errors.append("Date of meeting is required.")
-                                if not time_support: 
-                                    errors.append("Time of meeting is required.")
                             else:
                                 if not time_commitment: 
                                     errors.append("Time commitment is required.")
@@ -7362,9 +7136,10 @@ GU-TAP System
                                 preferred_ra_name = preferred_ra if has_preferred_ra else ""
                                 preferred_ra_email = STUDENT_SCHEDULE[preferred_ra]["email"] if has_preferred_ra else ""
                             
+                                submit_ts = datetime.now().strftime("%Y-%m-%d %H:%M")
                                 new_row_support = {
                                     "Date": date_support.strftime("%Y-%m-%d") if date_support else "",
-                                    "Time request needed": time_support if time_support else "",
+                                    "Time request needed": "",
                                     "Request description": request_description,
                                     "Anticipated Deliverable": anticipated_delivery,
                                     "TAP Name": staff_name,
@@ -7374,7 +7149,9 @@ GU-TAP System
                                     "Request Type": "Meeting" if anticipated_delivery == "Meeting notes" else "Project",
                                     "Student assigned": preferred_ra_name,
                                     "Student email": preferred_ra_email,
-                                    "Request status": "Not Started" if has_preferred_ra else ""
+                                    "Request status": "Not Started" if has_preferred_ra else "",
+                                    "Submission Date": submit_ts,
+                                    "Assigned Date": submit_ts if has_preferred_ra else "",
                                 }
                                 new_data_support = pd.DataFrame([new_row_support])
 
@@ -7417,7 +7194,6 @@ GU-TAP System
 
     Request Details:
     - Date: {date_str_email if date_str_email else 'N/A'}
-    - Time: {time_support if time_support else 'N/A'}
     - TAP Name: {staff_name}
     - TAP Email: {user_email}
     - Request Description: {request_description}
@@ -7452,31 +7228,23 @@ GU-TAP System
                                         st.rerun()
                                     
                                     else:
-                                        # Default behavior: Send notifications based on request type
+                                        # Notify all research assistants
                                         st.markdown("---")
-                                        st.markdown("**📧 Sending notifications to research assistants...**")
+                                        st.markdown("**📧 Sending notifications to all research assistants...**")
                                     
-                                        notification_sent = False
-                                        if anticipated_delivery == "Meeting notes":
-                                            # Send to available students only
-                                            notification_sent = send_support_request_notifications(
-                                                date_str=date_support.strftime("%Y-%m-%d"),
-                                                time_str=time_support,
-                                                request_description=request_description,
-                                                anticipated_delivery=anticipated_delivery,
-                                                tap_name=staff_name,
-                                                tap_email=user_email
-                                            )
-                                        else:
-                                            # Send to all students for non-meeting requests
-                                            notification_sent = send_project_request_notifications(
-                                                request_description=request_description,
-                                                anticipated_delivery=anticipated_delivery,
-                                                time_commitment=time_commitment,
-                                                anticipated_deadline=anticipated_deadline.strftime("%Y-%m-%d"),
-                                                tap_name=staff_name,
-                                                tap_email=user_email
-                                            )
+                                        notification_sent = send_ga_support_notifications_to_all(
+                                            request_description=request_description,
+                                            anticipated_delivery=anticipated_delivery,
+                                            tap_name=staff_name,
+                                            tap_email=user_email,
+                                            date_str=date_support.strftime("%Y-%m-%d") if date_support else "",
+                                            time_commitment=time_commitment if anticipated_delivery != "Meeting notes" else "",
+                                            anticipated_deadline=(
+                                                anticipated_deadline.strftime("%Y-%m-%d")
+                                                if anticipated_delivery != "Meeting notes" and anticipated_deadline
+                                                else ""
+                                            ),
+                                        )
                                     
                                         # Wait a moment to show completion status
                                         time.sleep(1)
@@ -9164,9 +8932,10 @@ GU-TAP System
                     _ra_cols = [
                         c
                         for c in [
+                            "Submission Date",
+                            "Assigned Date",
                             "Date",
                             "Request Type",
-                            "Time request needed",
                             "Request description",
                             "Anticipated Deliverable",
                             "TAP Name",
@@ -9233,8 +9002,18 @@ GU-TAP System
                         )
                         
                         # Display all requests - include Time Commitment and Anticipated Deadline for projects
-                        display_cols = ["Date", "Time request needed", "Request description", "Anticipated Deliverable", 
-                            "TAP Name", "TAP email", "Student assigned", "Student email", "Request status"]
+                        display_cols = [
+                            "Submission Date",
+                            "Assigned Date",
+                            "Date",
+                            "Request description",
+                            "Anticipated Deliverable",
+                            "TAP Name",
+                            "TAP email",
+                            "Student assigned",
+                            "Student email",
+                            "Request status",
+                        ]
                         for col in ["Anticipated Deadline", "Time Commitment", "Request Type"]:
                             if col in all_support_requests.columns and col not in display_cols:
                                 display_cols.insert(2, col)
@@ -9255,26 +9034,33 @@ GU-TAP System
                         if not unassigned_requests.empty:
                             st.markdown("#### 🆕 Unassigned Requests")
                             
-                            # Select request to assign - show Time Commitment for projects when Time request needed is empty
-                            def _time_display(idx):
-                                t = unassigned_requests.at[idx, 'Time request needed']
-                                if not t or (isinstance(t, str) and str(t).strip() == '') or str(t) == 'nan':
-                                    t = unassigned_requests.at[idx, 'Time Commitment'] if 'Time Commitment' in unassigned_requests.columns else ''
-                                return str(t) if t and str(t) != 'nan' else 'N/A'
+                            # Select request to assign
+                            def _unassigned_label(idx):
+                                sub = unassigned_requests.at[idx, 'Submission Date'] if 'Submission Date' in unassigned_requests.columns else ''
+                                sub = str(sub).strip() if sub and str(sub) != 'nan' else ''
+                                prefix = f"{sub} | " if sub else ""
+                                return (
+                                    f"{prefix}{unassigned_requests.at[idx, 'Date']} | "
+                                    f"{unassigned_requests.at[idx, 'TAP Name']} | "
+                                    f"{unassigned_requests.at[idx, 'Anticipated Deliverable']}"
+                                )
+
                             request_indices = unassigned_requests.index.tolist()
                             selected_request_idx = st.selectbox(
                                 "Select a request to assign to yourself",
                                 options=request_indices,
-                                format_func=lambda idx: f"{unassigned_requests.at[idx, 'Date']} | {unassigned_requests.at[idx, 'TAP Name']} | {_time_display(idx)}",
+                                format_func=_unassigned_label,
                                 key='unassigned_requests'
                             )
 
                             if st.button("✅ Assign to Me (Not Started)", key='assign_not_started'):
                                 try:
+                                    assign_ts = datetime.now().strftime("%Y-%m-%d %H:%M")
                                     updated_df_support = df_support.copy()
                                     updated_df_support.loc[selected_request_idx, "Student assigned"] = ga_support_name
                                     updated_df_support.loc[selected_request_idx, "Student email"] = st.session_state.user_email
                                     updated_df_support.loc[selected_request_idx, "Request status"] = "Not Started"
+                                    updated_df_support.loc[selected_request_idx, "Assigned Date"] = assign_ts
 
                                     # Update Google Sheet
                                     updated_df_support = updated_df_support.fillna("")
@@ -9289,12 +9075,11 @@ GU-TAP System
                                     tap_email = updated_df_support.loc[selected_request_idx, "TAP email"]
                                     tap_name = updated_df_support.loc[selected_request_idx, "TAP Name"]
                                     request_date = updated_df_support.loc[selected_request_idx, "Date"]
-                                    request_time = updated_df_support.loc[selected_request_idx, "Time request needed"]
                                     request_description = updated_df_support.loc[selected_request_idx, "Request description"]
                                     anticipated_deliverable = updated_df_support.loc[selected_request_idx, "Anticipated Deliverable"]
                                     
                                     if tap_email and tap_email.strip():
-                                        tap_subject = f"Support Request Assigned - {request_date} at {request_time}"
+                                        tap_subject = f"Support Request Assigned - {request_date}"
                                         tap_body = f"""
 Dear {tap_name},
 
@@ -9302,7 +9087,6 @@ Your support request has been assigned to a research assistant.
 
 Request Details:
 - Date: {request_date}
-- Time: {request_time}
 - Request Description: {request_description}
 - Anticipated Deliverable: {anticipated_deliverable}
 
@@ -9526,7 +9310,7 @@ GU-TAP System
                                 🔄 Re-assign Support Center
                             </div>
                             <div class="gutap-hero-sub">
-                                If you are unable to complete an assigned support request, you can re-assign it. The request will become unassigned and notifications will be sent to all available students.
+                                If you are unable to complete an assigned support request, you can re-assign it. The request will become unassigned and notifications will be sent to all research assistants.
                             </div>
                         </div>
                     """, unsafe_allow_html=True)
@@ -9566,7 +9350,7 @@ GU-TAP System
                             key='reassign_requests'
                         )
 
-                        st.warning("⚠️ **Warning:** Re-assigning this request will remove your assignment and send notifications to all available students. This action cannot be undone.")
+                        st.warning("⚠️ **Warning:** Re-assigning this request will remove your assignment and send notifications to all research assistants. This action cannot be undone.")
 
                         if st.button("🔄 Re-assign Support Request", key='reassign_support'):
                             try:
@@ -9586,6 +9370,7 @@ GU-TAP System
                                 # Clear assignment fields
                                 updated_df_support.loc[selected_reassign_idx, "Student assigned"] = ""
                                 updated_df_support.loc[selected_reassign_idx, "Student email"] = ""
+                                updated_df_support.loc[selected_reassign_idx, "Assigned Date"] = ""
                                 # Reset status to empty/unassigned state since no one is assigned
                                 updated_df_support.loc[selected_reassign_idx, "Request status"] = ""
                                 
@@ -9625,7 +9410,6 @@ A support request has been re-assigned and is now available for assignment.
 
 Request Details:
 - Date: {date_str_display if request_date else 'N/A'}
-- Time: {request_time if request_time else 'N/A'}
 - TAP Name: {tap_name}
 - TAP Email: {tap_email}
 - Request Description: {request_description}
