@@ -3401,17 +3401,16 @@ USERS = {
     },
 }
 
-lis_location = ["Maricopa Co. - Arizona", "Alameda Co. - California", "Los Angeles Co. - California", "Orange Co. - California", "Riverside Co. - California",\
-                "Sacramento Co. - California", "San Bernadino Co. -California", "San Diego Co. - California", "San Francisco Co. - California",\
-                "Broward Co. - Florida", "Duval Co. - Florida", "Hillsborough Co. - Florida", "Miami-Dade Co. - Florida","Orange Co. - Florida",\
-                "Palm Beach Co. - Florida", "Pinellas Co. - Florida", "Cobb Co. - Georgia", "Dekalb Co. - Georgia", "Fulton Co. - Georgia",\
-                "Gwinnett Co. - Georgia", "Cook Co. - Illinois", "Marion Co. - Indiana", "East Baton Rough Parish - Louisiana",\
-                "Orleans Parish - Louisiana", "Baltimore City - Maryland", "Montgomery Co. - Maryland", "Prince George's Co. - Maryland",\
-                "Suffolk Co. - Massachusetts", "Wayne Co. - Michigan", "Clark Co. - Nevada", "Essex Co. - New Jersey","Hudson Co. - New Jersey",\
-                "Bronx Co. - New York", "Kings Co. - New York", "New York Co. - New York", "Queens Co. - New York", "Mecklenburg Co. - North Carolina",\
-                "Cuyahoga Co. - Ohio", "Franklin Co. - Ohio", "Hamilton Co. - Ohio", "Philadelphia Co. - Pennsylvania", "Shelby Co. - Tennessee",\
-                "Bexar Co. - Texas", "Dallas Co. - Texas","Harris Co. - Texas", "Tarrant Co. - Texas","Travis Co. - Texas","King Co. - Washington",\
-                "Washington, DC", "San Juan Municipio - Puerto Rico", "Alabama", "Arkansas","Kentucky","Mississippi","Missouri","Oklahoma","South Carolina"]
+lis_location = ["Alabama (AL)", "Arkansas (AR)", "Atlanta (Fulton County, GA)", "Austin (Travis County, TX)", "Baltimore (MD)", "Baton Rouge (East Baton Rouge, LA)", \
+                "Boston (Suffolk County, MA)", "Charlotte (Mecklenburg County, NC)", "Chicago (Cook County, IL)", "Cleveland (Cuyahoga County, OH)", \
+                "Columbus (Franklin County, OH)", "Dallas (TX)", "Detroit (Wayne County, MI)","Fort Lauderdale (Broward County, FL)",\
+                "Fort Worth (Tarrant County, TX)", "Houston (Harris County, TX)", "Indianapolis (Marion County, IN )",\
+                "Jacksonville (FL)", "Jersey City (Hudson County, NJ)", "Kentucky (KY)", "Las Vegas (Clark County, NV)", "Los Angeles (CA )", \
+                "Memphis (Shelby County, TN)","Miami (Miami-Dade County, FL )","Mississippi (MS)","Missouri (MO)","New Orleans (Orleans Parish, LA )",\
+                "New York (NY )","Newark (Essex County, NJ)","Oakland (Alameda County, CA )","Ohio (OH)","Oklahoma (OK)","Orlando (Orange County, FL )"\
+                "Philadelphia (PA )","Phoenix (Maricopa County, AZ )","Sacramento (CA )","San Antonio (Bexar County, TX )","San Bernadino (CA )",\
+                "San Diego (CA )","San Francisco (CA )","San Juan (PR)","Santa Ana (CA )","Seattle (King County, WA)","South Carolina (SC)","Tampa (FL)",\
+                "Washington DC","West Palm Beach (FL)"]
 
 lis_organization = ["Maricopa County Public Health Department","Alameda County Public Health Department","Los Angeles County Department of Public Health",\
     "Orange County Health Care Agency","Riverside County Department of Public Health","Sacramento County Public Health","San Bernadino County Public Health",\
