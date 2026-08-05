@@ -2292,11 +2292,57 @@ def _travel_submission_date(row):
         return None
 
 
+# --- Program Assistant handover (Mabintou Ouattara -> Lauren Mathae) -------------------
+# Requests submitted on/after this date use the Lauren routing and the normal automated
+# workflow (escalation reminders, final approval email to the traveler).
+#
+# Requests submitted BEFORE this date are legacy: the app does not re-route them, does not
+# escalate them, does not flip any of their approval statuses, and does not email anyone
+# about them. They are hidden from the coordinator pending queue and surface only under
+# "Fully Approved Forms". A blank Lauren column on a legacy row is expected, not an error.
+TRAVEL_NEW_LOGIC_START = datetime(2026, 8, 4).date()
+
+
+def travel_row_is_new_logic(row) -> bool:
+    """True if this request falls under the post-handover (Lauren) workflow."""
+    sub_d = _travel_submission_date(row)
+    if sub_d is None:
+        # Unknown / unparseable submission date -> treat as legacy and leave it alone.
+        return False
+    return sub_d >= TRAVEL_NEW_LOGIC_START
+
+
+def travel_legacy_fully_approved(row) -> bool:
+    """
+    Completion test for pre-handover rows.
+
+    These were signed by Mabintou (Program Assistant) + Kemisha (Lead), with Jen sometimes
+    covering a line. Lauren will normally be blank on them. Any two approver lines signed
+    counts as complete; a missing Lauren signature is not treated as outstanding work.
+    """
+    if travel_row_has_any_rejection(row):
+        return False
+    legacy_cols = (
+        'Mabintou Approval Status',
+        'Kemisha Approval Status',
+        'Jen Approval Status',
+        'Lauren Approval Status',
+    )
+    signed = sum(
+        1 for c in legacy_cols
+        if _travel_approval_status_norm(row.get(c)) == 'approve'
+    )
+    return signed >= 2
+
+
 def travel_escalation_applied(row) -> bool:
     return bool(str(row.get(TRAVEL_ESCALATION_COL, '') or '').strip())
 
 
 def travel_row_needs_escalation(row) -> bool:
+    # Legacy rows are frozen: no status changes, no reminder emails.
+    if not travel_row_is_new_logic(row):
+        return False
     if not is_general_travel_submitter(row.get('Name', ''), row.get('Email', '')):
         return False
     if travel_row_has_any_rejection(row):
@@ -5000,6 +5046,10 @@ else:
                             # Filter forms that are routed to this coordinator
                             def is_routed_to_coordinator(row):
                                 """Check if form is routed to current coordinator"""
+                                # Pre-handover requests are frozen — they never appear as pending
+                                # work. They show up under "Fully Approved Forms" instead.
+                                if not travel_row_is_new_logic(row):
+                                    return False
                                 traveler_name_check = str(row.get('Name', '')).lower()
                                 traveler_email_check = str(row.get('Email', '')).lower()
                                 
@@ -5085,8 +5135,9 @@ else:
                                 if TRAVEL_ESCALATION_COL in pending_forms.columns:
                                     display_cols.append(TRAVEL_ESCALATION_COL)
                                 # Add approval status columns that exist
-                                approval_status_cols = ['Kemisha Approval Status', 'Mabintou Approval Status', 
-                                                       'Jen Approval Status', 'Lauren Approval Status']
+                                # Legacy rows never reach this queue, so the Mabintou column is omitted here.
+                                approval_status_cols = ['Lauren Approval Status', 'Kemisha Approval Status',
+                                                       'Jen Approval Status']
                                 for col in approval_status_cols:
                                     if col in pending_forms.columns:
                                         display_cols.append(col)
@@ -5711,6 +5762,10 @@ GU-TAP System
                                 """Check if form is fully approved based on its routing"""
                                 if travel_row_has_any_rejection(row):
                                     return False
+                                # Pre-handover rows use the legacy two-signature test so a blank
+                                # Lauren column doesn't make them look incomplete.
+                                if not travel_row_is_new_logic(row):
+                                    return travel_legacy_fully_approved(row)
                                 traveler_name_check = str(row.get('Name', '')).lower()
                                 traveler_email_check = str(row.get('Email', '')).lower()
                                 
@@ -5728,7 +5783,7 @@ GU-TAP System
                                     # Lauren's requests → Kemisha + Jen must both approve
                                     kemisha_status = str(row.get('Kemisha Approval Status', '')).lower()
                                     jen_status = str(row.get('Jen Approval Status', '')).lower()
-                                    return lauren_status == 'approve' and kemisha_status == 'approve'
+                                    return jen_status == 'approve' and kemisha_status == 'approve'
                                 else:
                                     # General: one approval per line — (Lauren or Jen) and (Kemisha or Jen)
                                     return travel_general_fully_approved(row)
@@ -5739,6 +5794,9 @@ GU-TAP System
                             else:
                                 fully_approved = pd.DataFrame()
                             
+                            if fully_approved.empty:
+                                st.info("No fully approved travel forms to show yet.")
+
                             if not fully_approved.empty:
                                 approved_display_cols = ['Name', 'Destination', 'Departure Date', 'Return Date', 'PDF Link']
                                 # Add all approval status and date columns that exist
