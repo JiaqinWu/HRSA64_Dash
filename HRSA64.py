@@ -3457,7 +3457,7 @@ lis_location = ["Alabama (AL)", "Arkansas (AR)", "Atlanta (Fulton County, GA)", 
                 "Fort Worth (Tarrant County, TX)", "Houston (Harris County, TX)", "Indianapolis (Marion County, IN )",\
                 "Jacksonville (FL)", "Jersey City (Hudson County, NJ)", "Kentucky (KY)", "Las Vegas (Clark County, NV)", "Los Angeles (CA )", \
                 "Memphis (Shelby County, TN)","Miami (Miami-Dade County, FL )","Mississippi (MS)","Missouri (MO)","New Orleans (Orleans Parish, LA )",\
-                "New York (NY )","Newark (Essex County, NJ)","Oakland (Alameda County, CA )","Ohio (OH)","Oklahoma (OK)","Orlando (Orange County, FL )"\
+                "New York (NY )","Newark (Essex County, NJ)","Oakland (Alameda County, CA )","Ohio (OH)","Oklahoma (OK)","Orlando (Orange County, FL )",\
                 "Philadelphia (PA )","Phoenix (Maricopa County, AZ )","Sacramento (CA )","San Antonio (Bexar County, TX )","San Bernadino (CA )",\
                 "San Diego (CA )","San Francisco (CA )","San Juan (PR)","Santa Ana (CA )","Seattle (King County, WA)","South Carolina (SC)","Tampa (FL)",\
                 "Washington DC","West Palm Beach (FL)"]
