@@ -6914,21 +6914,11 @@ GU-TAP System
                         with col2:
                             date_int = st.date_input("Date of Interaction *", value=datetime.today().date())
                     
-                        # If No Ticket ID, ask for Jurisdiction
-                        jurisdiction_for_no_ticket1 = None
-                        if ticket_id_int == "No Ticket ID":
-                            jurisdiction_for_no_ticket1 = st.selectbox(
-                                "Jurisdiction *",
-                                lis_location,
-                                index=None,
-                                placeholder="Select option...",
-                                key='juris_interaction1'
-                            )
-
                         list_interaction = [
-                            "Email", "Phone Call", "In-Person Meeting", "Online Meeting","Peer Learning Meetings (PLNs)", "Other"
+                            "Email", "Phone Call", "In-Person Meeting", "Online Meeting", "Peer Learning Meetings (PLNs)", "Other"
                         ]
 
+                        # Asked before jurisdiction, because it determines which jurisdiction field applies
                         type_interaction = st.selectbox(
                             "Type of Interaction *",
                             list_interaction,
@@ -6936,27 +6926,39 @@ GU-TAP System
                             placeholder="Select option..."
                         )
 
-                        # PLNs span multiple jurisdictions - kept separate from the single-select above
-                        pln_jurisdictions1 = []
-                        if type_interaction == "Peer Learning Meetings (PLNs)":
-                            pln_jurisdictions1 = st.multiselect(
+                        is_pln = type_interaction == "Peer Learning Meetings (PLNs)"
+
+                        jurisdiction_for_no_ticket = None
+                        pln_jurisdictions = []
+
+                        if is_pln:
+                            # PLNs span multiple jurisdictions - this replaces the single-jurisdiction field
+                            pln_jurisdictions = st.multiselect(
                                 "Jurisdiction(s) for PLN *",
                                 lis_location,
                                 default=[],
-                                placeholder="Select one or more...",
                                 key='juris_pln_coord'
+                            )
+                        elif ticket_id_int == "No Ticket ID":
+                            jurisdiction_for_no_ticket = st.selectbox(
+                                "Jurisdiction *",
+                                lis_location,
+                                index=None,
+                                placeholder="Select option...",
+                                key='juris_interaction_coord'
                             )
 
                         # If "Other" is selected, show a text input for custom value
                         if type_interaction == "Other":
                             type_interaction_other = st.text_input("Please specify the Type of Interaction *")
                             if type_interaction_other:
-                                type_interaction = type_interaction_other 
-                    
-                        interaction_description = st.text_area("Short Summary *", placeholder='Enter text', height=150, key='interaction_description1') 
+                                type_interaction = type_interaction_other
+
+                        interaction_description = st.text_area("Short Summary *", placeholder='Enter text',
+                            height=150, key='interaction_description_coord')
 
                         document_int = st.file_uploader(
-                            "Upload any files or attachments that are relevant to this interaction.", 
+                            "Upload any files or attachments that are relevant to this interaction.",
                             accept_multiple_files=True
                         )
 
@@ -6997,7 +6999,7 @@ GU-TAP System
                             drive_links_int = ""  # Initialize here
                             # Required field checks
                             if not ticket_id_int: errors.append("Ticket ID is required.")
-                            if ticket_id_int == "No Ticket ID" and not jurisdiction_for_no_ticket1 and not pln_jurisdictions1:
+                            if ticket_id_int == "No Ticket ID" and not jurisdiction_for_no_ticket and not pln_jurisdictions:
                                 errors.append("Jurisdiction is required when Ticket ID is not provided.")
                             if not date_int: errors.append("Date of interaction is required.")
                             if not type_interaction: errors.append("Type of interaction is required.")
