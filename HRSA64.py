@@ -7043,7 +7043,7 @@ GU-TAP System
                                     "Jurisdiction": (lambda: (
                                         str(df.loc[df["Ticket ID"].astype(str) == str(ticket_id_int), "Jurisdiction"].iloc[0])
                                         if ticket_id_int != "No Ticket ID" and not df.loc[df["Ticket ID"].astype(str) == str(ticket_id_int), "Jurisdiction"].empty
-                                        else (jurisdiction_for_no_ticket1 or "")
+                                        else (jurisdiction_for_no_ticket or "")
                                     ))(),
                                     "Submitted By": staff_name,
                                     "Submission Date": datetime.today().strftime("%Y-%m-%d %H:%M")
