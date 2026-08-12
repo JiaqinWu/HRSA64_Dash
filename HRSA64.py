@@ -4709,7 +4709,7 @@ else:
                             )
 
                         list_interaction = [
-                            "Email", "Phone Call", "In-Person Meeting", "Online Meeting", "Other"
+                            "Email", "Phone Call", "In-Person Meeting", "Online Meeting", "Peer Learning Meetings (PLNs)", "Other"
                         ]
 
                         type_interaction = st.selectbox(
@@ -4718,6 +4718,18 @@ else:
                             index=None,
                             placeholder="Select option..."
                         )
+
+                        # PLNs span multiple jurisdictions - kept separate from the single-select above
+                        pln_jurisdictions = []
+                        if type_interaction == "Peer Learning Meetings (PLNs)":
+                            pln_jurisdictions = st.multiselect(
+                                "Jurisdiction(s) for PLN *",
+                                lis_location,
+                                default=[],
+                                placeholder="Select one or more...",
+                                key='juris_pln_coord'
+                            )
+
 
                         # If "Other" is selected, show a text input for custom value
                         if type_interaction == "Other":
@@ -4754,7 +4766,7 @@ else:
                             drive_links_int = ""  # Initialize here
                             # Required field checks
                             if not ticket_id_int: errors.append("Ticket ID is required.")
-                            if ticket_id_int == "No Ticket ID" and not jurisdiction_for_no_ticket:
+                            if ticket_id_int == "No Ticket ID" and not jurisdiction_for_no_ticket and not pln_jurisdictions:
                                 errors.append("Jurisdiction is required when Ticket ID is not provided.")
                             if not date_int: errors.append("Date of interaction is required.")
                             if not type_interaction: errors.append("Type of interaction is required.")
@@ -6914,7 +6926,7 @@ GU-TAP System
                             )
 
                         list_interaction = [
-                            "Email", "Phone Call", "In-Person Meeting", "Online Meeting", "Other"
+                            "Email", "Phone Call", "In-Person Meeting", "Online Meeting","Peer Learning Meetings (PLNs)", "Other"
                         ]
 
                         type_interaction = st.selectbox(
@@ -6923,6 +6935,17 @@ GU-TAP System
                             index=None,
                             placeholder="Select option..."
                         )
+
+                        # PLNs span multiple jurisdictions - kept separate from the single-select above
+                        pln_jurisdictions1 = []
+                        if type_interaction == "Peer Learning Meetings (PLNs)":
+                            pln_jurisdictions1 = st.multiselect(
+                                "Jurisdiction(s) for PLN *",
+                                lis_location,
+                                default=[],
+                                placeholder="Select one or more...",
+                                key='juris_pln_coord'
+                            )
 
                         # If "Other" is selected, show a text input for custom value
                         if type_interaction == "Other":
@@ -6974,7 +6997,7 @@ GU-TAP System
                             drive_links_int = ""  # Initialize here
                             # Required field checks
                             if not ticket_id_int: errors.append("Ticket ID is required.")
-                            if ticket_id_int == "No Ticket ID" and not jurisdiction_for_no_ticket1:
+                            if ticket_id_int == "No Ticket ID" and not jurisdiction_for_no_ticket1 and not pln_jurisdictions1:
                                 errors.append("Jurisdiction is required when Ticket ID is not provided.")
                             if not date_int: errors.append("Date of interaction is required.")
                             if not type_interaction: errors.append("Type of interaction is required.")
