@@ -4720,8 +4720,9 @@ else:
                         )
 
                         # PLNs span multiple jurisdictions - kept separate from the single-select above
+                        is_pln = type_interaction == "Peer Learning Meetings (PLNs)"
                         pln_jurisdictions = []
-                        if type_interaction == "Peer Learning Meetings (PLNs)":
+                        if is_pln:
                             pln_jurisdictions = st.multiselect(
                                 "Jurisdiction(s) for PLN *",
                                 lis_location,
@@ -4768,6 +4769,8 @@ else:
                             if not ticket_id_int: errors.append("Ticket ID is required.")
                             if ticket_id_int == "No Ticket ID" and not jurisdiction_for_no_ticket and not pln_jurisdictions:
                                 errors.append("Jurisdiction is required when Ticket ID is not provided.")
+                            if is_pln and not pln_jurisdictions:
+                                errors.append("At least one jurisdiction is required for Peer Learning Meetings (PLNs).")
                             if not date_int: errors.append("Date of interaction is required.")
                             if not type_interaction: errors.append("Type of interaction is required.")
                             if not interaction_description: errors.append("Short summary is required.")
@@ -4780,7 +4783,7 @@ else:
                                 # Only upload files if all validation passes
                                 if document_int:
                                     try:
-                                        folder_id_int = "19-Sm8W151tg1zyDN0Nh14DUvOVUieqq7" 
+                                        folder_id_int = "19-Sm8W151tg1zyDN0Nh14DUvOVUieqq7"
                                         links_int = []
                                         upload_count = 0
                                         for file in document_int:
@@ -4797,26 +4800,35 @@ else:
                                             st.success(f"✅ Successfully uploaded: {file.name}")
                                         drive_links_int = ", ".join(links_int)
                                         if upload_count > 0:
-                                            st.success(f"✅ All {upload_count} file(s) uploaded successfully to Google Drive!")    
+                                            st.success(f"✅ All {upload_count} file(s) uploaded successfully to Google Drive!")
                                     except Exception as e:
                                         st.error(f"❌ Error uploading file(s) to Google Drive: {str(e)}")
 
-                                new_row_int = {
-                                    'Ticket ID': ticket_id_int,
-                                    "Date of Interaction": date_int.strftime("%Y-%m-%d"),
-                                    "Type of Interaction": type_interaction,
-                                    "Short Summary": interaction_description,
-                                    "Document": drive_links_int,
-                                    "Jurisdiction": (lambda: (
-                                        # If a Ticket ID is provided, extract jurisdiction from Main sheet
-                                        str(df.loc[df["Ticket ID"].astype(str) == str(ticket_id_int), "Jurisdiction"].iloc[0])
-                                        if ticket_id_int != "No Ticket ID" and not df.loc[df["Ticket ID"].astype(str) == str(ticket_id_int), "Jurisdiction"].empty
-                                        else (jurisdiction_for_no_ticket or "")
-                                    ))(),
-                                    "Submitted By": coordinator_name,
-                                    "Submission Date": datetime.today().strftime("%Y-%m-%d %H:%M")
-                                }
-                                new_data_int = pd.DataFrame([new_row_int])
+                                # Resolve the jurisdiction(s) this interaction should be logged under.
+                                # PLNs span multiple jurisdictions -> one row per selected jurisdiction.
+                                if is_pln and pln_jurisdictions:
+                                    jurisdiction_values = list(dict.fromkeys(pln_jurisdictions))
+                                else:
+                                    ticket_juris = df.loc[df["Ticket ID"].astype(str) == str(ticket_id_int), "Jurisdiction"]
+                                    if ticket_id_int != "No Ticket ID" and not ticket_juris.empty:
+                                        jurisdiction_values = [str(ticket_juris.iloc[0])]
+                                    else:
+                                        jurisdiction_values = [jurisdiction_for_no_ticket or ""]
+
+                                rows_int = [
+                                    {
+                                        'Ticket ID': ticket_id_int,
+                                        "Date of Interaction": date_int.strftime("%Y-%m-%d"),
+                                        "Type of Interaction": type_interaction,
+                                        "Short Summary": interaction_description,
+                                        "Document": drive_links_int,
+                                        "Jurisdiction": juris,
+                                        "Submitted By": coordinator_name,
+                                        "Submission Date": datetime.today().strftime("%Y-%m-%d %H:%M")
+                                    }
+                                    for juris in jurisdiction_values
+                                ]
+                                new_data_int = pd.DataFrame(rows_int)
 
                                 try:
                                     # Append new data to Google Sheet
@@ -4832,8 +4844,11 @@ else:
 
                                     # Clear cache to refresh data
                                     st.cache_data.clear()
-                                    
-                                    st.success("✅ Submission successful!")
+
+                                    if len(new_data_int) > 1:
+                                        st.success(f"✅ Submission successful! {len(new_data_int)} rows logged (one per jurisdiction).")
+                                    else:
+                                        st.success("✅ Submission successful!")
                                     time.sleep(2)
                                     st.rerun()
 
@@ -7001,6 +7016,8 @@ GU-TAP System
                             if not ticket_id_int: errors.append("Ticket ID is required.")
                             if ticket_id_int == "No Ticket ID" and not jurisdiction_for_no_ticket and not pln_jurisdictions:
                                 errors.append("Jurisdiction is required when Ticket ID is not provided.")
+                            if is_pln and not pln_jurisdictions:
+                                errors.append("At least one jurisdiction is required for Peer Learning Meetings (PLNs).")
                             if not date_int: errors.append("Date of interaction is required.")
                             if not type_interaction: errors.append("Type of interaction is required.")
                             if not interaction_description: errors.append("Short summary is required.")
@@ -7034,21 +7051,31 @@ GU-TAP System
                                     except Exception as e:
                                         st.error(f"❌ Error uploading file(s) to Google Drive: {str(e)}")
 
-                                new_row_int = {
-                                    'Ticket ID': ticket_id_int,
-                                    "Date of Interaction": date_int.strftime("%Y-%m-%d"),  # Convert to string
-                                    "Type of Interaction": type_interaction,
-                                    "Short Summary": interaction_description,
-                                    "Document": drive_links_int,
-                                    "Jurisdiction": (lambda: (
-                                        str(df.loc[df["Ticket ID"].astype(str) == str(ticket_id_int), "Jurisdiction"].iloc[0])
-                                        if ticket_id_int != "No Ticket ID" and not df.loc[df["Ticket ID"].astype(str) == str(ticket_id_int), "Jurisdiction"].empty
-                                        else (jurisdiction_for_no_ticket or "")
-                                    ))(),
-                                    "Submitted By": staff_name,
-                                    "Submission Date": datetime.today().strftime("%Y-%m-%d %H:%M")
-                                }
-                                new_data_int = pd.DataFrame([new_row_int])
+                                # Resolve the jurisdiction(s) this interaction should be logged under.
+                                # PLNs span multiple jurisdictions -> one row per selected jurisdiction.
+                                if is_pln and pln_jurisdictions:
+                                    jurisdiction_values = list(dict.fromkeys(pln_jurisdictions))
+                                else:
+                                    ticket_juris = df.loc[df["Ticket ID"].astype(str) == str(ticket_id_int), "Jurisdiction"]
+                                    if ticket_id_int != "No Ticket ID" and not ticket_juris.empty:
+                                        jurisdiction_values = [str(ticket_juris.iloc[0])]
+                                    else:
+                                        jurisdiction_values = [jurisdiction_for_no_ticket or ""]
+
+                                rows_int = [
+                                    {
+                                        'Ticket ID': ticket_id_int,
+                                        "Date of Interaction": date_int.strftime("%Y-%m-%d"),  # Convert to string
+                                        "Type of Interaction": type_interaction,
+                                        "Short Summary": interaction_description,
+                                        "Document": drive_links_int,
+                                        "Jurisdiction": juris,
+                                        "Submitted By": staff_name,
+                                        "Submission Date": datetime.today().strftime("%Y-%m-%d %H:%M")
+                                    }
+                                    for juris in jurisdiction_values
+                                ]
+                                new_data_int = pd.DataFrame(rows_int)
 
                                 try:
                                     # Append new data to Google Sheet
@@ -7066,8 +7093,11 @@ GU-TAP System
 
                                     # Clear cache to refresh data
                                     st.cache_data.clear()
-                                
-                                    st.success("✅ Submission successful!")
+
+                                    if len(new_data_int) > 1:
+                                        st.success(f"✅ Submission successful! {len(new_data_int)} rows logged (one per jurisdiction).")
+                                    else:
+                                        st.success("✅ Submission successful!")
                                     time.sleep(2)
                                     st.rerun()
 
