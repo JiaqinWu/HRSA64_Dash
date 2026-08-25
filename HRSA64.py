@@ -2292,6 +2292,14 @@ def _travel_submission_date(row):
         return None
 
 
+def travel_row_has_modern_pending_approval(row) -> bool:
+    """True when a row has an active pending status in the current approval columns."""
+    for col in TRAVEL_APPROVER_STATUS_COLUMNS:
+        if _travel_approval_status_norm(row.get(col)) == 'pending':
+            return True
+    return False
+
+
 # --- Program Assistant handover (Mabintou Ouattara -> Lauren Mathae) -------------------
 # Requests submitted on/after this date use the Lauren routing and the normal automated
 # workflow (escalation reminders, final approval email to the traveler).
@@ -2307,8 +2315,9 @@ def travel_row_is_new_logic(row) -> bool:
     """True if this request falls under the post-handover (Lauren) workflow."""
     sub_d = _travel_submission_date(row)
     if sub_d is None:
-        # Unknown / unparseable submission date -> treat as legacy and leave it alone.
-        return False
+        # Rows with active current-approver pending statuses should still appear in
+        # the review queue even if the sheet has a missing/unparseable submission date.
+        return travel_row_has_modern_pending_approval(row)
     return sub_d >= TRAVEL_NEW_LOGIC_START
 
 
@@ -5699,10 +5708,10 @@ GU-TAP System
                                                             other_status_col = 'Lauren Approval Status'
                                                     elif is_lauren_traveler_check:
                                                         # Lauren's requests → Kemisha + Jen
-                                                        if status_col == 'Lauren Approval Status':
+                                                        if status_col == 'Kemisha Approval Status':
+                                                            other_status_col = 'Jen Approval Status'
+                                                        elif status_col == 'Jen Approval Status':
                                                             other_status_col = 'Kemisha Approval Status'
-                                                        elif status_col == 'Kemisha Approval Status':
-                                                            other_status_col = 'Lauren Approval Status'
                                                     else:
                                                         # General: PA line (Lauren / Jen); Lead line (Kemisha / Jen)
                                                         if status_col == 'Lauren Approval Status':
@@ -8183,70 +8192,17 @@ GU-TAP System
                                         if row_idx >= 0 and row_idx < len(df_travel):
                                             updated_df_travel = df_travel.copy()
                                         
-                                            # Determine approval routing based on traveler
-                                            traveler_email = review.get('email', '').lower()
-                                            traveler_name_lower = traveler_name.lower()
-                                        
-                                            # Check if traveler is Kemisha or Lauren
-                                            is_kemisha_traveler = (traveler_email == 'kd802@georgetown.edu' or 
-                                                                  'kemisha' in traveler_name_lower)
-                                            is_lauren_traveler = (traveler_email == 'lm1353@georgetown.edu' or 
-                                                                   'lauren mathae' in traveler_name_lower)
-                                        
-                                            # Determine approvers based on routing rules:
-                                            # - Kemisha's requests → Lauren + Jen
-                                            # - Others → Lauren + Kemisha (or alternatives if out)
-                                        
-                                            if is_kemisha_traveler:
-                                                # Kemisha's requests go to Lauren and Jen
-                                                approver1_email = "lm1353@georgetown.edu"
-                                                approver1_name = "Lauren Mathae"
-                                                approver1_status_col = 'Lauren Approval Status'
-                                                approver2_email = "jenevieve.opoku@georgetown.edu"
-                                                approver2_name = "Jenevieve Opoku"
-                                                approver2_status_col = 'Jen Approval Status'
-                                            elif is_lauren_traveler:
-                                                # Lauren's requests go to Lauren and Kemisha
-                                                approver1_email = "lm1353@georgetown.edu"
-                                                approver1_name = "Lauren Mathae"
-                                                approver1_status_col = 'Lauren Approval Status'
-                                                approver2_email = "kd802@georgetown.edu"
-                                                approver2_name = "Kemisha Denny"
-                                                approver2_status_col = 'Kemisha Approval Status'
-                                            else:
-                                                # Default: Lauren + Kemisha (with alternatives if out)
-                                                # Check if Kemisha or Lauren are out and use alternatives
-                                                # If Kemisha is out → Jen is alternative for lead
-                                            
-                                                # Out of Office configuration (can be updated as needed)
-                                                # Set to True if the person is out of office
-                                                out_of_office = {
-                                                    'kemisha': False,  # Set to True if Kemisha is out
-                                                    'lauren': False  # Set to True if Lauren is out
-                                                }
-                                            
-                                                # Determine approvers with alternatives
-                                                if out_of_office.get('lauren', False):
-                                                    # Lauren is out, use Lauren as alternative
-                                                    approver1_email = "jenevieve.opoku@georgetown.edu"
-                                                    approver1_name = "Jenevieve Opoku"
-                                                    approver1_status_col = 'Jen Approval Status'
-                                                else:
-                                                    # Lauren is available
-                                                    approver1_email = "lm1353@georgetown.edu"
-                                                    approver1_name = "Lauren Mathae"
-                                                    approver1_status_col = 'Lauren Approval Status'
-                                            
-                                                if out_of_office.get('kemisha', False):
-                                                    # Kemisha is out, use Jen as alternative for lead
-                                                    approver2_email = "jenevieve.opoku@georgetown.edu"
-                                                    approver2_name = "Jenevieve Opoku"
-                                                    approver2_status_col = 'Jen Approval Status'
-                                                else:
-                                                    # Kemisha is available
-                                                    approver2_email = "kd802@georgetown.edu"
-                                                    approver2_name = "Kemisha Denny"
-                                                    approver2_status_col = 'Kemisha Approval Status'
+                                            # Determine approval routing based on traveler.
+                                            route = travel_routing_from_traveler(
+                                                traveler_name,
+                                                review.get('email', ''),
+                                            )
+                                            approver1_email = route['approver1_email']
+                                            approver1_name = route['approver1_name']
+                                            approver1_status_col = route['approver1_status_col']
+                                            approver2_email = route['approver2_email']
+                                            approver2_name = route['approver2_name']
+                                            approver2_status_col = route['approver2_status_col']
                                         
                                             # Ensure required columns exist
                                             required_cols = ['PDF Link', approver1_status_col, approver2_status_col]
