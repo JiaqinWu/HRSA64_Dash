@@ -2073,7 +2073,7 @@ def _travel_sheet_date_to_date(val):
 def travel_row_is_past_travel(row) -> bool:
     """
     True if the trip is already over (return date before today, or departure before today if return blank).
-    No escalation emails; hidden from coordinator pending queue.
+    Used to suppress automated escalation emails, not to hide manual approval work.
     """
     today = datetime.now().date()
     ret = _travel_sheet_date_to_date(row.get('Return Date'))
@@ -2086,8 +2086,8 @@ def travel_row_is_past_travel(row) -> bool:
 
 
 def travel_row_exclude_from_pending_coordinator_queue(row) -> bool:
-    """Rejected, or travel dates already passed — do not show as pending for approvers."""
-    return travel_row_has_any_rejection(row) or travel_row_is_past_travel(row)
+    """Rejected forms are closed; pending approvals stay visible even after travel dates pass."""
+    return travel_row_has_any_rejection(row)
 
 
 def travel_general_slot1_ok(row) -> bool:
