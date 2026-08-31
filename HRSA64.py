@@ -1782,8 +1782,8 @@ def create_pdf(form_data, ws):
             return str(date_value) if date_value else ''
     
     # Get coordinator signatures and dates if available.
-    # Program Assistant slot is now Lauren (was Mabintou). Legacy 'mabintou_*'
-    # keys are still accepted so older callers / stored rows keep working.
+    # Program Assistant slot is Lauren Mathae. The legacy 'mabintou_*' keys are still read
+    # as a fallback so PDFs regenerated from pre-handover sheet rows keep their signature.
     lauren_sig_text = str(
         form_data.get('lauren_signature') or form_data.get('mabintou_signature') or ''
     ).strip()
@@ -2500,19 +2500,15 @@ def gsa_blank_approval_columns():
     """Same approval-related columns as Travel worksheet rows."""
     return {
         'Kemisha Approval Status': '',
-        'Mabintou Approval Status': '',
         'Jen Approval Status': '',
         'Lauren Approval Status': '',
         'Kemisha Approval Date': '',
-        'Mabintou Approval Date': '',
         'Jen Approval Date': '',
         'Lauren Approval Date': '',
         'Kemisha Signature': '',
-        'Mabintou Signature': '',
         'Jen Signature': '',
         'Lauren Signature': '',
         'Kemisha Note': '',
-        'Mabintou Note': '',
         'Jen Note': '',
         'Lauren Note': '',
     }
@@ -2646,11 +2642,9 @@ def gsa_sheet_row_to_pdf_form_data(row_dict):
         'submission_date': row.get('Submission Date', '') or '',
         'supporting_drive_links': supporting,
         'supporting_materials': '',
-        'mabintou_signature': str(row.get('Mabintou Signature', '') or ''),
         'jen_signature': str(row.get('Jen Signature', '') or ''),
         'kemisha_signature': str(row.get('Kemisha Signature', '') or ''),
         'lauren_signature': str(row.get('Lauren Signature', '') or ''),
-        'mabintou_approval_date': str(row.get('Mabintou Approval Date', '') or ''),
         'jen_approval_date': str(row.get('Jen Approval Date', '') or ''),
         'kemisha_approval_date': str(row.get('Kemisha Approval Date', '') or ''),
         'lauren_approval_date': str(row.get('Lauren Approval Date', '') or ''),
@@ -3362,10 +3356,6 @@ USERS = {
         "Coordinator": {"password": "kd802hrsa!!", "name": "Kemisha Denny"},
         "Assignee/Staff": {"password": "kd802hrsa!!", "name": "Kemisha Denny"}
     },
-    "mo887@georgetown.edu": {
-        "Coordinator": {"password": "Mabintou123!", "name": "Mabintou Ouattara"},
-        "Assignee/Staff": {"password": "Mabintou123!", "name": "Mabintou Ouattara"},
-    },
     "lm1353@georgetown.edu": {
         "Coordinator": {"password": "LM1353hrsa64?", "name": "Lauren Mathae"},
         "Assignee/Staff": {"password": "LM1353hrsa64?", "name": "Lauren Mathae"}
@@ -3918,9 +3908,6 @@ else:
                 coordinator_name = user_info["Coordinator"]["name"]
                 # Check if current coordinator is Lauren (only sees Travel Authorization Review Center)
                 is_lauren_coordinator = st.session_state.user_email == "lm1353@georgetown.edu"
-                # Mabintou Ouattara no longer holds the Program Assistant role (Lauren took over).
-                # Kept as a flag so the sections that used to be hidden from her stay visible to everyone.
-                is_mabintou_coordinator = False
                 gutap_dashboard_header("📬 Coordinator Dashboard", kicker="Coordinator workspace")
                 if user_info and "Coordinator" in user_info:
                     gutap_welcome_strip(coordinator_name)
@@ -4998,7 +4985,6 @@ else:
 
 
                 # Travel Authorization Review Center - visible to Jen, Kemisha, Lauren, Jiaqin
-                # (Close the if not is_mabintou_coordinator block here)
                 st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
 
                 with st.expander("✈️ **REVIEW & APPROVE TRAVEL AUTHORIZATION FORMS**"):
@@ -6478,98 +6464,96 @@ GU-TAP System
                         except Exception as e:
                             st.error(f"Error loading GSA exemption forms: {str(e)}")
 
-                # Hide Check Interaction & Delivery Patterns for Mabintou
-                if not is_mabintou_coordinator:
-                    st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
+                st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
 
-                    with st.expander("📦 **CHECK INTERACTION & DELIVERY PATTERNS**"):
-                        st.markdown("""
-                            <div class="gutap-hero">
-                                <div class="gutap-hero-title">
-                                    📦 Activity Analytics Center
-                                </div>
-                                <div class="gutap-hero-sub">
-                                    Visualize and analyze communication and delivery patterns for all Technical Assistance requests. Use charts and filters to spot trends and monitor engagement.
-                                </div>
+                with st.expander("📦 **CHECK INTERACTION & DELIVERY PATTERNS**"):
+                    st.markdown("""
+                        <div class="gutap-hero">
+                            <div class="gutap-hero-title">
+                                📦 Activity Analytics Center
                             </div>
-                        """, unsafe_allow_html=True)
-                        # Fetch data from Google Sheets     
-                        try:
-                            df = load_main_sheet()  # Use cached function
-                        except Exception as e:
-                            st.error(f"Error fetching data from Google Sheets: {str(e)}")
+                            <div class="gutap-hero-sub">
+                                Visualize and analyze communication and delivery patterns for all Technical Assistance requests. Use charts and filters to spot trends and monitor engagement.
+                            </div>
+                        </div>
+                    """, unsafe_allow_html=True)
+                    # Fetch data from Google Sheets     
+                    try:
+                        df = load_main_sheet()  # Use cached function
+                    except Exception as e:
+                        st.error(f"Error fetching data from Google Sheets: {str(e)}")
 
-                        try:
-                            df_int = load_interaction_sheet()  # Use cached function
-                        except Exception as e:
-                            st.error(f"Error fetching data from Google Sheets: {str(e)}")
+                    try:
+                        df_int = load_interaction_sheet()  # Use cached function
+                    except Exception as e:
+                        st.error(f"Error fetching data from Google Sheets: {str(e)}")
 
-                        try:
-                            df_del = load_delivery_sheet()  # Use cached function
-                        except Exception as e:
-                            st.error(f"Error fetching data from Google Sheets: {str(e)}")
+                    try:
+                        df_del = load_delivery_sheet()  # Use cached function
+                    except Exception as e:
+                        st.error(f"Error fetching data from Google Sheets: {str(e)}")
                         
-                        num_interaction = df_int.shape[0]
-                        num_delivery = df_del.shape[0]
+                    num_interaction = df_int.shape[0]
+                    num_delivery = df_del.shape[0]
 
-                        col1, col2 = st.columns(2)
-                        col1.metric("🟡 # of Interactions", num_interaction)
-                        col2.metric("🟡 # of Deliveries", num_delivery)
+                    col1, col2 = st.columns(2)
+                    col1.metric("🟡 # of Interactions", num_interaction)
+                    col2.metric("🟡 # of Deliveries", num_delivery)
 
-                        # Group by Ticket ID and Type of Interaction, count occurrences
-                        interaction_counts = df_int.groupby(['Ticket ID', 'Type of Interaction']).size().reset_index(name='Count')
-                        delivery_counts = df_del.groupby(['Ticket ID', 'Type of Delivery']).size().reset_index(name='Count')
-
-
-                        st.markdown("##### 🟡 Top 10 with most Interactions by Interaction Type")
-                        if not interaction_counts.empty:
-                            pie1 = alt.Chart(interaction_counts).mark_bar().encode(
-                                y=alt.Y('Ticket ID:N', sort='-x', title='Ticket ID'),
-                                x=alt.X('Count:Q', title='Number of Interactions'),
-                                color=alt.Color('Type of Interaction:N', title='Interaction Type'),
-                                tooltip=['Ticket ID', 'Type of Interaction', 'Count']
-                            ).properties(
-                                width=600,
-                                height=400
-                            )
-                            st.altair_chart(pie1, use_container_width=True)
-                        else:
-                            st.info("No any interaction to show.")
-
-                        st.markdown("##### 🟡 Top 10 with most Deliveries by Delivery Type")
-                        if not delivery_counts.empty:
-                            pie1 = alt.Chart(delivery_counts).mark_bar().encode(
-                                y=alt.Y('Ticket ID:N', sort='-x', title='Ticket ID'),
-                                x=alt.X('Count:Q', title='Number of Deliveries'),
-                                color=alt.Color('Type of Delivery:N', title='Delivery Type'),
-                                tooltip=['Ticket ID', 'Type of Delivery', 'Count']
-                            ).properties(
-                                width=600,
-                                height=400
-                            )
-                            st.altair_chart(pie1, use_container_width=True)
-                        else:
-                            st.info("No any delivery to show.")
+                    # Group by Ticket ID and Type of Interaction, count occurrences
+                    interaction_counts = df_int.groupby(['Ticket ID', 'Type of Interaction']).size().reset_index(name='Count')
+                    delivery_counts = df_del.groupby(['Ticket ID', 'Type of Delivery']).size().reset_index(name='Count')
 
 
-                        unique_id = sorted(set(df_int["Ticket ID"].unique().tolist() + df_del["Ticket ID"].unique().tolist()))
-                        selected_ticket_id = st.selectbox("Select a Ticket ID", unique_id, placeholder="Select option...")
-                        # Filter records
-                        interactions_for_ticket = df_int[df_int["Ticket ID"] == selected_ticket_id]
-                        deliveries_for_ticket = df_del[df_del["Ticket ID"] == selected_ticket_id]
-                        num_interaction_ticket = interactions_for_ticket.shape[0]
-                        num_delivery_ticket = deliveries_for_ticket.shape[0]
-                        st.markdown(f"##### 🟡 Ticket ID: {selected_ticket_id}")
-                        st.markdown(f"🟡 # of Interactions: {num_interaction_ticket if num_interaction_ticket > 0 else 0}")
-                        if num_interaction_ticket > 0:
-                            st.dataframe(interactions_for_ticket)
-                        else:
-                            st.info("No interaction records found for this Ticket ID.")
-                        st.markdown(f"🟡 # of Deliveries: {num_delivery_ticket if num_delivery_ticket > 0 else 0}")
-                        if num_delivery_ticket > 0:
-                            st.dataframe(deliveries_for_ticket)
-                        else:
-                            st.info("No delivery records found for this Ticket ID.")
+                    st.markdown("##### 🟡 Top 10 with most Interactions by Interaction Type")
+                    if not interaction_counts.empty:
+                        pie1 = alt.Chart(interaction_counts).mark_bar().encode(
+                            y=alt.Y('Ticket ID:N', sort='-x', title='Ticket ID'),
+                            x=alt.X('Count:Q', title='Number of Interactions'),
+                            color=alt.Color('Type of Interaction:N', title='Interaction Type'),
+                            tooltip=['Ticket ID', 'Type of Interaction', 'Count']
+                        ).properties(
+                            width=600,
+                            height=400
+                        )
+                        st.altair_chart(pie1, use_container_width=True)
+                    else:
+                        st.info("No any interaction to show.")
+
+                    st.markdown("##### 🟡 Top 10 with most Deliveries by Delivery Type")
+                    if not delivery_counts.empty:
+                        pie1 = alt.Chart(delivery_counts).mark_bar().encode(
+                            y=alt.Y('Ticket ID:N', sort='-x', title='Ticket ID'),
+                            x=alt.X('Count:Q', title='Number of Deliveries'),
+                            color=alt.Color('Type of Delivery:N', title='Delivery Type'),
+                            tooltip=['Ticket ID', 'Type of Delivery', 'Count']
+                        ).properties(
+                            width=600,
+                            height=400
+                        )
+                        st.altair_chart(pie1, use_container_width=True)
+                    else:
+                        st.info("No any delivery to show.")
+
+
+                    unique_id = sorted(set(df_int["Ticket ID"].unique().tolist() + df_del["Ticket ID"].unique().tolist()))
+                    selected_ticket_id = st.selectbox("Select a Ticket ID", unique_id, placeholder="Select option...")
+                    # Filter records
+                    interactions_for_ticket = df_int[df_int["Ticket ID"] == selected_ticket_id]
+                    deliveries_for_ticket = df_del[df_del["Ticket ID"] == selected_ticket_id]
+                    num_interaction_ticket = interactions_for_ticket.shape[0]
+                    num_delivery_ticket = deliveries_for_ticket.shape[0]
+                    st.markdown(f"##### 🟡 Ticket ID: {selected_ticket_id}")
+                    st.markdown(f"🟡 # of Interactions: {num_interaction_ticket if num_interaction_ticket > 0 else 0}")
+                    if num_interaction_ticket > 0:
+                        st.dataframe(interactions_for_ticket)
+                    else:
+                        st.info("No interaction records found for this Ticket ID.")
+                    st.markdown(f"🟡 # of Deliveries: {num_delivery_ticket if num_delivery_ticket > 0 else 0}")
+                    if num_delivery_ticket > 0:
+                        st.dataframe(deliveries_for_ticket)
+                    else:
+                        st.info("No delivery records found for this Ticket ID.")
                   
 
 
@@ -6584,1985 +6568,1974 @@ GU-TAP System
                 if staff_name:
                     gutap_welcome_strip(staff_name)
 
-                staff_gsa_only = (user_email == "mo887@georgetown.edu")
-                if staff_gsa_only:
-                    st.info(
-                        "Your account can submit **GSA Lodging Exemption** forms below. "
-                        "Other staff dashboard features are not available on this account."
-                    )
-                else:
                     # Filter requests assigned to current staff and In Progress
-                    staff_df = df[(df["Assigned Coach"] == staff_name) & (df["Status"] == "In Progress")].copy()
-                    com_df = df[(df["Assigned Coach"] == staff_name) & (df["Status"] == "Completed")].copy()
+                staff_df = df[(df["Assigned Coach"] == staff_name) & (df["Status"] == "In Progress")].copy()
+                com_df = df[(df["Assigned Coach"] == staff_name) & (df["Status"] == "Completed")].copy()
 
 
-                    # Ensure date columns are datetime
-                    staff_df["Targeted Due Date"] = pd.to_datetime(staff_df["Targeted Due Date"], errors="coerce")
-                    staff_df["Assigned Date"] = pd.to_datetime(staff_df["Assigned Date"], errors="coerce")
+                # Ensure date columns are datetime
+                staff_df["Targeted Due Date"] = pd.to_datetime(staff_df["Targeted Due Date"], errors="coerce")
+                staff_df["Assigned Date"] = pd.to_datetime(staff_df["Assigned Date"], errors="coerce")
 
+                st.markdown(
+                    '<p class="gutap-section-label">Your workload</p>',
+                    unsafe_allow_html=True,
+                )
+                # --- Top Summary Cards
+                col1, col2 = st.columns(2)
+                col3, col4 = st.columns(2)
+                # 1. Total In Progress
+                total_in_progress = staff_df['Ticket ID'].nunique()
+                total_complete = com_df['Ticket ID'].nunique()
+
+                # 2. Newly Assigned: within last 3 days
+                recent_cutoff = datetime.today() - timedelta(days=3)
+                newly_assigned = staff_df[staff_df["Assigned Date"] >= recent_cutoff]['Ticket ID'].nunique()
+
+                # 3. Due within 1 month
+                due_soon_cutoff = datetime.today() + timedelta(days=30)
+                due_soon = staff_df[staff_df["Targeted Due Date"] <= due_soon_cutoff]['Ticket ID'].nunique()
+
+                col1.metric("🟡 In Progress", total_in_progress)
+                col2.metric("✅ Completed", total_complete)
+                col3.metric("🆕 Newly Assigned (Last 3 days)", newly_assigned)
+                col4.metric("📅 Due Within 1 Month", due_soon)
+
+                style_metric_cards(border_left_color="#DBF227")
+
+                with st.expander("🔎 **TA log lookup**", expanded=False):
                     st.markdown(
-                        '<p class="gutap-section-label">Your workload</p>',
+                        """
+                        <div class="gutap-hero">
+                            <div class="gutap-hero-title">Lookup TA requests</div>
+                            <div class="gutap-hero-sub">
+                                Read-only search across the main TA log—ticket ID, jurisdiction, organization, names, email, or status text.
+                            </div>
+                        </div>
+                        """,
                         unsafe_allow_html=True,
                     )
-                    # --- Top Summary Cards
-                    col1, col2 = st.columns(2)
-                    col3, col4 = st.columns(2)
-                    # 1. Total In Progress
-                    total_in_progress = staff_df['Ticket ID'].nunique()
-                    total_complete = com_df['Ticket ID'].nunique()
+                    staff_lookup_q = st.text_input(
+                        "Search",
+                        placeholder="e.g. ticket ID, keyword, email…",
+                        key="staff_ta_lookup_q",
+                    )
+                    staff_lookup_scope = st.radio(
+                        "Search scope",
+                        ["My assignments only", "Entire TA log"],
+                        horizontal=True,
+                        key="staff_ta_lookup_scope",
+                    )
+                    _staff_base = df.copy()
+                    if staff_lookup_scope == "My assignments only" and staff_name and "Assigned Coach" in _staff_base.columns:
+                        _staff_base = _staff_base[
+                            _staff_base["Assigned Coach"].astype(str).str.strip()
+                            == str(staff_name).strip()
+                        ]
+                    if staff_lookup_q and str(staff_lookup_q).strip():
+                        _staff_filt = _gutap_df_text_search(
+                            _staff_base, str(staff_lookup_q).strip(), max_display=400
+                        )
+                    else:
+                        _staff_filt = (
+                            _staff_base.head(250) if len(_staff_base) > 250 else _staff_base
+                        )
+                    _staff_cols = [
+                        c
+                        for c in [
+                            "Ticket ID",
+                            "Status",
+                            "Priority",
+                            "Jurisdiction",
+                            "Organization",
+                            "Name",
+                            "Email Address",
+                            "TA Type",
+                            "Focus Area",
+                            "Assigned Coach",
+                            "Targeted Due Date",
+                        ]
+                        if c in getattr(_staff_filt, "columns", [])
+                    ]
+                    if _staff_filt is None or _staff_filt.empty:
+                        st.info("No rows match this search or scope.")
+                    else:
+                        st.dataframe(
+                            _staff_filt[_staff_cols],
+                            use_container_width=True,
+                        )
+                        st.caption(
+                            f"Showing {len(_staff_filt)} row(s). Refine the search to narrow results; data is read-only."
+                        )
 
-                    # 2. Newly Assigned: within last 3 days
-                    recent_cutoff = datetime.today() - timedelta(days=3)
-                    newly_assigned = staff_df[staff_df["Assigned Date"] >= recent_cutoff]['Ticket ID'].nunique()
+                # --- Section 2: Filter, Sort, Comment
+                with st.expander("🚧 **IN-PROGRESS REQUESTS**"):
+                    st.markdown("""
+                        <div class="gutap-hero">
+                            <div class="gutap-hero-title">
+                                🚧 In-Progress Requests Management
+                            </div>
+                            <div class="gutap-hero-sub">
+                                Manage your assigned requests, add comments, and track progress. Filter and sort your active TA requests efficiently.
+                            </div>
+                        </div>
+                    """, unsafe_allow_html=True)
 
-                    # 3. Due within 1 month
-                    due_soon_cutoff = datetime.today() + timedelta(days=30)
-                    due_soon = staff_df[staff_df["Targeted Due Date"] <= due_soon_cutoff]['Ticket ID'].nunique()
+                    # Filter "In Progress" requests
+                    if staff_df.empty:
+                        st.info("No requests currently in progress.")
+                    else:
+                        # Convert date columns
+                        staff_df["Assigned Date"] = pd.to_datetime(staff_df["Assigned Date"], errors="coerce")
+                        staff_df["Targeted Due Date"] = pd.to_datetime(staff_df["Targeted Due Date"], errors="coerce")
+                        staff_df['Expected Duration (Days)'] = (staff_df["Targeted Due Date"]-staff_df["Assigned Date"]).dt.days
 
-                    col1.metric("🟡 In Progress", total_in_progress)
-                    col2.metric("✅ Completed", total_complete)
-                    col3.metric("🆕 Newly Assigned (Last 3 days)", newly_assigned)
-                    col4.metric("📅 Due Within 1 Month", due_soon)
+                        # Format dates
+                        staff_df["Assigned Date"] = staff_df["Assigned Date"].dt.strftime("%Y-%m-%d")
+                        staff_df["Targeted Due Date"] = staff_df["Targeted Due Date"].dt.strftime("%Y-%m-%d")
 
-                    style_metric_cards(border_left_color="#DBF227")
 
-                    with st.expander("🔎 **TA log lookup**", expanded=False):
-                        st.markdown(
-                            """
-                            <div class="gutap-hero">
-                                <div class="gutap-hero-title">Lookup TA requests</div>
-                                <div class="gutap-hero-sub">
-                                    Read-only search across the main TA log—ticket ID, jurisdiction, organization, names, email, or status text.
+                        # --- Filters
+                        st.markdown("##### 🔍 Filter Options")
+
+                        col1, col2, col3 = st.columns(3)
+                        with col1:
+                            priority_filter = st.multiselect(
+                                "Filter by Priority",
+                                options=staff_df["Priority"].unique(),
+                                default=staff_df["Priority"].unique(), key='sta1'
+                            )
+
+                        with col2:
+                            ta_type_filter = st.multiselect(
+                                "Filter by TA Type",
+                                options=staff_df["TA Type"].unique(),
+                                default=staff_df["TA Type"].unique(), key='sta2'
+                            )
+
+                        with col3:
+                            focus_area_filter = st.multiselect(
+                                "Filter by Focus Area",
+                                options=staff_df["Focus Area"].unique(),
+                                default=staff_df["Focus Area"].unique(), key='sta3'
+                            )
+
+                        # Apply filters
+                        filtered_df2 = staff_df[
+                            (staff_df["Priority"].isin(priority_filter)) &
+                            (staff_df["TA Type"].isin(ta_type_filter)) &
+                            (staff_df["Focus Area"].isin(focus_area_filter))
+                        ]
+
+                        # Display filtered table
+                        st.dataframe(filtered_df2[[
+                            "Ticket ID","Jurisdiction", "Organization", "Name", "Title/Position", "Email Address", "Phone Number",
+                            "Focus Area", "TA Type", "Assigned Date", "Targeted Due Date","Expected Duration (Days)","Priority", "Assigned Coach", "TA Description",
+                            "Document","Coordinator Comment History", "Staff Comment History", "Transfer History"
+                        ]].sort_values(by="Expected Duration (Days)").reset_index(drop=True))
+
+                        # Select request by index (row number in submitted_requests)
+                        request_indices2 = filtered_df2.index.tolist()
+                        selected_request_index1 = st.selectbox(
+                            "Select a request to comment",
+                            options=request_indices2,
+                            format_func=lambda idx: f"{filtered_df2.at[idx, 'Ticket ID']} | {filtered_df2.at[idx, 'Name']} | {filtered_df2.at[idx, 'Jurisdiction']}",
+                        )
+
+                        # Input comment
+                        comment_text = st.text_area("Staff Comment", placeholder="Enter comments", height=150, key='commm')
+
+                        # Submit
+                        if st.button("✅ Submit Comments"):
+                            try:
+                                # Get the index of the selected row in the full df
+                                global_index = filtered_df2.loc[selected_request_index1].name
+
+                                # Copy df and update
+                                updated_df = df.copy()
+                                # Keep latest comment in main field
+                                updated_df.loc[global_index, "Staff Comment"] = comment_text
+                                # Append to history with timestamp and author
+                                ts = datetime.today().strftime("%Y-%m-%d %H:%M")
+                                author = staff_name or "Staff"
+                                entry = f"{ts} | {author}: {comment_text}" if comment_text else ""
+                                if entry:
+                                    existing = str(updated_df.loc[global_index, "Staff Comment History"]).strip()
+                                    if existing and existing.lower() != "nan":
+                                        updated_df.loc[global_index, "Staff Comment History"] = existing + "\n" + entry
+                                    else:
+                                        updated_df.loc[global_index, "Staff Comment History"] = entry
+                                updated_df = updated_df.applymap(
+                                    lambda x: x.strftime("%Y-%m-%d") if isinstance(x, (pd.Timestamp, datetime)) and not pd.isna(x) else x
+                                )
+                                updated_df = updated_df.fillna("") 
+
+                                # Push to Google Sheets
+                                spreadsheet1 = client.open('HRSA64_TA_Request')
+                                worksheet1 = spreadsheet1.worksheet('Main')
+                                worksheet1.update([updated_df.columns.values.tolist()] + updated_df.values.tolist())
+
+                                st.cache_data.clear()
+
+                                st.success("💬 Comment saved successfully!.")
+                                time.sleep(2)
+                                st.rerun()
+
+                            except Exception as e:
+                                st.error(f"Error saving comment: {str(e)}")
+                st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
+
+                with st.expander("🗒️ **CHECK & SUBMIT INTERACTION LOG**"):
+                    st.markdown("""
+                        <div class="gutap-hero">
+                            <div class="gutap-hero-title">
+                                🗒️ Interaction Management Center
+                            </div>
+                            <div class="gutap-hero-sub">
+                                Review your previous interactions and submit new ones. Track all your communications with jurisdictions and TA requests.
+                            </div>
+                        </div>
+                    """, unsafe_allow_html=True)
+
+                    # Upper section: Previous Interactions
+                    st.markdown("""
+                        <div style='background: #f8f9fa; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); padding: 1.5em; margin-bottom: 2em;'>
+                            <h3 style='color: #1a237e; font-family: "Segoe UI", sans-serif; font-weight: 700; margin-bottom: 1em; text-align: center;'>
+                                📊 Your Previous Interactions
+                            </h3>
+                        </div>
+                    """, unsafe_allow_html=True)
+                    
+                    # Get interaction data properly
+                    df_int_staff = df_int[df_int["Submitted By"] == staff_name].copy()
+                    if not df_int_staff.empty:
+                        # Remove columns we don't want to display
+                        display_cols = [col for col in df_int_staff.columns if col not in ['Submitted By', 'Submission Date']]
+                        df_int_staff_display = df_int_staff[display_cols].copy()
+                        
+                        # Sort by Date of Interaction (most recent first)
+                        df_int_staff_display["Date of Interaction"] = pd.to_datetime(df_int_staff_display["Date of Interaction"], errors="coerce")
+                        df_int_staff_display = df_int_staff_display.sort_values("Date of Interaction", ascending=True)
+                        df_int_staff_display["Date of Interaction"] = df_int_staff_display["Date of Interaction"].dt.strftime("%Y-%m-%d")
+                        
+                        # Add summary stats
+                        total_interactions = len(df_int_staff_display)
+                        recent_interactions = len(df_int_staff_display[df_int_staff_display["Date of Interaction"] >= (datetime.now() - timedelta(days=30)).strftime("%Y-%m-%d")])
+                        
+                        st.markdown(f"""
+                            <div style='background: #e3f2fd; border-radius: 10px; padding: 1em; margin-top: 1em; text-align: center;'>
+                                <div style='display: flex; justify-content: space-around;'>
+                                    <div>
+                                        <div style='font-size: 1.5em; font-weight: bold; color: #1976d2;'>{total_interactions}</div>
+                                        <div style='font-size: 0.9em; color: #666;'>Total Interactions</div>
+                                    </div>
+                                    <div>
+                                        <div style='font-size: 1.5em; font-weight: bold; color: #388e3c;'>{recent_interactions}</div>
+                                        <div style='font-size: 0.9em; color: #666;'>Last 30 Days</div>
+                                    </div>
                                 </div>
+                            </div>
+                        """, unsafe_allow_html=True)
+
+                        st.dataframe(df_int_staff_display.reset_index(drop=True), use_container_width=True)
+                        
+
+                    else:
+                        st.markdown("""
+                            <div style='background: #fff3e0; border-radius: 15px; padding: 2em; text-align: center; border: 2px dashed #ff9800;'>
+                                <div style='font-size: 3em; margin-bottom: 0.5em;'>📝</div>
+                                <h4 style='color: #e65100; margin-bottom: 0.5em;'>No Previous Interactions</h4>
+                                <p style='color: #666; margin: 0;'>You haven't logged any interactions yet. Start by submitting your first interaction below!</p>
+                            </div>
+                        """, unsafe_allow_html=True)
+
+                    # Middle section: View Interactions by Ticket ID
+                    st.markdown("""
+                        <div style='background: #f8f9fa; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); padding: 1.5em; margin-bottom: 2em; margin-top: 2em;'>
+                            <h3 style='color: #1a237e; font-family: "Segoe UI", sans-serif; font-weight: 700; margin-bottom: 1em; text-align: center;'>
+                                🔍 View Interactions by Ticket ID
+                            </h3>
+                        </div>
+                    """, unsafe_allow_html=True)
+                    
+                    # Get ticket IDs assigned to this staff member
+                    assigned_tickets_staff = df[df["Assigned Coach"] == staff_name]["Ticket ID"].dropna().astype(str).unique().tolist()
+                    assigned_tickets_staff_sorted = sorted(assigned_tickets_staff)
+                    
+                    if assigned_tickets_staff_sorted:
+                        selected_ticket_view_staff = st.selectbox(
+                            "Select a Ticket ID to view all interactions",
+                            options=[""] + assigned_tickets_staff_sorted,
+                            index=0,
+                            key='view_interactions_ticket_staff',
+                            help="Select a ticket ID from your assigned requests to view all interactions for that ticket"
+                        )
+                        
+                        if selected_ticket_view_staff:
+                            # Get all interactions for this ticket ID (regardless of who submitted)
+                            # Handle NaN values properly
+                            df_ticket_int_staff = df_int[
+                                (df_int["Ticket ID"].notna()) & 
+                                (df_int["Ticket ID"].astype(str) == selected_ticket_view_staff)
+                            ].copy()
+                            
+                            if not df_ticket_int_staff.empty:
+                                # Remove columns we don't want to display
+                                display_cols_ticket_staff = [col for col in df_ticket_int_staff.columns if col not in ['Submission Date']]
+                                df_ticket_int_staff_display = df_ticket_int_staff[display_cols_ticket_staff].copy()
+                                
+                                # Sort by Date of Interaction (most recent first)
+                                df_ticket_int_staff_display["Date of Interaction"] = pd.to_datetime(df_ticket_int_staff_display["Date of Interaction"], errors="coerce")
+                                df_ticket_int_staff_display = df_ticket_int_staff_display.sort_values("Date of Interaction", ascending=True)
+                                df_ticket_int_staff_display["Date of Interaction"] = df_ticket_int_staff_display["Date of Interaction"].dt.strftime("%Y-%m-%d")
+                                
+                                st.markdown(f"**All interactions for Ticket ID: {selected_ticket_view_staff}**")
+                                st.dataframe(df_ticket_int_staff_display.reset_index(drop=True), use_container_width=True)
+                            else:
+                                st.info(f"No interactions found for Ticket ID: {selected_ticket_view_staff}")
+                    else:
+                        st.info("No assigned ticket IDs available to view interactions.")
+
+                    # Lower section: Submit New Interaction
+                    st.markdown("""
+                        <div style='background: #f8f9fa; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); padding: 1.5em; margin-bottom: 1em;'>
+                            <h3 style='color: #1a237e; font-family: "Segoe UI", sans-serif; font-weight: 700; margin-bottom: 1em; text-align: center;'>
+                                ✍️ Submit New Interaction
+                            </h3>
+                        </div>
+                    """, unsafe_allow_html=True)
+                    
+                    lis_ticket = ["No Ticket ID"] + sorted([tid for tid in df["Ticket ID"].dropna().astype(str).unique().tolist()])
+
+                    # Interaction Log form
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        ticket_id_int = st.selectbox("Ticket ID *", lis_ticket, index=None,
+                            placeholder="Select option...", key='interaction1')
+                    with col2:
+                        date_int = st.date_input("Date of Interaction *", value=datetime.today().date())
+                    
+                    list_interaction = [
+                        "Email", "Phone Call", "In-Person Meeting", "Online Meeting", "Peer Learning Meetings (PLNs)", "Other"
+                    ]
+
+                    # Asked before jurisdiction, because it determines which jurisdiction field applies
+                    type_interaction = st.selectbox(
+                        "Type of Interaction *",
+                        list_interaction,
+                        index=None,
+                        placeholder="Select option..."
+                    )
+
+                    is_pln = type_interaction == "Peer Learning Meetings (PLNs)"
+
+                    jurisdiction_for_no_ticket = None
+                    pln_jurisdictions = []
+
+                    if is_pln:
+                        # PLNs span multiple jurisdictions - this replaces the single-jurisdiction field
+                        pln_jurisdictions = st.multiselect(
+                            "Jurisdiction(s) for PLN *",
+                            lis_location,
+                            default=[],
+                            key='juris_pln_coord'
+                        )
+                    elif ticket_id_int == "No Ticket ID":
+                        jurisdiction_for_no_ticket = st.selectbox(
+                            "Jurisdiction *",
+                            lis_location,
+                            index=None,
+                            placeholder="Select option...",
+                            key='juris_interaction_coord'
+                        )
+
+                    # If "Other" is selected, show a text input for custom value
+                    if type_interaction == "Other":
+                        type_interaction_other = st.text_input("Please specify the Type of Interaction *")
+                        if type_interaction_other:
+                            type_interaction = type_interaction_other
+
+                    interaction_description = st.text_area("Short Summary *", placeholder='Enter text',
+                        height=150, key='interaction_description_coord')
+
+                    document_int = st.file_uploader(
+                        "Upload any files or attachments that are relevant to this interaction.",
+                        accept_multiple_files=True
+                    )
+
+                    # Submit button
+                    st.markdown("""
+                        <style>
+                        .stButton > button {
+                            width: 100%;
+                            background-color: #cdb4db;
+                            color: black;
+                            font-family: Arial, "Segoe UI", sans-serif;
+                            font-weight: 600;
+                            border-radius: 8px;
+                            padding: 0.6em;
+                            margin-top: 1em;
+                        }
+                        </style>
+                    """, unsafe_allow_html=True)
+
+                    try:
+                        df = load_main_sheet()  # Use cached function
+                    except Exception as e:
+                        st.error(f"Error fetching data from Google Sheets: {str(e)}")
+
+                    try:
+                        df_int = load_interaction_sheet()  # Use cached function
+                    except Exception as e:
+                        st.error(f"Error fetching data from Google Sheets: {str(e)}")
+
+                    try:
+                        df_del = load_delivery_sheet()  # Use cached function
+                    except Exception as e:
+                        st.error(f"Error fetching data from Google Sheets: {str(e)}")
+
+                    # Submit logic
+                    if st.button("Submit",key='interaction_submit1'):
+                        errors = []
+                        drive_links_int = ""  # Initialize here
+                        # Required field checks
+                        if not ticket_id_int: errors.append("Ticket ID is required.")
+                        if ticket_id_int == "No Ticket ID" and not jurisdiction_for_no_ticket and not pln_jurisdictions:
+                            errors.append("Jurisdiction is required when Ticket ID is not provided.")
+                        if is_pln and not pln_jurisdictions:
+                            errors.append("At least one jurisdiction is required for Peer Learning Meetings (PLNs).")
+                        if not date_int: errors.append("Date of interaction is required.")
+                        if not type_interaction: errors.append("Type of interaction is required.")
+                        if not interaction_description: errors.append("Short summary is required.")
+
+                        # Show warnings or success
+                        if errors:
+                            for error in errors:
+                                st.warning(error)
+                        else:
+                            # Only upload files if all validation passes
+                            if document_int:
+                                try:
+                                    folder_id_int = "19-Sm8W151tg1zyDN0Nh14DUvOVUieqq7" 
+                                    links_int = []
+                                    upload_count = 0
+                                    for file in document_int:
+                                        # Rename file as: GU0001_filename.pdf
+                                        renamed_filename = f"{ticket_id_int}_{file.name}"
+                                        link = upload_file_to_drive(
+                                            file=file,
+                                            filename=renamed_filename,
+                                            folder_id=folder_id_int,
+                                            creds_dict=st.secrets["gcp_service_account"]
+                                        )
+                                        links_int.append(link)
+                                        upload_count += 1
+                                        st.success(f"✅ Successfully uploaded: {file.name}")
+                                    drive_links_int = ", ".join(links_int)
+                                    if upload_count > 0:
+                                        st.success(f"✅ All {upload_count} file(s) uploaded successfully to Google Drive!")    
+                                except Exception as e:
+                                    st.error(f"❌ Error uploading file(s) to Google Drive: {str(e)}")
+
+                            # Resolve the jurisdiction(s) this interaction should be logged under.
+                            # PLNs span multiple jurisdictions -> one row per selected jurisdiction.
+                            if is_pln and pln_jurisdictions:
+                                jurisdiction_values = list(dict.fromkeys(pln_jurisdictions))
+                            else:
+                                ticket_juris = df.loc[df["Ticket ID"].astype(str) == str(ticket_id_int), "Jurisdiction"]
+                                if ticket_id_int != "No Ticket ID" and not ticket_juris.empty:
+                                    jurisdiction_values = [str(ticket_juris.iloc[0])]
+                                else:
+                                    jurisdiction_values = [jurisdiction_for_no_ticket or ""]
+
+                            rows_int = [
+                                {
+                                    'Ticket ID': ticket_id_int,
+                                    "Date of Interaction": date_int.strftime("%Y-%m-%d"),  # Convert to string
+                                    "Type of Interaction": type_interaction,
+                                    "Short Summary": interaction_description,
+                                    "Document": drive_links_int,
+                                    "Jurisdiction": juris,
+                                    "Submitted By": staff_name,
+                                    "Submission Date": datetime.today().strftime("%Y-%m-%d %H:%M")
+                                }
+                                for juris in jurisdiction_values
+                            ]
+                            new_data_int = pd.DataFrame(rows_int)
+
+                            try:
+                                # Append new data to Google Sheet
+                                updated_sheet2 = pd.concat([df_int, new_data_int], ignore_index=True)
+                                updated_sheet2= updated_sheet2.applymap(
+                                    lambda x: x.strftime("%Y-%m-%d") if isinstance(x, (datetime, pd.Timestamp)) else x
+                                )
+                                # Replace NaN with empty strings to ensure JSON compatibility
+                                updated_sheet2 = updated_sheet2.fillna("")
+                                
+                                # Get the worksheet first
+                                spreadsheet3 = client.open('HRSA64_TA_Request')
+                                worksheet3 = spreadsheet3.worksheet('Interaction')
+                                worksheet3.update([updated_sheet2.columns.values.tolist()] + updated_sheet2.values.tolist())
+
+                                # Clear cache to refresh data
+                                st.cache_data.clear()
+
+                                if len(new_data_int) > 1:
+                                    st.success(f"✅ Submission successful! {len(new_data_int)} rows logged (one per jurisdiction).")
+                                else:
+                                    st.success("✅ Submission successful!")
+                                time.sleep(2)
+                                st.rerun()
+
+                            except Exception as e:
+                                st.error(f"Error updating Google Sheets: {str(e)}")
+
+                st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
+
+                with st.expander("👨‍💻 **SUBMIT STUDENT SUPPORT REQUEST FORM**"):
+                    st.markdown("""
+                        <div class="gutap-hero">
+                            <div class="gutap-hero-title">
+                                👨‍💻 Student Support Request Center
+                            </div>
+                            <div class="gutap-hero-sub">
+                                Submit new student support requests. The system will automatically notify all research assistants.
+                            </div>
+                        </div>
+                    """, unsafe_allow_html=True)
+
+                    # Upper section: previous support requests (same portal pattern as Interaction Log)
+                    st.markdown("""
+                        <div style='background: #f8f9fa; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); padding: 1.5em; margin-bottom: 2em;'>
+                            <h3 style='color: #1a237e; font-family: "Segoe UI", sans-serif; font-weight: 700; margin-bottom: 1em; text-align: center;'>
+                                📊 Your Previous Student Support Requests
+                            </h3>
+                        </div>
+                    """, unsafe_allow_html=True)
+
+                    _mask_prev_support = pd.Series(False, index=df_support.index)
+                    if "TAP Name" in df_support.columns and staff_name:
+                        _mask_prev_support = _mask_prev_support | (
+                            df_support["TAP Name"].astype(str).str.strip() == str(staff_name).strip()
+                        )
+                    if "TAP email" in df_support.columns and user_email:
+                        _mask_prev_support = _mask_prev_support | (
+                            df_support["TAP email"].astype(str).str.strip().str.lower()
+                            == str(user_email).strip().lower()
+                        )
+                    df_support_staff_prev = df_support[_mask_prev_support].copy()
+
+                    if not df_support_staff_prev.empty:
+                        _hide_prev = {"TAP Name", "TAP email", "Student email"}
+                        _display_cols = [c for c in df_support_staff_prev.columns if c not in _hide_prev]
+                        df_support_prev_disp = df_support_staff_prev[_display_cols].copy()
+
+                        _sort_ts = pd.Series(pd.NaT, index=df_support_prev_disp.index)
+                        if "Submission Date" in df_support_prev_disp.columns:
+                            _sort_ts = pd.to_datetime(df_support_prev_disp["Submission Date"], errors="coerce")
+                        if "Date" in df_support_prev_disp.columns:
+                            _sort_ts = _sort_ts.fillna(
+                                pd.to_datetime(df_support_prev_disp["Date"], errors="coerce")
+                            )
+                        if "Anticipated Deadline" in df_support_prev_disp.columns:
+                            _sort_ts = _sort_ts.fillna(
+                                pd.to_datetime(df_support_prev_disp["Anticipated Deadline"], errors="coerce")
+                            )
+                        df_support_prev_disp = df_support_prev_disp.assign(_sort_ts=_sort_ts)
+                        df_support_prev_disp = df_support_prev_disp.sort_values("_sort_ts", ascending=True).drop(
+                            columns=["_sort_ts"]
+                        )
+
+                        for _dc in ("Date", "Anticipated Deadline"):
+                            if _dc in df_support_prev_disp.columns:
+                                _dts = pd.to_datetime(df_support_prev_disp[_dc], errors="coerce")
+                                df_support_prev_disp[_dc] = _dts.apply(
+                                    lambda x: x.strftime("%Y-%m-%d") if pd.notna(x) else ""
+                                )
+
+                        _total_support_prev = len(df_support_staff_prev)
+                        if "Request status" in df_support_staff_prev.columns:
+                            _completed_support_prev = (
+                                df_support_staff_prev["Request status"].astype(str).str.strip().str.lower()
+                                == "completed"
+                            ).sum()
+                        else:
+                            _completed_support_prev = 0
+
+                        st.markdown(f"""
+                            <div style='background: #e3f2fd; border-radius: 10px; padding: 1em; margin-bottom: 1em; text-align: center;'>
+                                <div style='display: flex; justify-content: space-around;'>
+                                    <div>
+                                        <div style='font-size: 1.5em; font-weight: bold; color: #1976d2;'>{_total_support_prev}</div>
+                                        <div style='font-size: 0.9em; color: #666;'>Total Requests</div>
+                                    </div>
+                                    <div>
+                                        <div style='font-size: 1.5em; font-weight: bold; color: #388e3c;'>{_completed_support_prev}</div>
+                                        <div style='font-size: 0.9em; color: #666;'>Completed</div>
+                                    </div>
+                                </div>
+                            </div>
+                        """, unsafe_allow_html=True)
+
+                        st.dataframe(df_support_prev_disp.reset_index(drop=True), use_container_width=True)
+                    else:
+                        st.markdown("""
+                            <div style='background: #fff3e0; border-radius: 15px; padding: 2em; text-align: center; border: 2px dashed #ff9800;'>
+                                <div style='font-size: 3em; margin-bottom: 0.5em;">📝</div>
+                                <h4 style='color: #e65100; margin-bottom: 0.5em;'>No Previous Student Support Requests</h4>
+                                <p style='color: #666; margin: 0;'>You have not submitted any student support requests yet. Use the form below to submit your first request.</p>
+                            </div>
+                        """, unsafe_allow_html=True)
+
+                    st.markdown("""
+                        <div class="support-section-header">
+                            <div class="support-section-kicker">New request</div>
+                            <div class="support-section-title">Submit Student Support Request</div>
+                        </div>
+                    """, unsafe_allow_html=True)
+
+                    # Start with Anticipated Delivery
+                    anticipated_delivery = st.selectbox("Anticipated Delivery *", options=["Meeting notes", "Dashboard", "Peer learning facilitation", "TA meeting", "Other"], index=0) 
+                    if anticipated_delivery == "Other":
+                        anticipated_delivery_other = st.text_input("Please specify the Anticipated Delivery *")
+                        if anticipated_delivery_other:
+                            anticipated_delivery = anticipated_delivery_other
+
+                    date_support = None
+                    meeting_time = ""
+                    meeting_start_time = ""
+                    meeting_end_time = ""
+                    time_commitment = ""
+                    anticipated_deadline = None
+
+                    # Conditional form fields based on delivery type
+                    if anticipated_delivery == "Meeting notes":
+                        st.markdown("""
+                            <div class="support-section-header" style="margin-top: 1rem;">
+                                <div class="support-section-kicker">Meeting schedule</div>
+                                <div class="support-section-title">Date and time window</div>
+                            </div>
+                            <div class="support-helper">
+                                Choose the meeting start time first. The end time defaults to one hour later and can be adjusted in 30-minute increments.
+                            </div>
+                        """, unsafe_allow_html=True)
+                        meeting_time_options = [
+                            (
+                                datetime.combine(
+                                    datetime.today().date(),
+                                    datetime.strptime("9:00 AM", "%I:%M %p").time(),
+                                )
+                                + timedelta(minutes=30 * i)
+                            ).strftime("%I:%M %p").lstrip("0")
+                            for i in range(17)
+                        ]
+                        meeting_start_options = meeting_time_options[:-2]
+                        col1, col2, col3 = st.columns(3)
+                        with col1:
+                            date_support = st.date_input("Date of Meeting *", value=datetime.today().date())
+                        with col2:
+                            meeting_start_time = st.selectbox(
+                                "Start Time *",
+                                options=meeting_start_options,
+                                index=0,
+                                key="support_meeting_start_time",
+                            )
+                        start_time_index = meeting_time_options.index(meeting_start_time)
+                        default_end_time = meeting_time_options[start_time_index + 2]
+                        meeting_end_options = meeting_time_options[start_time_index + 1:]
+                        if (
+                            st.session_state.get("support_meeting_start_time_previous") != meeting_start_time
+                            or st.session_state.get("support_meeting_end_time") not in meeting_end_options
+                        ):
+                            st.session_state["support_meeting_end_time"] = default_end_time
+                        st.session_state["support_meeting_start_time_previous"] = meeting_start_time
+                        with col3:
+                            meeting_end_time = st.selectbox(
+                                "End Time *",
+                                options=meeting_end_options,
+                                index=meeting_end_options.index(st.session_state["support_meeting_end_time"]),
+                                key="support_meeting_end_time",
+                            )
+                        meeting_time = f"{meeting_start_time}-{meeting_end_time}"
+                        st.markdown(
+                            f"""
+                            <div class="support-time-summary">
+                                <span>Time requested</span>{meeting_time}
                             </div>
                             """,
                             unsafe_allow_html=True,
                         )
-                        staff_lookup_q = st.text_input(
-                            "Search",
-                            placeholder="e.g. ticket ID, keyword, email…",
-                            key="staff_ta_lookup_q",
-                        )
-                        staff_lookup_scope = st.radio(
-                            "Search scope",
-                            ["My assignments only", "Entire TA log"],
-                            horizontal=True,
-                            key="staff_ta_lookup_scope",
-                        )
-                        _staff_base = df.copy()
-                        if staff_lookup_scope == "My assignments only" and staff_name and "Assigned Coach" in _staff_base.columns:
-                            _staff_base = _staff_base[
-                                _staff_base["Assigned Coach"].astype(str).str.strip()
-                                == str(staff_name).strip()
-                            ]
-                        if staff_lookup_q and str(staff_lookup_q).strip():
-                            _staff_filt = _gutap_df_text_search(
-                                _staff_base, str(staff_lookup_q).strip(), max_display=400
-                            )
-                        else:
-                            _staff_filt = (
-                                _staff_base.head(250) if len(_staff_base) > 250 else _staff_base
-                            )
-                        _staff_cols = [
-                            c
-                            for c in [
-                                "Ticket ID",
-                                "Status",
-                                "Priority",
-                                "Jurisdiction",
-                                "Organization",
-                                "Name",
-                                "Email Address",
-                                "TA Type",
-                                "Focus Area",
-                                "Assigned Coach",
-                                "Targeted Due Date",
-                            ]
-                            if c in getattr(_staff_filt, "columns", [])
-                        ]
-                        if _staff_filt is None or _staff_filt.empty:
-                            st.info("No rows match this search or scope.")
-                        else:
-                            st.dataframe(
-                                _staff_filt[_staff_cols],
-                                use_container_width=True,
-                            )
-                            st.caption(
-                                f"Showing {len(_staff_filt)} row(s). Refine the search to narrow results; data is read-only."
-                            )
-
-                    # --- Section 2: Filter, Sort, Comment
-                    with st.expander("🚧 **IN-PROGRESS REQUESTS**"):
+                        request_description = st.text_area("Meeting Description *", placeholder='Describe the meeting topic, agenda, or specific requirements...', height=150, key='meeting_description')
+                        
+                    else:
                         st.markdown("""
-                            <div class="gutap-hero">
-                                <div class="gutap-hero-title">
-                                    🚧 In-Progress Requests Management
-                                </div>
-                                <div class="gutap-hero-sub">
-                                    Manage your assigned requests, add comments, and track progress. Filter and sort your active TA requests efficiently.
-                                </div>
+                            <div class="support-section-header" style="margin-top: 1rem;">
+                                <div class="support-section-kicker">Project timeline</div>
+                                <div class="support-section-title">Estimate effort and deadline</div>
                             </div>
                         """, unsafe_allow_html=True)
+                        col1, col2 = st.columns(2)
+                        
+                        with col1:
+                            time_commitment = st.selectbox("Anticipated Time Commitment *", 
+                                                         options=["1-2 hours", "3-4 hours", "5-8 hours", "1-2 days", "3-5 days", "1-2 weeks", "More than 2 weeks"], 
+                                                         index=None, 
+                                                         placeholder="Select option...")
+                        
+                        with col2:
+                            anticipated_deadline = st.date_input("Anticipated Deadline *", value=datetime.today().date() + timedelta(days=7))
+                        
+                        request_description = st.text_area("Project Description *", placeholder='Describe the project requirements, deliverables, and any specific details...', height=150, key='project_description')
+                        
+                        # Set default values for non-meeting requests
+                        date_support = None
 
-                        # Filter "In Progress" requests
-                        if staff_df.empty:
-                            st.info("No requests currently in progress.")
+                    # Preferred RA Selection
+                    st.markdown("""
+                        <div class="support-section-header">
+                            <div class="support-section-kicker">Assignment</div>
+                            <div class="support-section-title">Preferred Research Assistant</div>
+                        </div>
+                        <div class="support-helper">
+                            Leave this as No preference to notify all research assistants.
+                        </div>
+                    """, unsafe_allow_html=True)
+                    ra_list = ["No preference"] + sorted([name for name in STUDENT_SCHEDULE.keys()])
+                    preferred_ra = st.selectbox(
+                        "Research Assistant",
+                        options=ra_list,
+                        index=0,
+                        key='preferred_ra_selection'
+                    )
+
+                    st.markdown('<div class="support-subtle-note">Review the details before submitting. Assigned requests are emailed directly; unassigned requests notify all RAs.</div>', unsafe_allow_html=True)
+
+                    # Submit logic
+                    if st.button("Submit Student Support Request", key='support_submit1', type="primary"):
+                        errors = []
+                        drive_links_del = ""  # Ensure always defined
+                        
+                        # Required field checks based on delivery type
+                        if not anticipated_delivery: 
+                            errors.append("Anticipated delivery is required.")
+                        if not request_description: 
+                            errors.append("Description is required.")
+                        
+                        if anticipated_delivery == "Meeting notes":
+                            if not date_support: 
+                                errors.append("Date of meeting is required.")
+                            if not meeting_start_time:
+                                errors.append("Start time is required.")
+                            if not meeting_end_time:
+                                errors.append("End time is required.")
                         else:
-                            # Convert date columns
-                            staff_df["Assigned Date"] = pd.to_datetime(staff_df["Assigned Date"], errors="coerce")
-                            staff_df["Targeted Due Date"] = pd.to_datetime(staff_df["Targeted Due Date"], errors="coerce")
-                            staff_df['Expected Duration (Days)'] = (staff_df["Targeted Due Date"]-staff_df["Assigned Date"]).dt.days
+                            if not time_commitment: 
+                                errors.append("Time commitment is required.")
+                            if not anticipated_deadline: 
+                                errors.append("Anticipated deadline is required.")
 
-                            # Format dates
-                            staff_df["Assigned Date"] = staff_df["Assigned Date"].dt.strftime("%Y-%m-%d")
-                            staff_df["Targeted Due Date"] = staff_df["Targeted Due Date"].dt.strftime("%Y-%m-%d")
+                        # Show warnings or success
+                        if errors:
+                            for error in errors:
+                                st.warning(error)
+                        else:
+                            # Prepare data for Google Sheets
+                            # Check if preferred RA is selected
+                            has_preferred_ra = preferred_ra and preferred_ra != "No preference"
+                            preferred_ra_name = preferred_ra if has_preferred_ra else ""
+                            preferred_ra_email = STUDENT_SCHEDULE[preferred_ra]["email"] if has_preferred_ra else ""
+                            
+                            submit_ts = datetime.now().strftime("%Y-%m-%d %H:%M")
+                            new_row_support = {
+                                "Date": date_support.strftime("%Y-%m-%d") if date_support else "",
+                                "Time request needed": meeting_time if anticipated_delivery == "Meeting notes" else "",
+                                "Request description": request_description,
+                                "Anticipated Deliverable": anticipated_delivery,
+                                "TAP Name": staff_name,
+                                "TAP email": user_email,
+                                "Time Commitment": time_commitment if anticipated_delivery != "Meeting notes" else "",
+                                "Anticipated Deadline": anticipated_deadline.strftime("%Y-%m-%d") if anticipated_delivery != "Meeting notes" and anticipated_deadline else "",
+                                "Request Type": "Meeting" if anticipated_delivery == "Meeting notes" else "Project",
+                                "Student assigned": preferred_ra_name,
+                                "Student email": preferred_ra_email,
+                                "Request status": "Not Started" if has_preferred_ra else "",
+                                "Submission Date": submit_ts,
+                                "Assigned Date": submit_ts if has_preferred_ra else "",
+                            }
+                            new_data_support = pd.DataFrame([new_row_support])
 
-
-                            # --- Filters
-                            st.markdown("##### 🔍 Filter Options")
-
-                            col1, col2, col3 = st.columns(3)
-                            with col1:
-                                priority_filter = st.multiselect(
-                                    "Filter by Priority",
-                                    options=staff_df["Priority"].unique(),
-                                    default=staff_df["Priority"].unique(), key='sta1'
+                            try:
+                                # Append new data to Google Sheet
+                                updated_sheet3 = pd.concat([df_support, new_data_support], ignore_index=True)
+                                updated_sheet3= updated_sheet3.applymap(
+                                    lambda x: x.strftime("%Y-%m-%d") if isinstance(x, (datetime, pd.Timestamp)) else x
                                 )
+                                # Replace NaN with empty strings to ensure JSON compatibility
+                                updated_sheet3 = updated_sheet3.fillna("")
+                                spreadsheet4 = client.open('HRSA64_TA_Request')
+                                worksheet4 = spreadsheet4.worksheet('GA_Support')
+                                worksheet4.update([updated_sheet3.columns.values.tolist()] + updated_sheet3.values.tolist())
 
-                            with col2:
-                                ta_type_filter = st.multiselect(
-                                    "Filter by TA Type",
-                                    options=staff_df["TA Type"].unique(),
-                                    default=staff_df["TA Type"].unique(), key='sta2'
-                                )
+                                # Clear cache to refresh data
+                                st.cache_data.clear()
+                                
+                                st.success("✅ Submission successful!")
+                                
+                                # Handle notifications based on preferred RA selection
+                                if has_preferred_ra:
+                                    # Send direct assignment email to preferred RA
+                                    st.markdown("---")
+                                    st.markdown(f"**📧 Sending assignment notification to {preferred_ra}...**")
+                                    
+                                    # Format date for email
+                                    if date_support:
+                                        date_str_email = date_support.strftime("%Y-%m-%d")
+                                    elif anticipated_deadline and anticipated_delivery != "Meeting notes":
+                                        date_str_email = anticipated_deadline.strftime("%Y-%m-%d")
+                                    else:
+                                        date_str_email = ""
+                                    
+                                    ra_subject = f"You have been assigned a support request - {date_str_email if date_str_email else anticipated_delivery}"
+                                    ra_body = f"""
+Dear {preferred_ra},
 
-                            with col3:
-                                focus_area_filter = st.multiselect(
-                                    "Filter by Focus Area",
-                                    options=staff_df["Focus Area"].unique(),
-                                    default=staff_df["Focus Area"].unique(), key='sta3'
-                                )
+You have been assigned to a support request by {staff_name}.
 
-                            # Apply filters
-                            filtered_df2 = staff_df[
-                                (staff_df["Priority"].isin(priority_filter)) &
-                                (staff_df["TA Type"].isin(ta_type_filter)) &
-                                (staff_df["Focus Area"].isin(focus_area_filter))
-                            ]
+Request Details:
+- Date: {date_str_email if date_str_email else 'N/A'}
+{f"- Time: {meeting_time}" if meeting_time else ""}
+- TAP Name: {staff_name}
+- TAP Email: {user_email}
+- Request Description: {request_description}
+- Anticipated Deliverable: {anticipated_delivery}
+{f"- Time Commitment: {time_commitment}" if time_commitment else ""}
+{f"- Anticipated Deadline: {anticipated_deadline.strftime('%Y-%m-%d')}" if anticipated_deadline and anticipated_delivery != "Meeting notes" else ""}
 
-                            # Display filtered table
-                            st.dataframe(filtered_df2[[
-                                "Ticket ID","Jurisdiction", "Organization", "Name", "Title/Position", "Email Address", "Phone Number",
-                                "Focus Area", "TA Type", "Assigned Date", "Targeted Due Date","Expected Duration (Days)","Priority", "Assigned Coach", "TA Description",
-                                "Document","Coordinator Comment History", "Staff Comment History", "Transfer History"
-                            ]].sort_values(by="Expected Duration (Days)").reset_index(drop=True))
+Status: Not Started
 
-                            # Select request by index (row number in submitted_requests)
-                            request_indices2 = filtered_df2.index.tolist()
-                            selected_request_index1 = st.selectbox(
-                                "Select a request to comment",
-                                options=request_indices2,
-                                format_func=lambda idx: f"{filtered_df2.at[idx, 'Ticket ID']} | {filtered_df2.at[idx, 'Name']} | {filtered_df2.at[idx, 'Jurisdiction']}",
-                            )
+Please log into the GU-TAP System to view the request details and update the status as you progress.
 
-                            # Input comment
-                            comment_text = st.text_area("Staff Comment", placeholder="Enter comments", height=150, key='commm')
+GU-TAP System: https://hrsagutap.streamlit.app/
 
-                            # Submit
-                            if st.button("✅ Submit Comments"):
-                                try:
-                                    # Get the index of the selected row in the full df
-                                    global_index = filtered_df2.loc[selected_request_index1].name
-
-                                    # Copy df and update
-                                    updated_df = df.copy()
-                                    # Keep latest comment in main field
-                                    updated_df.loc[global_index, "Staff Comment"] = comment_text
-                                    # Append to history with timestamp and author
-                                    ts = datetime.today().strftime("%Y-%m-%d %H:%M")
-                                    author = staff_name or "Staff"
-                                    entry = f"{ts} | {author}: {comment_text}" if comment_text else ""
-                                    if entry:
-                                        existing = str(updated_df.loc[global_index, "Staff Comment History"]).strip()
-                                        if existing and existing.lower() != "nan":
-                                            updated_df.loc[global_index, "Staff Comment History"] = existing + "\n" + entry
+Best regards,
+GU-TAP System
+                                    """
+                                    
+                                    try:
+                                        ra_notification_sent = send_email_mailjet(
+                                            to_email=preferred_ra_email,
+                                            subject=ra_subject,
+                                            body=ra_body.strip()
+                                        )
+                                        if ra_notification_sent:
+                                            st.success(f"✅ Assignment notification sent to {preferred_ra} ({preferred_ra_email})")
                                         else:
-                                            updated_df.loc[global_index, "Staff Comment History"] = entry
-                                    updated_df = updated_df.applymap(
-                                        lambda x: x.strftime("%Y-%m-%d") if isinstance(x, (pd.Timestamp, datetime)) and not pd.isna(x) else x
+                                            st.warning(f"⚠️ Failed to send assignment notification to {preferred_ra}")
+                                    except Exception as e:
+                                        st.warning(f"⚠️ Failed to send assignment notification to {preferred_ra}: {e}")
+                                    
+                                    time.sleep(2)
+                                    st.rerun()
+                                    
+                                else:
+                                    # Notify all research assistants
+                                    st.markdown("---")
+                                    st.markdown("**📧 Sending notifications to all research assistants...**")
+                                    
+                                    notification_sent = send_ga_support_notifications_to_all(
+                                        request_description=request_description,
+                                        anticipated_delivery=anticipated_delivery,
+                                        tap_name=staff_name,
+                                        tap_email=user_email,
+                                        date_str=date_support.strftime("%Y-%m-%d") if date_support else "",
+                                        meeting_time=meeting_time if anticipated_delivery == "Meeting notes" else "",
+                                        time_commitment=time_commitment if anticipated_delivery != "Meeting notes" else "",
+                                        anticipated_deadline=(
+                                            anticipated_deadline.strftime("%Y-%m-%d")
+                                            if anticipated_delivery != "Meeting notes" and anticipated_deadline
+                                            else ""
+                                        ),
                                     )
-                                    updated_df = updated_df.fillna("") 
-
-                                    # Push to Google Sheets
-                                    spreadsheet1 = client.open('HRSA64_TA_Request')
-                                    worksheet1 = spreadsheet1.worksheet('Main')
-                                    worksheet1.update([updated_df.columns.values.tolist()] + updated_df.values.tolist())
-
-                                    st.cache_data.clear()
-
-                                    st.success("💬 Comment saved successfully!.")
+                                    
+                                    # Wait a moment to show completion status
+                                    time.sleep(1)
+                                    
+                                    # Show final status and rerun
+                                    if notification_sent:
+                                        st.success("✅ All notifications sent successfully!")
+                                    else:
+                                        st.warning("⚠️ Some notifications may have failed. Please check the logs above.")
+                                    
                                     time.sleep(2)
                                     st.rerun()
 
-                                except Exception as e:
-                                    st.error(f"Error saving comment: {str(e)}")
-                    st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
+                            except Exception as e:
+                                st.error(f"Error updating Google Sheets: {str(e)}")
 
-                    with st.expander("🗒️ **CHECK & SUBMIT INTERACTION LOG**"):
-                        st.markdown("""
-                            <div class="gutap-hero">
-                                <div class="gutap-hero-title">
-                                    🗒️ Interaction Management Center
-                                </div>
-                                <div class="gutap-hero-sub">
-                                    Review your previous interactions and submit new ones. Track all your communications with jurisdictions and TA requests.
-                                </div>
+                st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
+
+                with st.expander("🧳 **GENERATE DOMESTIC TRAVEL AUTHORIZATION FORM**"):
+                    st.markdown("""
+                        <div class="gutap-hero">
+                            <div class="gutap-hero-title">
+                                🧳 Generate Domestic Travel Authorization Form
                             </div>
-                        """, unsafe_allow_html=True)
-
-                        # Upper section: Previous Interactions
-                        st.markdown("""
-                            <div style='background: #f8f9fa; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); padding: 1.5em; margin-bottom: 2em;'>
-                                <h3 style='color: #1a237e; font-family: "Segoe UI", sans-serif; font-weight: 700; margin-bottom: 1em; text-align: center;'>
-                                    📊 Your Previous Interactions
-                                </h3>
+                            <div class="gutap-hero-sub">
+                                Input your travel information to generate a domestic travel authorization form.
                             </div>
-                        """, unsafe_allow_html=True)
+                        </div>
+                    """, unsafe_allow_html=True)
                     
-                        # Get interaction data properly
-                        df_int_staff = df_int[df_int["Submitted By"] == staff_name].copy()
-                        if not df_int_staff.empty:
-                            # Remove columns we don't want to display
-                            display_cols = [col for col in df_int_staff.columns if col not in ['Submitted By', 'Submission Date']]
-                            df_int_staff_display = df_int_staff[display_cols].copy()
-                        
-                            # Sort by Date of Interaction (most recent first)
-                            df_int_staff_display["Date of Interaction"] = pd.to_datetime(df_int_staff_display["Date of Interaction"], errors="coerce")
-                            df_int_staff_display = df_int_staff_display.sort_values("Date of Interaction", ascending=True)
-                            df_int_staff_display["Date of Interaction"] = df_int_staff_display["Date of Interaction"].dt.strftime("%Y-%m-%d")
-                        
-                            # Add summary stats
-                            total_interactions = len(df_int_staff_display)
-                            recent_interactions = len(df_int_staff_display[df_int_staff_display["Date of Interaction"] >= (datetime.now() - timedelta(days=30)).strftime("%Y-%m-%d")])
-                        
-                            st.markdown(f"""
-                                <div style='background: #e3f2fd; border-radius: 10px; padding: 1em; margin-top: 1em; text-align: center;'>
-                                    <div style='display: flex; justify-content: space-around;'>
-                                        <div>
-                                            <div style='font-size: 1.5em; font-weight: bold; color: #1976d2;'>{total_interactions}</div>
-                                            <div style='font-size: 0.9em; color: #666;'>Total Interactions</div>
-                                        </div>
-                                        <div>
-                                            <div style='font-size: 1.5em; font-weight: bold; color: #388e3c;'>{recent_interactions}</div>
-                                            <div style='font-size: 0.9em; color: #666;'>Last 30 Days</div>
-                                        </div>
-                                    </div>
-                                </div>
-                            """, unsafe_allow_html=True)
-
-                            st.dataframe(df_int_staff_display.reset_index(drop=True), use_container_width=True)
-                        
-
-                        else:
-                            st.markdown("""
-                                <div style='background: #fff3e0; border-radius: 15px; padding: 2em; text-align: center; border: 2px dashed #ff9800;'>
-                                    <div style='font-size: 3em; margin-bottom: 0.5em;'>📝</div>
-                                    <h4 style='color: #e65100; margin-bottom: 0.5em;'>No Previous Interactions</h4>
-                                    <p style='color: #666; margin: 0;'>You haven't logged any interactions yet. Start by submitting your first interaction below!</p>
-                                </div>
-                            """, unsafe_allow_html=True)
-
-                        # Middle section: View Interactions by Ticket ID
-                        st.markdown("""
-                            <div style='background: #f8f9fa; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); padding: 1.5em; margin-bottom: 2em; margin-top: 2em;'>
-                                <h3 style='color: #1a237e; font-family: "Segoe UI", sans-serif; font-weight: 700; margin-bottom: 1em; text-align: center;'>
-                                    🔍 View Interactions by Ticket ID
-                                </h3>
-                            </div>
-                        """, unsafe_allow_html=True)
+                    st.markdown("Fill out the form below to generate your Georgetown domestic travel authorization form.")
                     
-                        # Get ticket IDs assigned to this staff member
-                        assigned_tickets_staff = df[df["Assigned Coach"] == staff_name]["Ticket ID"].dropna().astype(str).unique().tolist()
-                        assigned_tickets_staff_sorted = sorted(assigned_tickets_staff)
-                    
-                        if assigned_tickets_staff_sorted:
-                            selected_ticket_view_staff = st.selectbox(
-                                "Select a Ticket ID to view all interactions",
-                                options=[""] + assigned_tickets_staff_sorted,
-                                index=0,
-                                key='view_interactions_ticket_staff',
-                                help="Select a ticket ID from your assigned requests to view all interactions for that ticket"
-                            )
-                        
-                            if selected_ticket_view_staff:
-                                # Get all interactions for this ticket ID (regardless of who submitted)
-                                # Handle NaN values properly
-                                df_ticket_int_staff = df_int[
-                                    (df_int["Ticket ID"].notna()) & 
-                                    (df_int["Ticket ID"].astype(str) == selected_ticket_view_staff)
-                                ].copy()
-                            
-                                if not df_ticket_int_staff.empty:
-                                    # Remove columns we don't want to display
-                                    display_cols_ticket_staff = [col for col in df_ticket_int_staff.columns if col not in ['Submission Date']]
-                                    df_ticket_int_staff_display = df_ticket_int_staff[display_cols_ticket_staff].copy()
-                                
-                                    # Sort by Date of Interaction (most recent first)
-                                    df_ticket_int_staff_display["Date of Interaction"] = pd.to_datetime(df_ticket_int_staff_display["Date of Interaction"], errors="coerce")
-                                    df_ticket_int_staff_display = df_ticket_int_staff_display.sort_values("Date of Interaction", ascending=True)
-                                    df_ticket_int_staff_display["Date of Interaction"] = df_ticket_int_staff_display["Date of Interaction"].dt.strftime("%Y-%m-%d")
-                                
-                                    st.markdown(f"**All interactions for Ticket ID: {selected_ticket_view_staff}**")
-                                    st.dataframe(df_ticket_int_staff_display.reset_index(drop=True), use_container_width=True)
-                                else:
-                                    st.info(f"No interactions found for Ticket ID: {selected_ticket_view_staff}")
-                        else:
-                            st.info("No assigned ticket IDs available to view interactions.")
-
-                        # Lower section: Submit New Interaction
-                        st.markdown("""
-                            <div style='background: #f8f9fa; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); padding: 1.5em; margin-bottom: 1em;'>
-                                <h3 style='color: #1a237e; font-family: "Segoe UI", sans-serif; font-weight: 700; margin-bottom: 1em; text-align: center;'>
-                                    ✍️ Submit New Interaction
-                                </h3>
-                            </div>
-                        """, unsafe_allow_html=True)
-                    
-                        lis_ticket = ["No Ticket ID"] + sorted([tid for tid in df["Ticket ID"].dropna().astype(str).unique().tolist()])
-
-                        # Interaction Log form
-                        col1, col2 = st.columns(2)
-                        with col1:
-                            ticket_id_int = st.selectbox("Ticket ID *", lis_ticket, index=None,
-                                placeholder="Select option...", key='interaction1')
-                        with col2:
-                            date_int = st.date_input("Date of Interaction *", value=datetime.today().date())
-                    
-                        list_interaction = [
-                            "Email", "Phone Call", "In-Person Meeting", "Online Meeting", "Peer Learning Meetings (PLNs)", "Other"
-                        ]
-
-                        # Asked before jurisdiction, because it determines which jurisdiction field applies
-                        type_interaction = st.selectbox(
-                            "Type of Interaction *",
-                            list_interaction,
-                            index=None,
-                            placeholder="Select option..."
-                        )
-
-                        is_pln = type_interaction == "Peer Learning Meetings (PLNs)"
-
-                        jurisdiction_for_no_ticket = None
-                        pln_jurisdictions = []
-
-                        if is_pln:
-                            # PLNs span multiple jurisdictions - this replaces the single-jurisdiction field
-                            pln_jurisdictions = st.multiselect(
-                                "Jurisdiction(s) for PLN *",
-                                lis_location,
-                                default=[],
-                                key='juris_pln_coord'
-                            )
-                        elif ticket_id_int == "No Ticket ID":
-                            jurisdiction_for_no_ticket = st.selectbox(
-                                "Jurisdiction *",
-                                lis_location,
-                                index=None,
-                                placeholder="Select option...",
-                                key='juris_interaction_coord'
-                            )
-
-                        # If "Other" is selected, show a text input for custom value
-                        if type_interaction == "Other":
-                            type_interaction_other = st.text_input("Please specify the Type of Interaction *")
-                            if type_interaction_other:
-                                type_interaction = type_interaction_other
-
-                        interaction_description = st.text_area("Short Summary *", placeholder='Enter text',
-                            height=150, key='interaction_description_coord')
-
-                        document_int = st.file_uploader(
-                            "Upload any files or attachments that are relevant to this interaction.",
-                            accept_multiple_files=True
-                        )
-
-                        # Submit button
-                        st.markdown("""
-                            <style>
-                            .stButton > button {
-                                width: 100%;
-                                background-color: #cdb4db;
-                                color: black;
-                                font-family: Arial, "Segoe UI", sans-serif;
-                                font-weight: 600;
-                                border-radius: 8px;
-                                padding: 0.6em;
-                                margin-top: 1em;
-                            }
-                            </style>
-                        """, unsafe_allow_html=True)
-
+                    try:
+                        # Try to load Excel template - adjust path if needed
                         try:
-                            df = load_main_sheet()  # Use cached function
-                        except Exception as e:
-                            st.error(f"Error fetching data from Google Sheets: {str(e)}")
-
-                        try:
-                            df_int = load_interaction_sheet()  # Use cached function
-                        except Exception as e:
-                            st.error(f"Error fetching data from Google Sheets: {str(e)}")
-
-                        try:
-                            df_del = load_delivery_sheet()  # Use cached function
-                        except Exception as e:
-                            st.error(f"Error fetching data from Google Sheets: {str(e)}")
-
-                        # Submit logic
-                        if st.button("Submit",key='interaction_submit1'):
-                            errors = []
-                            drive_links_int = ""  # Initialize here
-                            # Required field checks
-                            if not ticket_id_int: errors.append("Ticket ID is required.")
-                            if ticket_id_int == "No Ticket ID" and not jurisdiction_for_no_ticket and not pln_jurisdictions:
-                                errors.append("Jurisdiction is required when Ticket ID is not provided.")
-                            if is_pln and not pln_jurisdictions:
-                                errors.append("At least one jurisdiction is required for Peer Learning Meetings (PLNs).")
-                            if not date_int: errors.append("Date of interaction is required.")
-                            if not type_interaction: errors.append("Type of interaction is required.")
-                            if not interaction_description: errors.append("Short summary is required.")
-
-                            # Show warnings or success
-                            if errors:
-                                for error in errors:
-                                    st.warning(error)
+                            wb, ws = load_excel_template()
+                        except FileNotFoundError:
+                            # Try alternative path
+                            import os
+                            alt_path = os.path.join(os.path.dirname(__file__), '..', 'Georgetown_Travel_Form_Generator', 'Georgetown Domestic Travel Authorization Form.xlsx')
+                            if os.path.exists(alt_path):
+                                wb = openpyxl.load_workbook(alt_path)
+                                ws = wb['Reimbursement Form']
                             else:
-                                # Only upload files if all validation passes
-                                if document_int:
+                                st.warning("⚠️ Excel template file not found. PDF generation will proceed without template validation.")
+                                wb, ws = None, None
+                        
+                        # General Guidance (UI only) - Using button toggle instead of nested expander
+                        if 'show_travel_guidance' not in st.session_state:
+                            st.session_state.show_travel_guidance = False
+                        
+                        if st.button("📋 General Guidance (Click to show/hide)", key="travel_guidance_toggle"):
+                            st.session_state.show_travel_guidance = not st.session_state.show_travel_guidance
+                        
+                        if st.session_state.show_travel_guidance:
+                            st.markdown("""
+                            <div style='padding: 15px; background-color: #fafafa; border-radius: 5px; margin-top: 10px; border: 1px solid #e0e0e0;'>
+                            """, unsafe_allow_html=True)
+                            st.markdown("""
+                                ### General Information
+                                Fill out the fields highlighted in green, as applicable. Form must be submitted at least one month prior to your proposed dates of travel. Please inform ADVANCE leadership if extenuating circumstances will prevent you from meeting this deadline.
+
+                                ### Receipts
+                                You must submit receipts as part of your Expense Report in GMS for every item associated with your trip. This signed travel authorization will serve as your receipt for meals and incidentals. Meals are reimbursed at the Federal Per Diem rate for the destination city.
+
+                                ### Mileage
+                                In lieu of taxi expenses, you can choose to be reimbursed for the mileage driven from your point of origin to the airport, train station, or bus station. Georgetown University uses the IRS mileage rate.
+
+                                Please attach documentation for the specified mileage in your GMS Expense report (e.g., Google Maps, MapQuest). Round all mileage to the nearest mile.
+
+                                ### Airfare, Transportation, Parking, Lodging, Baggage Fees, Miscellaneous/Other
+                                - **Airfare**: Should be booked through Concur and paid by Georgetown University. Include it as a cost in this Travel Authorization Form; your airfare should be included as an expense in your GMS Expense Report, but not as a personal reimbursement. If you are being reimbursed for your air travel, you must submit your itinerary and receipt.
+                                - **Ground Transportation**: Covers reasonable expenses for taxis or other modes of transportation to and from airports and/or train and bus stations. Receipts must indicate the point of departure and point of arrival.
+                                - **Parking**: If you are being reimbursed for parking, you must submit your receipt(s).
+                                - **Lodging**: If lodging is purchased by the traveler, hotel receipts must be submitted. Lodging includes room and tax; it does not include telephone calls, room service, or other incidentals.
+                                - **Baggage Fees**: Georgetown University will reimburse for one checked bag per passenger for each leg of trip (if the carrier charges for checked bags). For carriers with a free first bag, no reimbursement for additional bags will be allowed.
+                                - **Miscellaneous/Other**: Includes pre‑approved travel expenses not listed in this form.
+
+                                ### Meals and Incidental Expenses (M&IE)
+                                Georgetown University will reimburse meals and incidentals at the U.S. Government per diem rates. This allowance covers tips, porter fees, etc.
+
+                                Federal Guidelines stipulate that on the first and last travel day, travelers are only eligible for 75 percent of the total M&IE rate.
+
+                                The cost of any meals provided at meetings and conferences will not be reimbursed by Georgetown University. For meals that have been provided, please place an "x" in the appropriate box on the reimbursement form.
+                            """)
+                            st.markdown("</div>", unsafe_allow_html=True)
+                        
+                        # Date inputs outside form so they trigger immediate reruns
+                        st.header("Travel Dates")
+                        col_date1, col_date2 = st.columns(2)
+                        with col_date1:
+                            departure_date = st.date_input("Departure Date *", key="travel_departure_date")
+                        with col_date2:
+                            return_date = st.date_input("Return Date *", key="travel_return_date")
+                        
+                        # Validate date range
+                        if departure_date and return_date and return_date < departure_date:
+                            st.error("Return Date must be the same as or after the Departure Date.")
+                            st.stop()
+                        
+                        # Track date changes to auto-populate date fields
+                        # Initialize session state for date tracking
+                        if 'travel_last_departure' not in st.session_state:
+                            st.session_state.travel_last_departure = departure_date
+                        if 'travel_last_return' not in st.session_state:
+                            st.session_state.travel_last_return = return_date
+                        
+                        # Check if dates changed
+                        dates_changed = (departure_date != st.session_state.travel_last_departure or 
+                                       return_date != st.session_state.travel_last_return)
+                        
+                        # Compute total days and generate full date range
+                        if departure_date and return_date and return_date >= departure_date:
+                            total_days = (return_date - departure_date).days + 1
+                            # Reasonable upper bound to avoid runaway UI
+                            total_days = min(total_days, 60)
+                        else:
+                            total_days = 7
+                        default_dates = generate_date_range(departure_date, return_date, max_days=total_days)
+                        
+                        # Update session state when dates change (this happens on rerun)
+                        if dates_changed:
+                            st.session_state.travel_last_departure = departure_date
+                            st.session_state.travel_last_return = return_date
+                            # Update all date fields with new defaults when dates change
+                            # Clear previous keys generously then set new defaults
+                            for i in range(0, 100):
+                                if i < len(default_dates) and default_dates[i]:
+                                    st.session_state[f'travel_mileage_date_{i}'] = default_dates[i]
+                                    st.session_state[f'travel_expense_date_{i}'] = default_dates[i]
+                                    st.session_state[f'travel_per_diem_date_{i}'] = default_dates[i]
+                                else:
+                                    # Clear if beyond date range
+                                    st.session_state[f'travel_mileage_date_{i}'] = ''
+                                    st.session_state[f'travel_expense_date_{i}'] = ''
+                                    st.session_state[f'travel_per_diem_date_{i}'] = ''
+                        else:
+                            # Initialize session state on first load if not exists
+                            for i in range(total_days):
+                                if f'travel_mileage_date_{i}' not in st.session_state:
+                                    st.session_state[f'travel_mileage_date_{i}'] = default_dates[i] if i < len(default_dates) else ''
+                                if f'travel_expense_date_{i}' not in st.session_state:
+                                    st.session_state[f'travel_expense_date_{i}'] = default_dates[i] if i < len(default_dates) else ''
+                                if f'travel_per_diem_date_{i}' not in st.session_state:
+                                    st.session_state[f'travel_per_diem_date_{i}'] = default_dates[i] if i < len(default_dates) else ''
+                        
+                        with st.form("travel_form"):
+                            st.header("Traveler Information")
+                            col1, col2 = st.columns(2)
+                            
+                            with col1:
+                                name = st.text_input("Name *", value=staff_name, key="travel_name")
+                                organization = st.text_input("Organization", value="Georgetown University", key="travel_organization")
+                                destination = st.text_input("Destination *", key="travel_destination")
+                                email = st.text_input("Email Address *", value=user_email, key="travel_email")              
+                                
+                            
+                            with col2:
+                                address1 = st.text_input("Address Line 1 *", key="travel_address1")
+                                address2 = st.text_input("Address Line 2", key="travel_address2")
+                                city = st.text_input("City *", key="travel_city")
+                                state = st.text_input("State *", key="travel_state")
+                                zip_code = st.text_input("Zip *", key="travel_zip")
+
+                            st.header("Purpose of Travel")
+                            col_purpose1, col_purpose2 = st.columns([1, 1])
+                            with col_purpose1:
+                                purpose_of_travel = st.text_area("Purpose of Travel *", key="travel_purpose_of_travel", height=100)
+                                attendees = st.text_area("Attendees *", key="travel_attendees", height=100)
+                            with col_purpose2:
+                                objective = st.text_area("Objective *", key="travel_objective", height=100)
+                                deliverables = st.text_area("Deliverables *", key="travel_deliverables", height=100)
+                            support_files = st.file_uploader(
+                                "Upload Documents (i.e Agenda, TA Request, etc.)",accept_multiple_files=True, key="travel_document"
+                            )
+                            
+                            st.header("Mileage Expenses")
+                            st.markdown("**The Mileage (Per Day) should be rounded to the nearest mile.**")
+                            st.markdown("**Mileage rate for 2025: $0.70 per mile**")
+                            
+                            mileage_dates = []
+                            mileage_amounts = []
+                            
+                            # Render mileage inputs in chunks of 7 days per row
+                            for chunk_start in range(0, total_days, 7):
+                                chunk_len = min(7, total_days - chunk_start)
+                                cols = st.columns(chunk_len)
+                                for offset in range(chunk_len):
+                                    i = chunk_start + offset
+                                    with cols[offset]:
+                                        mileage_dates.append(st.text_input(f"Day {i+1}", key=f"travel_mileage_date_{i}", placeholder="MM/DD/YY"))
+                                        mileage_amounts.append(number_text_input(f"Miles", key=f"travel_mileage_{i}", value=0.0, placeholder="0"))
+                            
+                            total_mileage = round(sum([m * 0.70 for m in mileage_amounts if m]),2)
+                            
+                            st.header("Travel Expenses")
+                            expense_dates = []
+                            airfare = []
+                            ground_transport = []
+                            parking = []
+                            lodging = []
+                            baggage = []
+                            misc = []
+                            misc2 = []
+                            # First pass: render Date, Airfare, Ground, Parking, Lodging, Baggage
+                            for chunk_start in range(0, total_days, 7):
+                                chunk_len = min(7, total_days - chunk_start)
+                                cols = st.columns(chunk_len)
+                                for offset in range(chunk_len):
+                                    i = chunk_start + offset
+                                    with cols[offset]:
+                                        expense_dates.append(st.text_input(f"Day {i+1}", key=f"travel_expense_date_{i}", placeholder="MM/DD/YY"))
+                                        airfare.append(number_text_input(f"Airfare", key=f"travel_airfare_{i}", value=0.0, placeholder="0.00"))
+                                        ground_transport.append(number_text_input(f"Ground Transportation", key=f"travel_ground_{i}", value=0.0, placeholder="0.00"))
+                                        parking.append(number_text_input(f"Parking", key=f"travel_parking_{i}", value=0.0, placeholder="0.00"))
+                                        lodging.append(number_text_input(f"Lodging", key=f"travel_lodging_{i}", value=0.0, placeholder="0.00"))
+                                        baggage.append(number_text_input(f"Baggage Fees", key=f"travel_baggage_{i}", value=0.0, placeholder="0.00"))
+
+                            # Descriptions next (always shown above misc rows, once for the section)
+                            misc_desc1 = st.text_input("Miscellaneous/Other Description 1", key="travel_misc_desc1", placeholder="e.g., Registration")
+                            # Second pass: render Misc Row 1 and Misc Row 2 amounts
+                            for chunk_start in range(0, total_days, 7):
+                                chunk_len = min(7, total_days - chunk_start)
+                                cols = st.columns(chunk_len)
+                                for offset in range(chunk_len):
+                                    i = chunk_start + offset
+                                    with cols[offset]:
+                                        misc.append(number_text_input(f"{misc_desc1} Day {i+1}", key=f"travel_misc_{i}", value=0.0, placeholder="0.00"))
+
+                            misc_desc2 = st.text_input("Miscellaneous/Other Description 2", key="travel_misc_desc2", placeholder="e.g., Supplies")
+
+                            # Second pass: render Misc Row 1 and Misc Row 2 amounts
+                            for chunk_start in range(0, total_days, 7):
+                                chunk_len = min(7, total_days - chunk_start)
+                                cols = st.columns(chunk_len)
+                                for offset in range(chunk_len):
+                                    i = chunk_start + offset
+                                    with cols[offset]:
+                                        misc2.append(number_text_input(f"{misc_desc2} Day {i+1}", key=f"travel_misc2_{i}", value=0.0, placeholder="0.00"))
+                            
+                            
+                            st.header("Meals and Incidentals Per Diem")
+                            st.markdown("**Please confirm the official GSA per diem rate for your travel destination at https://www.gsa.gov/travel/plan-book/per-diem-rates and select the corresponding rate below.**")
+                            # Single per diem selection for all days
+                            selected_per_diem = st.selectbox("Per Diem Rate (applies to all days)", options=[68,74,80,86,92], index=2, key="travel_per_diem_base")
+                            per_diem_dates = []
+                            per_diem_amounts = []
+                            breakfast_checks = []
+                            lunch_checks = []
+                            dinner_checks = []
+                            st.markdown("**Check boxes if meals were provided**")
+                            # Render per diem inputs in chunks of 7 days per row
+                            for chunk_start in range(0, total_days, 7):
+                                chunk_len = min(7, total_days - chunk_start)
+                                cols = st.columns(chunk_len)
+                                for offset in range(chunk_len):
+                                    i = chunk_start + offset
+                                    with cols[offset]:
+                                        per_diem_dates.append(st.text_input(f"Day {i+1}", key=f"travel_per_diem_date_{i}", placeholder="MM/DD/YY"))
+                                        per_diem_amounts.append(selected_per_diem) 
+                                        breakfast_checks.append(st.checkbox(f"Breakfast", key=f"travel_breakfast_{i}"))
+                                        lunch_checks.append(st.checkbox(f"Lunch", key=f"travel_lunch_{i}"))
+                                        dinner_checks.append(st.checkbox(f"Dinner", key=f"travel_dinner_{i}"))
+                            
+                            st.header("Additional Information")
+                            
+                            # E-Signature section
+                            st.subheader("Traveler Signature")
+                            col1, col2 = st.columns([2, 1])
+                            with col1:
+                                signature_text = st.text_input("Type your full name", key="travel_signature_text", 
+                                                              help="Your typed name will be automatically converted to a signature-style image")
+                                if signature_text:
+                                    # Show preview of signature (use lower scale for preview to be faster)
                                     try:
-                                        folder_id_int = "19-Sm8W151tg1zyDN0Nh14DUvOVUieqq7" 
-                                        links_int = []
-                                        upload_count = 0
-                                        for file in document_int:
-                                            # Rename file as: GU0001_filename.pdf
-                                            renamed_filename = f"{ticket_id_int}_{file.name}"
+                                        preview_img = generate_signature_image(signature_text, width=600, height=120, scale_factor=2)
+                                        if preview_img:
+                                            # Ensure it's RGB for display (should already be RGB now)
+                                            if preview_img.mode != 'RGB':
+                                                rgb_preview = PILImage.new('RGB', preview_img.size, (255, 255, 255))
+                                                if preview_img.mode == 'RGBA':
+                                                    rgb_preview.paste(preview_img, mask=preview_img.split()[3])
+                                                else:
+                                                    rgb_preview.paste(preview_img)
+                                                preview_img = rgb_preview
+                                            # Resize preview for display
+                                            preview_display = preview_img.resize((400, int(400 * preview_img.size[1] / preview_img.size[0])))
+                                            st.image(preview_display, caption="Signature Preview", width=400)
+                                    except Exception as e:
+                                        pass
+                            with col2:
+                                signature_date = st.date_input("Signature Date", value=datetime.now().date(), key="travel_sig_date")
+                            
+                            signature = signature_text.strip() if signature_text else ""
+                            
+                            submitted = st.form_submit_button("Generate PDF")
+                        
+                        if submitted:
+                            # Validate required Traveler Information fields
+                            missing_fields = []
+                            if not name or not name.strip():
+                                missing_fields.append("Name")
+                            if not address1 or not address1.strip():
+                                missing_fields.append("Address Line 1")
+                            if not city or not city.strip():
+                                missing_fields.append("City")
+                            if not state or not state.strip():
+                                missing_fields.append("State")
+                            if not zip_code or not zip_code.strip():
+                                missing_fields.append("Zip")
+                            if not destination or not destination.strip():
+                                missing_fields.append("Destination")
+                            if not email or not email.strip():
+                                missing_fields.append("Email Address")
+                            if not purpose_of_travel or not purpose_of_travel.strip():
+                                missing_fields.append("Purpose of Travel")
+                            if not attendees or not attendees.strip():
+                                missing_fields.append("Attendees")
+                            if not deliverables or not deliverables.strip():
+                                missing_fields.append("Deliverables")
+                            
+                            if missing_fields:
+                                st.warning(f"⚠️ Please fill in all required fields: {', '.join(missing_fields)}")
+                                st.stop()
+                            
+                            # Check for any input validation errors (check all number inputs)
+                            has_validation_errors = False
+                            # Check all input keys that might have errors
+                            input_prefixes = ['travel_mileage_', 'travel_airfare_', 'travel_ground_', 'travel_parking_', 'travel_lodging_', 'travel_baggage_', 'travel_misc_', 'travel_misc2_']
+                            for key in st.session_state.keys():
+                                if key.endswith('_has_error') and st.session_state[key]:
+                                    # Check if this is one of our input fields
+                                    base_key = key.replace('_has_error', '')
+                                    if any(base_key.startswith(prefix) for prefix in input_prefixes):
+                                        has_validation_errors = True
+                                        break
+                            
+                            if has_validation_errors:
+                                st.warning("⚠️ **Cannot generate PDF: Please fix all invalid input fields above.**")
+                                st.stop()
+                            # Calculate totals
+                            total_airfare = sum(airfare)
+                            total_ground_transport = sum(ground_transport)
+                            total_parking = sum(parking)
+                            total_lodging = sum(lodging)
+                            total_baggage = sum(baggage)
+                            total_misc = sum(misc) + sum(misc2)  # Include both misc rows in total
+                            # Calculate adjusted per diem with meal deductions
+                            days_with_dates = [i for i, d in enumerate(per_diem_dates) if d and str(d).strip()]
+                            num_days = len(days_with_dates)
+                            first_day_idx = days_with_dates[0] if days_with_dates else 0
+                            last_day_idx = days_with_dates[-1] if days_with_dates else 0
+                            
+                            meal_deductions = {
+                                68: { 'breakfast': 16, 'lunch': 19, 'dinner': 28, 'incidental': 5, 'first_last': 51.00 },
+                                74: { 'breakfast': 18, 'lunch': 20, 'dinner': 31, 'incidental': 5, 'first_last': 55.50 },
+                                80: { 'breakfast': 20, 'lunch': 22, 'dinner': 33, 'incidental': 5, 'first_last': 60.00 },
+                                86: { 'breakfast': 22, 'lunch': 23, 'dinner': 36, 'incidental': 5, 'first_last': 64.50 },
+                                92: { 'breakfast': 23, 'lunch': 26, 'dinner': 38, 'incidental': 5, 'first_last': 69.00 },
+                            }
+                            adjusted_per_diem_daily = []
+                            for i in range(len(per_diem_dates)):
+                                if i < len(per_diem_dates) and per_diem_dates[i] and str(per_diem_dates[i]).strip():
+                                    base_per_diem = int(per_diem_amounts[i]) if (i < len(per_diem_amounts) and per_diem_amounts[i]) else 80
+                                    deducts = meal_deductions.get(base_per_diem, meal_deductions[80])
+                                    deduction_total = 0.0
+                                    if i < len(breakfast_checks) and breakfast_checks[i]:
+                                        deduction_total += deducts['breakfast']
+                                    if i < len(lunch_checks) and lunch_checks[i]:
+                                        deduction_total += deducts['lunch']
+                                    if i < len(dinner_checks) and dinner_checks[i]:
+                                        deduction_total += deducts['dinner']
+                                    # Base already includes incidentals; do not add +$5 here
+                                    pre75_total = max(0.0, float(base_per_diem) - deduction_total)
+                                    # Apply 75% for first and last day
+                                    if i == first_day_idx or i == last_day_idx:
+                                        final_per_diem = round(pre75_total * 0.75, 2)
+                                    else:
+                                        final_per_diem = round(pre75_total, 2)
+                                    
+                                    adjusted_per_diem_daily.append(final_per_diem)
+                                else:
+                                    adjusted_per_diem_daily.append(0.0)
+                            
+                            total_per_diem = sum(adjusted_per_diem_daily)
+                            total_amount_due = (total_mileage + total_airfare + total_ground_transport + 
+                                              total_parking + total_lodging + total_baggage + 
+                                              total_misc + total_per_diem)
+                            
+                            # Store support files in session state for later upload
+                            if support_files:
+                                # Store file bytes and metadata in session state
+                                file_data_list = []
+                                for file in support_files:
+                                    file.seek(0)  # Reset file pointer
+                                    file_bytes = file.read()
+                                    file.seek(0)  # Reset again for potential reuse
+                                    file_data_list.append({
+                                        'name': file.name,
+                                        'bytes': file_bytes,
+                                        'type': file.type
+                                    })
+                                st.session_state['travel_support_files_data'] = file_data_list
+                            else:
+                                st.session_state['travel_support_files_data'] = []
+                            
+                            form_data = {
+                                'name': name,
+                                'address1': address1,
+                                'address2': address2,
+                                'city': city,
+                                'state': state,
+                                'zip': zip_code,
+                                'organization': organization,
+                                'destination': destination,
+                                'departure_date': departure_date.strftime('%m/%d/%Y') if departure_date else '',
+                                'return_date': return_date.strftime('%m/%d/%Y') if return_date else '',
+                                'email': email,
+                                'purpose_of_travel': purpose_of_travel,
+                                'objective': objective,
+                                'attendees': attendees,
+                                'deliverables': deliverables,
+                                'support_files': '',  # Will be updated after upload
+                                'mileage_dates': mileage_dates,
+                                'mileage_amounts': mileage_amounts,
+                                'total_mileage': total_mileage,
+                                'expense_dates': expense_dates,
+                                'airfare': airfare,
+                                'ground_transport': ground_transport,
+                                'parking': parking,
+                                'lodging': lodging,
+                                'baggage': baggage,
+                                'misc': misc,
+                                'misc2': misc2,
+                                'misc_desc1': misc_desc1,
+                                'misc_desc2': misc_desc2,
+                                'total_airfare': total_airfare,
+                                'total_ground_transport': total_ground_transport,
+                                'total_parking': total_parking,
+                                'total_lodging': total_lodging,
+                                'total_baggage': total_baggage,
+                                'total_misc': total_misc,
+                                'per_diem_dates': per_diem_dates,
+                                'per_diem_amounts': per_diem_amounts,
+                                'breakfast_checks': breakfast_checks,
+                                'lunch_checks': lunch_checks,
+                                'dinner_checks': dinner_checks,
+                                'total_per_diem': total_per_diem,
+                                'total_amount_due': total_amount_due,
+                                'signature': signature,
+                                'signature_date': signature_date.strftime('%m/%d/%Y') if signature_date else ''
+                            }
+                            
+                            # Store for review step
+                            st.session_state['travel_review_data'] = form_data
+                            st.info("Review the details below, then confirm to continue.")
+
+                        # Review & Approve pane
+                        if 'travel_review_data' in st.session_state:
+                            review = st.session_state['travel_review_data']
+                            st.subheader("Review & Approve")
+                            colA, colB = st.columns(2)
+                            with colA:
+                                st.markdown("**Traveler**")
+                                traveler_html = f"""
+                                <div style='border:1px solid #e0e0e0;border-radius:8px;padding:12px;background:#fafafa;'>
+                                  <div style='display:flex;justify-content:space-between;padding:4px 0;'>
+                                    <span style='color:#555;'>Name</span><strong>{review.get('name','')}</strong>
+                                  </div>
+                                  <div style='display:flex;justify-content:space-between;padding:4px 0;'>
+                                    <span style='color:#555;'>Organization</span><strong>{review.get('organization','')}</strong>
+                                  </div>
+                                  <div style='display:flex;justify-content:space-between;padding:4px 0;'>
+                                    <span style='color:#555;'>Destination</span><strong>{review.get('destination','')}</strong>
+                                  </div>
+                                  <div style='display:flex;justify-content:space-between;padding:4px 0;'>
+                                    <span style='color:#555;'>Email</span><strong>{review.get('email','')}</strong>
+                                  </div>
+                                </div>
+                                """
+                                st.markdown(traveler_html, unsafe_allow_html=True)
+                            with colB:
+                                st.markdown("**Trip**")
+                                trip_html = f"""
+                                <div style='border:1px solid #e0e0e0;border-radius:8px;padding:12px;background:#fafafa;'>
+                                  <div style='display:flex;justify-content:space-between;padding:4px 0;'>
+                                    <span style='color:#555;'>Departure Date</span><strong>{review.get('departure_date','')}</strong>
+                                  </div>
+                                  <div style='display:flex;justify-content:space-between;padding:4px 0;'>
+                                    <span style='color:#555;'>Return Date</span><strong>{review.get('return_date','')}</strong>
+                                  </div>
+                                </div>
+                                """
+                                st.markdown(trip_html, unsafe_allow_html=True)
+                            st.markdown("**Totals**")
+                            totals_html = f"""
+                            <table style='width:100%;border-collapse:collapse;border:1px solid #eee;'>
+                              <thead>
+                                <tr style='background:#f5f5f5;'>
+                                  <th style='text-align:left;padding:8px;border-bottom:1px solid #eee;'>Category</th>
+                                  <th style='text-align:right;padding:8px;border-bottom:1px solid #eee;'>Amount</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                <tr><td style='padding:8px;border-bottom:1px solid #f0f0f0;'>Mileage</td><td style='padding:8px;text-align:right;'>${int(review.get('total_mileage',0))}</td></tr>
+                                <tr><td style='padding:8px;border-bottom:1px solid #f0f0f0;'>Airfare</td><td style='padding:8px;text-align:right;'>${review.get('total_airfare',0):.2f}</td></tr>
+                                <tr><td style='padding:8px;border-bottom:1px solid #f0f0f0;'>Ground Transport</td><td style='padding:8px;text-align:right;'>${review.get('total_ground_transport',0):.2f}</td></tr>
+                                <tr><td style='padding:8px;border-bottom:1px solid #f0f0f0;'>Parking</td><td style='padding:8px;text-align:right;'>${review.get('total_parking',0):.2f}</td></tr>
+                                <tr><td style='padding:8px;border-bottom:1px solid #f0f0f0;'>Lodging</td><td style='padding:8px;text-align:right;'>${review.get('total_lodging',0):.2f}</td></tr>
+                                <tr><td style='padding:8px;border-bottom:1px solid #f0f0f0;'>Baggage</td><td style='padding:8px;text-align:right;'>${review.get('total_baggage',0):.2f}</td></tr>
+                                <tr><td style='padding:8px;border-bottom:1px solid #f0f0f0;'>Miscellaneous</td><td style='padding:8px;text-align:right;'>${review.get('total_misc',0):.2f}</td></tr>
+                                <tr><td style='padding:8px;border-bottom:1px solid #f0f0f0;'>Per Diem</td><td style='padding:8px;text-align:right;'>${review.get('total_per_diem',0):.2f}</td></tr>
+                                <tr style='background:#fff8f8;font-weight:600;'>
+                                  <td style='padding:8px;border-top:1px solid #eee;'>Total Amount Due</td>
+                                  <td style='padding:8px;text-align:right;border-top:1px solid #eee;'>${review.get('total_amount_due',0):.2f}</td>
+                                </tr>
+                              </tbody>
+                            </table>
+                            """
+                            st.markdown(totals_html, unsafe_allow_html=True)
+                            approved = st.checkbox("I have reviewed and approve this travel form.", key="travel_approve_review")
+                            generate_now = st.button("✅ Finalize and Send for Approval", disabled=not approved, key="travel_generate_now", type="primary", use_container_width=True)
+                            if generate_now and approved:
+                                # Upload support files to Google Drive if provided
+                                support_files_links = ""
+                                if 'travel_support_files_data' in st.session_state and st.session_state['travel_support_files_data']:
+                                    try:
+                                        folder_id_travel = "1aDE0N_duNN6w8rLDLX5HHeychyhLIqbo"
+                                        links = []
+                                        name_for_files = review.get('name', 'Unknown')
+                                        destination_for_files = review.get('destination', 'Unknown')
+                                        
+                                        for file_data in st.session_state['travel_support_files_data']:
+                                            # Create unique filename
+                                            renamed_filename = f"Travel_{name_for_files.replace(' ', '_')}_{destination_for_files.replace(' ', '_')}_{file_data['name']}"
+                                            
+                                            # Create a file-like object from bytes with required attributes
+                                            file_obj = io.BytesIO(file_data['bytes'])
+                                            file_obj.name = file_data['name']
+                                            file_obj.type = file_data.get('type', 'application/octet-stream')
+                                            
+                                            # Upload to Google Drive
                                             link = upload_file_to_drive(
-                                                file=file,
+                                                file=file_obj,
                                                 filename=renamed_filename,
-                                                folder_id=folder_id_int,
+                                                folder_id=folder_id_travel,
                                                 creds_dict=st.secrets["gcp_service_account"]
                                             )
-                                            links_int.append(link)
-                                            upload_count += 1
-                                            st.success(f"✅ Successfully uploaded: {file.name}")
-                                        drive_links_int = ", ".join(links_int)
-                                        if upload_count > 0:
-                                            st.success(f"✅ All {upload_count} file(s) uploaded successfully to Google Drive!")    
+                                            links.append(link)
+                                        
+                                        support_files_links = ", ".join(links)
+                                        st.success("✅ Support files uploaded to Google Drive!")
+                                        
+                                        # Update review data with file links
+                                        review['support_files'] = support_files_links
+                                        
+                                        # Clear file data from session state to free memory
+                                        del st.session_state['travel_support_files_data']
+                                        
                                     except Exception as e:
-                                        st.error(f"❌ Error uploading file(s) to Google Drive: {str(e)}")
-
-                                # Resolve the jurisdiction(s) this interaction should be logged under.
-                                # PLNs span multiple jurisdictions -> one row per selected jurisdiction.
-                                if is_pln and pln_jurisdictions:
-                                    jurisdiction_values = list(dict.fromkeys(pln_jurisdictions))
-                                else:
-                                    ticket_juris = df.loc[df["Ticket ID"].astype(str) == str(ticket_id_int), "Jurisdiction"]
-                                    if ticket_id_int != "No Ticket ID" and not ticket_juris.empty:
-                                        jurisdiction_values = [str(ticket_juris.iloc[0])]
-                                    else:
-                                        jurisdiction_values = [jurisdiction_for_no_ticket or ""]
-
-                                rows_int = [
-                                    {
-                                        'Ticket ID': ticket_id_int,
-                                        "Date of Interaction": date_int.strftime("%Y-%m-%d"),  # Convert to string
-                                        "Type of Interaction": type_interaction,
-                                        "Short Summary": interaction_description,
-                                        "Document": drive_links_int,
-                                        "Jurisdiction": juris,
-                                        "Submitted By": staff_name,
-                                        "Submission Date": datetime.today().strftime("%Y-%m-%d %H:%M")
+                                        st.warning(f"⚠️ Error uploading support files: {str(e)}")
+                                
+                                # Save to Google Sheets when PDF is generated
+                                try:
+                                    df_travel = load_travel_sheet()
+                                    
+                                    # Create new row for travel sheet
+                                    new_travel_row = {
+                                        'Name': review.get('name', ''),
+                                        'Email': review.get('email', ''),
+                                        'Destination': review.get('destination', ''),
+                                        'Purpose of Travel': review.get('purpose_of_travel', ''),
+                                        'Objective': review.get('objective', ''),
+                                        'Attendees': review.get('attendees', ''),
+                                        'Departure Date': review.get('departure_date', ''),
+                                        'Return Date': review.get('return_date', ''),
+                                        'Deliverables': review.get('deliverables', ''),
+                                        'Support Files': support_files_links,
+                                        'Submission Date': datetime.now().strftime('%Y-%m-%d'),
+                                        'PDF Link': '',  # Will be filled when sent for approval
+                                        # Traveler information
+                                        'Address1': review.get('address1', ''),
+                                        'Address2': review.get('address2', ''),
+                                        'City': review.get('city', ''),
+                                        'State': review.get('state', ''),
+                                        'Zip': review.get('zip', ''),
+                                        'Organization': review.get('organization', 'Georgetown University'),
+                                        'Signature': review.get('signature', ''),
+                                        'Signature Date': review.get('signature_date', ''),
+                                        # Expense details - stored as JSON strings
+                                        'Mileage Dates': json.dumps(review.get('mileage_dates', [])),
+                                        'Mileage Amounts': json.dumps(review.get('mileage_amounts', [])),
+                                        'Total Mileage': review.get('total_mileage', 0),
+                                        'Expense Dates': json.dumps(review.get('expense_dates', [])),
+                                        'Airfare': json.dumps(review.get('airfare', [])),
+                                        'Ground Transport': json.dumps(review.get('ground_transport', [])),
+                                        'Parking': json.dumps(review.get('parking', [])),
+                                        'Lodging': json.dumps(review.get('lodging', [])),
+                                        'Baggage': json.dumps(review.get('baggage', [])),
+                                        'Misc': json.dumps(review.get('misc', [])),
+                                        'Misc2': json.dumps(review.get('misc2', [])),
+                                        'Misc Desc1': review.get('misc_desc1', ''),
+                                        'Misc Desc2': review.get('misc_desc2', ''),
+                                        'Total Airfare': review.get('total_airfare', 0),
+                                        'Total Ground Transport': review.get('total_ground_transport', 0),
+                                        'Total Parking': review.get('total_parking', 0),
+                                        'Total Lodging': review.get('total_lodging', 0),
+                                        'Total Baggage': review.get('total_baggage', 0),
+                                        'Total Misc': review.get('total_misc', 0),
+                                        'Per Diem Dates': json.dumps(review.get('per_diem_dates', [])),
+                                        'Per Diem Amounts': json.dumps(review.get('per_diem_amounts', [])),
+                                        'Breakfast Checks': json.dumps(review.get('breakfast_checks', [])),
+                                        'Lunch Checks': json.dumps(review.get('lunch_checks', [])),
+                                        'Dinner Checks': json.dumps(review.get('dinner_checks', [])),
+                                        'Total Per Diem': review.get('total_per_diem', 0),
+                                        'Total Amount Due': review.get('total_amount_due', 0),
+                                        # Approval fields (all possible approvers)
+                                        'Kemisha Approval Status': '',
+                                        'Jen Approval Status': '',
+                                        'Lauren Approval Status': '',
+                                        'Kemisha Approval Date': '',
+                                        'Jen Approval Date': '',
+                                        'Lauren Approval Date': '',
+                                        'Kemisha Signature': '',
+                                        'Jen Signature': '',
+                                        'Lauren Signature': '',
+                                        'Kemisha Note': '',
+                                        'Jen Note': '',
+                                        'Lauren Note': '',
+                                        'Travel Escalation Sent': '',
                                     }
-                                    for juris in jurisdiction_values
-                                ]
-                                new_data_int = pd.DataFrame(rows_int)
-
-                                try:
-                                    # Append new data to Google Sheet
-                                    updated_sheet2 = pd.concat([df_int, new_data_int], ignore_index=True)
-                                    updated_sheet2= updated_sheet2.applymap(
-                                        lambda x: x.strftime("%Y-%m-%d") if isinstance(x, (datetime, pd.Timestamp)) else x
-                                    )
-                                    # Replace NaN with empty strings to ensure JSON compatibility
-                                    updated_sheet2 = updated_sheet2.fillna("")
-                                
-                                    # Get the worksheet first
-                                    spreadsheet3 = client.open('HRSA64_TA_Request')
-                                    worksheet3 = spreadsheet3.worksheet('Interaction')
-                                    worksheet3.update([updated_sheet2.columns.values.tolist()] + updated_sheet2.values.tolist())
-
-                                    # Clear cache to refresh data
-                                    st.cache_data.clear()
-
-                                    if len(new_data_int) > 1:
-                                        st.success(f"✅ Submission successful! {len(new_data_int)} rows logged (one per jurisdiction).")
-                                    else:
-                                        st.success("✅ Submission successful!")
-                                    time.sleep(2)
-                                    st.rerun()
-
-                                except Exception as e:
-                                    st.error(f"Error updating Google Sheets: {str(e)}")
-
-                    st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
-
-                    with st.expander("👨‍💻 **SUBMIT STUDENT SUPPORT REQUEST FORM**"):
-                        st.markdown("""
-                            <div class="gutap-hero">
-                                <div class="gutap-hero-title">
-                                    👨‍💻 Student Support Request Center
-                                </div>
-                                <div class="gutap-hero-sub">
-                                    Submit new student support requests. The system will automatically notify all research assistants.
-                                </div>
-                            </div>
-                        """, unsafe_allow_html=True)
-
-                        # Upper section: previous support requests (same portal pattern as Interaction Log)
-                        st.markdown("""
-                            <div style='background: #f8f9fa; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); padding: 1.5em; margin-bottom: 2em;'>
-                                <h3 style='color: #1a237e; font-family: "Segoe UI", sans-serif; font-weight: 700; margin-bottom: 1em; text-align: center;'>
-                                    📊 Your Previous Student Support Requests
-                                </h3>
-                            </div>
-                        """, unsafe_allow_html=True)
-
-                        _mask_prev_support = pd.Series(False, index=df_support.index)
-                        if "TAP Name" in df_support.columns and staff_name:
-                            _mask_prev_support = _mask_prev_support | (
-                                df_support["TAP Name"].astype(str).str.strip() == str(staff_name).strip()
-                            )
-                        if "TAP email" in df_support.columns and user_email:
-                            _mask_prev_support = _mask_prev_support | (
-                                df_support["TAP email"].astype(str).str.strip().str.lower()
-                                == str(user_email).strip().lower()
-                            )
-                        df_support_staff_prev = df_support[_mask_prev_support].copy()
-
-                        if not df_support_staff_prev.empty:
-                            _hide_prev = {"TAP Name", "TAP email", "Student email"}
-                            _display_cols = [c for c in df_support_staff_prev.columns if c not in _hide_prev]
-                            df_support_prev_disp = df_support_staff_prev[_display_cols].copy()
-
-                            _sort_ts = pd.Series(pd.NaT, index=df_support_prev_disp.index)
-                            if "Submission Date" in df_support_prev_disp.columns:
-                                _sort_ts = pd.to_datetime(df_support_prev_disp["Submission Date"], errors="coerce")
-                            if "Date" in df_support_prev_disp.columns:
-                                _sort_ts = _sort_ts.fillna(
-                                    pd.to_datetime(df_support_prev_disp["Date"], errors="coerce")
-                                )
-                            if "Anticipated Deadline" in df_support_prev_disp.columns:
-                                _sort_ts = _sort_ts.fillna(
-                                    pd.to_datetime(df_support_prev_disp["Anticipated Deadline"], errors="coerce")
-                                )
-                            df_support_prev_disp = df_support_prev_disp.assign(_sort_ts=_sort_ts)
-                            df_support_prev_disp = df_support_prev_disp.sort_values("_sort_ts", ascending=True).drop(
-                                columns=["_sort_ts"]
-                            )
-
-                            for _dc in ("Date", "Anticipated Deadline"):
-                                if _dc in df_support_prev_disp.columns:
-                                    _dts = pd.to_datetime(df_support_prev_disp[_dc], errors="coerce")
-                                    df_support_prev_disp[_dc] = _dts.apply(
-                                        lambda x: x.strftime("%Y-%m-%d") if pd.notna(x) else ""
-                                    )
-
-                            _total_support_prev = len(df_support_staff_prev)
-                            if "Request status" in df_support_staff_prev.columns:
-                                _completed_support_prev = (
-                                    df_support_staff_prev["Request status"].astype(str).str.strip().str.lower()
-                                    == "completed"
-                                ).sum()
-                            else:
-                                _completed_support_prev = 0
-
-                            st.markdown(f"""
-                                <div style='background: #e3f2fd; border-radius: 10px; padding: 1em; margin-bottom: 1em; text-align: center;'>
-                                    <div style='display: flex; justify-content: space-around;'>
-                                        <div>
-                                            <div style='font-size: 1.5em; font-weight: bold; color: #1976d2;'>{_total_support_prev}</div>
-                                            <div style='font-size: 0.9em; color: #666;'>Total Requests</div>
-                                        </div>
-                                        <div>
-                                            <div style='font-size: 1.5em; font-weight: bold; color: #388e3c;'>{_completed_support_prev}</div>
-                                            <div style='font-size: 0.9em; color: #666;'>Completed</div>
-                                        </div>
-                                    </div>
-                                </div>
-                            """, unsafe_allow_html=True)
-
-                            st.dataframe(df_support_prev_disp.reset_index(drop=True), use_container_width=True)
-                        else:
-                            st.markdown("""
-                                <div style='background: #fff3e0; border-radius: 15px; padding: 2em; text-align: center; border: 2px dashed #ff9800;'>
-                                    <div style='font-size: 3em; margin-bottom: 0.5em;">📝</div>
-                                    <h4 style='color: #e65100; margin-bottom: 0.5em;'>No Previous Student Support Requests</h4>
-                                    <p style='color: #666; margin: 0;'>You have not submitted any student support requests yet. Use the form below to submit your first request.</p>
-                                </div>
-                            """, unsafe_allow_html=True)
-
-                        st.markdown("""
-                            <div class="support-section-header">
-                                <div class="support-section-kicker">New request</div>
-                                <div class="support-section-title">Submit Student Support Request</div>
-                            </div>
-                        """, unsafe_allow_html=True)
-
-                        # Start with Anticipated Delivery
-                        anticipated_delivery = st.selectbox("Anticipated Delivery *", options=["Meeting notes", "Dashboard", "Peer learning facilitation", "TA meeting", "Other"], index=0) 
-                        if anticipated_delivery == "Other":
-                            anticipated_delivery_other = st.text_input("Please specify the Anticipated Delivery *")
-                            if anticipated_delivery_other:
-                                anticipated_delivery = anticipated_delivery_other
-
-                        date_support = None
-                        meeting_time = ""
-                        meeting_start_time = ""
-                        meeting_end_time = ""
-                        time_commitment = ""
-                        anticipated_deadline = None
-
-                        # Conditional form fields based on delivery type
-                        if anticipated_delivery == "Meeting notes":
-                            st.markdown("""
-                                <div class="support-section-header" style="margin-top: 1rem;">
-                                    <div class="support-section-kicker">Meeting schedule</div>
-                                    <div class="support-section-title">Date and time window</div>
-                                </div>
-                                <div class="support-helper">
-                                    Choose the meeting start time first. The end time defaults to one hour later and can be adjusted in 30-minute increments.
-                                </div>
-                            """, unsafe_allow_html=True)
-                            meeting_time_options = [
-                                (
-                                    datetime.combine(
-                                        datetime.today().date(),
-                                        datetime.strptime("9:00 AM", "%I:%M %p").time(),
-                                    )
-                                    + timedelta(minutes=30 * i)
-                                ).strftime("%I:%M %p").lstrip("0")
-                                for i in range(17)
-                            ]
-                            meeting_start_options = meeting_time_options[:-2]
-                            col1, col2, col3 = st.columns(3)
-                            with col1:
-                                date_support = st.date_input("Date of Meeting *", value=datetime.today().date())
-                            with col2:
-                                meeting_start_time = st.selectbox(
-                                    "Start Time *",
-                                    options=meeting_start_options,
-                                    index=0,
-                                    key="support_meeting_start_time",
-                                )
-                            start_time_index = meeting_time_options.index(meeting_start_time)
-                            default_end_time = meeting_time_options[start_time_index + 2]
-                            meeting_end_options = meeting_time_options[start_time_index + 1:]
-                            if (
-                                st.session_state.get("support_meeting_start_time_previous") != meeting_start_time
-                                or st.session_state.get("support_meeting_end_time") not in meeting_end_options
-                            ):
-                                st.session_state["support_meeting_end_time"] = default_end_time
-                            st.session_state["support_meeting_start_time_previous"] = meeting_start_time
-                            with col3:
-                                meeting_end_time = st.selectbox(
-                                    "End Time *",
-                                    options=meeting_end_options,
-                                    index=meeting_end_options.index(st.session_state["support_meeting_end_time"]),
-                                    key="support_meeting_end_time",
-                                )
-                            meeting_time = f"{meeting_start_time}-{meeting_end_time}"
-                            st.markdown(
-                                f"""
-                                <div class="support-time-summary">
-                                    <span>Time requested</span>{meeting_time}
-                                </div>
-                                """,
-                                unsafe_allow_html=True,
-                            )
-                            request_description = st.text_area("Meeting Description *", placeholder='Describe the meeting topic, agenda, or specific requirements...', height=150, key='meeting_description')
-                        
-                        else:
-                            st.markdown("""
-                                <div class="support-section-header" style="margin-top: 1rem;">
-                                    <div class="support-section-kicker">Project timeline</div>
-                                    <div class="support-section-title">Estimate effort and deadline</div>
-                                </div>
-                            """, unsafe_allow_html=True)
-                            col1, col2 = st.columns(2)
-                        
-                            with col1:
-                                time_commitment = st.selectbox("Anticipated Time Commitment *", 
-                                                             options=["1-2 hours", "3-4 hours", "5-8 hours", "1-2 days", "3-5 days", "1-2 weeks", "More than 2 weeks"], 
-                                                             index=None, 
-                                                             placeholder="Select option...")
-                        
-                            with col2:
-                                anticipated_deadline = st.date_input("Anticipated Deadline *", value=datetime.today().date() + timedelta(days=7))
-                        
-                            request_description = st.text_area("Project Description *", placeholder='Describe the project requirements, deliverables, and any specific details...', height=150, key='project_description')
-                        
-                            # Set default values for non-meeting requests
-                            date_support = None
-
-                        # Preferred RA Selection
-                        st.markdown("""
-                            <div class="support-section-header">
-                                <div class="support-section-kicker">Assignment</div>
-                                <div class="support-section-title">Preferred Research Assistant</div>
-                            </div>
-                            <div class="support-helper">
-                                Leave this as No preference to notify all research assistants.
-                            </div>
-                        """, unsafe_allow_html=True)
-                        ra_list = ["No preference"] + sorted([name for name in STUDENT_SCHEDULE.keys()])
-                        preferred_ra = st.selectbox(
-                            "Research Assistant",
-                            options=ra_list,
-                            index=0,
-                            key='preferred_ra_selection'
-                        )
-
-                        st.markdown('<div class="support-subtle-note">Review the details before submitting. Assigned requests are emailed directly; unassigned requests notify all RAs.</div>', unsafe_allow_html=True)
-
-                        # Submit logic
-                        if st.button("Submit Student Support Request", key='support_submit1', type="primary"):
-                            errors = []
-                            drive_links_del = ""  # Ensure always defined
-                        
-                            # Required field checks based on delivery type
-                            if not anticipated_delivery: 
-                                errors.append("Anticipated delivery is required.")
-                            if not request_description: 
-                                errors.append("Description is required.")
-                        
-                            if anticipated_delivery == "Meeting notes":
-                                if not date_support: 
-                                    errors.append("Date of meeting is required.")
-                                if not meeting_start_time:
-                                    errors.append("Start time is required.")
-                                if not meeting_end_time:
-                                    errors.append("End time is required.")
-                            else:
-                                if not time_commitment: 
-                                    errors.append("Time commitment is required.")
-                                if not anticipated_deadline: 
-                                    errors.append("Anticipated deadline is required.")
-
-                            # Show warnings or success
-                            if errors:
-                                for error in errors:
-                                    st.warning(error)
-                            else:
-                                # Prepare data for Google Sheets
-                                # Check if preferred RA is selected
-                                has_preferred_ra = preferred_ra and preferred_ra != "No preference"
-                                preferred_ra_name = preferred_ra if has_preferred_ra else ""
-                                preferred_ra_email = STUDENT_SCHEDULE[preferred_ra]["email"] if has_preferred_ra else ""
-                            
-                                submit_ts = datetime.now().strftime("%Y-%m-%d %H:%M")
-                                new_row_support = {
-                                    "Date": date_support.strftime("%Y-%m-%d") if date_support else "",
-                                    "Time request needed": meeting_time if anticipated_delivery == "Meeting notes" else "",
-                                    "Request description": request_description,
-                                    "Anticipated Deliverable": anticipated_delivery,
-                                    "TAP Name": staff_name,
-                                    "TAP email": user_email,
-                                    "Time Commitment": time_commitment if anticipated_delivery != "Meeting notes" else "",
-                                    "Anticipated Deadline": anticipated_deadline.strftime("%Y-%m-%d") if anticipated_delivery != "Meeting notes" and anticipated_deadline else "",
-                                    "Request Type": "Meeting" if anticipated_delivery == "Meeting notes" else "Project",
-                                    "Student assigned": preferred_ra_name,
-                                    "Student email": preferred_ra_email,
-                                    "Request status": "Not Started" if has_preferred_ra else "",
-                                    "Submission Date": submit_ts,
-                                    "Assigned Date": submit_ts if has_preferred_ra else "",
-                                }
-                                new_data_support = pd.DataFrame([new_row_support])
-
-                                try:
-                                    # Append new data to Google Sheet
-                                    updated_sheet3 = pd.concat([df_support, new_data_support], ignore_index=True)
-                                    updated_sheet3= updated_sheet3.applymap(
-                                        lambda x: x.strftime("%Y-%m-%d") if isinstance(x, (datetime, pd.Timestamp)) else x
-                                    )
-                                    # Replace NaN with empty strings to ensure JSON compatibility
-                                    updated_sheet3 = updated_sheet3.fillna("")
-                                    spreadsheet4 = client.open('HRSA64_TA_Request')
-                                    worksheet4 = spreadsheet4.worksheet('GA_Support')
-                                    worksheet4.update([updated_sheet3.columns.values.tolist()] + updated_sheet3.values.tolist())
-
-                                    # Clear cache to refresh data
-                                    st.cache_data.clear()
-                                
-                                    st.success("✅ Submission successful!")
-                                
-                                    # Handle notifications based on preferred RA selection
-                                    if has_preferred_ra:
-                                        # Send direct assignment email to preferred RA
-                                        st.markdown("---")
-                                        st.markdown(f"**📧 Sending assignment notification to {preferred_ra}...**")
                                     
-                                        # Format date for email
-                                        if date_support:
-                                            date_str_email = date_support.strftime("%Y-%m-%d")
-                                        elif anticipated_deadline and anticipated_delivery != "Meeting notes":
-                                            date_str_email = anticipated_deadline.strftime("%Y-%m-%d")
-                                        else:
-                                            date_str_email = ""
+                                    new_travel_data = pd.DataFrame([new_travel_row])
                                     
-                                        ra_subject = f"You have been assigned a support request - {date_str_email if date_str_email else anticipated_delivery}"
-                                        ra_body = f"""
-    Dear {preferred_ra},
-
-    You have been assigned to a support request by {staff_name}.
-
-    Request Details:
-    - Date: {date_str_email if date_str_email else 'N/A'}
-    {f"- Time: {meeting_time}" if meeting_time else ""}
-    - TAP Name: {staff_name}
-    - TAP Email: {user_email}
-    - Request Description: {request_description}
-    - Anticipated Deliverable: {anticipated_delivery}
-    {f"- Time Commitment: {time_commitment}" if time_commitment else ""}
-    {f"- Anticipated Deadline: {anticipated_deadline.strftime('%Y-%m-%d')}" if anticipated_deadline and anticipated_delivery != "Meeting notes" else ""}
-
-    Status: Not Started
-
-    Please log into the GU-TAP System to view the request details and update the status as you progress.
-
-    GU-TAP System: https://hrsagutap.streamlit.app/
-
-    Best regards,
-    GU-TAP System
-                                        """
+                                    # Append new data to existing travel sheet
+                                    updated_travel_sheet = pd.concat([df_travel, new_travel_data], ignore_index=True)
+                                    updated_travel_sheet = updated_travel_sheet.fillna("")
                                     
-                                        try:
-                                            ra_notification_sent = send_email_mailjet(
-                                                to_email=preferred_ra_email,
-                                                subject=ra_subject,
-                                                body=ra_body.strip()
-                                            )
-                                            if ra_notification_sent:
-                                                st.success(f"✅ Assignment notification sent to {preferred_ra} ({preferred_ra_email})")
-                                            else:
-                                                st.warning(f"⚠️ Failed to send assignment notification to {preferred_ra}")
-                                        except Exception as e:
-                                            st.warning(f"⚠️ Failed to send assignment notification to {preferred_ra}: {e}")
-                                    
-                                        time.sleep(2)
-                                        st.rerun()
-                                    
-                                    else:
-                                        # Notify all research assistants
-                                        st.markdown("---")
-                                        st.markdown("**📧 Sending notifications to all research assistants...**")
-                                    
-                                        notification_sent = send_ga_support_notifications_to_all(
-                                            request_description=request_description,
-                                            anticipated_delivery=anticipated_delivery,
-                                            tap_name=staff_name,
-                                            tap_email=user_email,
-                                            date_str=date_support.strftime("%Y-%m-%d") if date_support else "",
-                                            meeting_time=meeting_time if anticipated_delivery == "Meeting notes" else "",
-                                            time_commitment=time_commitment if anticipated_delivery != "Meeting notes" else "",
-                                            anticipated_deadline=(
-                                                anticipated_deadline.strftime("%Y-%m-%d")
-                                                if anticipated_delivery != "Meeting notes" and anticipated_deadline
-                                                else ""
-                                            ),
-                                        )
-                                    
-                                        # Wait a moment to show completion status
-                                        time.sleep(1)
-                                    
-                                        # Show final status and rerun
-                                        if notification_sent:
-                                            st.success("✅ All notifications sent successfully!")
-                                        else:
-                                            st.warning("⚠️ Some notifications may have failed. Please check the logs above.")
-                                    
-                                        time.sleep(2)
-                                        st.rerun()
-
-                                except Exception as e:
-                                    st.error(f"Error updating Google Sheets: {str(e)}")
-
-                    st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
-
-                    with st.expander("🧳 **GENERATE DOMESTIC TRAVEL AUTHORIZATION FORM**"):
-                        st.markdown("""
-                            <div class="gutap-hero">
-                                <div class="gutap-hero-title">
-                                    🧳 Generate Domestic Travel Authorization Form
-                                </div>
-                                <div class="gutap-hero-sub">
-                                    Input your travel information to generate a domestic travel authorization form.
-                                </div>
-                            </div>
-                        """, unsafe_allow_html=True)
-                    
-                        st.markdown("Fill out the form below to generate your Georgetown domestic travel authorization form.")
-                    
-                        try:
-                            # Try to load Excel template - adjust path if needed
-                            try:
-                                wb, ws = load_excel_template()
-                            except FileNotFoundError:
-                                # Try alternative path
-                                import os
-                                alt_path = os.path.join(os.path.dirname(__file__), '..', 'Georgetown_Travel_Form_Generator', 'Georgetown Domestic Travel Authorization Form.xlsx')
-                                if os.path.exists(alt_path):
-                                    wb = openpyxl.load_workbook(alt_path)
-                                    ws = wb['Reimbursement Form']
-                                else:
-                                    st.warning("⚠️ Excel template file not found. PDF generation will proceed without template validation.")
-                                    wb, ws = None, None
-                        
-                            # General Guidance (UI only) - Using button toggle instead of nested expander
-                            if 'show_travel_guidance' not in st.session_state:
-                                st.session_state.show_travel_guidance = False
-                        
-                            if st.button("📋 General Guidance (Click to show/hide)", key="travel_guidance_toggle"):
-                                st.session_state.show_travel_guidance = not st.session_state.show_travel_guidance
-                        
-                            if st.session_state.show_travel_guidance:
-                                st.markdown("""
-                                <div style='padding: 15px; background-color: #fafafa; border-radius: 5px; margin-top: 10px; border: 1px solid #e0e0e0;'>
-                                """, unsafe_allow_html=True)
-                                st.markdown("""
-                                    ### General Information
-                                    Fill out the fields highlighted in green, as applicable. Form must be submitted at least one month prior to your proposed dates of travel. Please inform ADVANCE leadership if extenuating circumstances will prevent you from meeting this deadline.
-
-                                    ### Receipts
-                                    You must submit receipts as part of your Expense Report in GMS for every item associated with your trip. This signed travel authorization will serve as your receipt for meals and incidentals. Meals are reimbursed at the Federal Per Diem rate for the destination city.
-
-                                    ### Mileage
-                                    In lieu of taxi expenses, you can choose to be reimbursed for the mileage driven from your point of origin to the airport, train station, or bus station. Georgetown University uses the IRS mileage rate.
-
-                                    Please attach documentation for the specified mileage in your GMS Expense report (e.g., Google Maps, MapQuest). Round all mileage to the nearest mile.
-
-                                    ### Airfare, Transportation, Parking, Lodging, Baggage Fees, Miscellaneous/Other
-                                    - **Airfare**: Should be booked through Concur and paid by Georgetown University. Include it as a cost in this Travel Authorization Form; your airfare should be included as an expense in your GMS Expense Report, but not as a personal reimbursement. If you are being reimbursed for your air travel, you must submit your itinerary and receipt.
-                                    - **Ground Transportation**: Covers reasonable expenses for taxis or other modes of transportation to and from airports and/or train and bus stations. Receipts must indicate the point of departure and point of arrival.
-                                    - **Parking**: If you are being reimbursed for parking, you must submit your receipt(s).
-                                    - **Lodging**: If lodging is purchased by the traveler, hotel receipts must be submitted. Lodging includes room and tax; it does not include telephone calls, room service, or other incidentals.
-                                    - **Baggage Fees**: Georgetown University will reimburse for one checked bag per passenger for each leg of trip (if the carrier charges for checked bags). For carriers with a free first bag, no reimbursement for additional bags will be allowed.
-                                    - **Miscellaneous/Other**: Includes pre‑approved travel expenses not listed in this form.
-
-                                    ### Meals and Incidental Expenses (M&IE)
-                                    Georgetown University will reimburse meals and incidentals at the U.S. Government per diem rates. This allowance covers tips, porter fees, etc.
-
-                                    Federal Guidelines stipulate that on the first and last travel day, travelers are only eligible for 75 percent of the total M&IE rate.
-
-                                    The cost of any meals provided at meetings and conferences will not be reimbursed by Georgetown University. For meals that have been provided, please place an "x" in the appropriate box on the reimbursement form.
-                                """)
-                                st.markdown("</div>", unsafe_allow_html=True)
-                        
-                            # Date inputs outside form so they trigger immediate reruns
-                            st.header("Travel Dates")
-                            col_date1, col_date2 = st.columns(2)
-                            with col_date1:
-                                departure_date = st.date_input("Departure Date *", key="travel_departure_date")
-                            with col_date2:
-                                return_date = st.date_input("Return Date *", key="travel_return_date")
-                        
-                            # Validate date range
-                            if departure_date and return_date and return_date < departure_date:
-                                st.error("Return Date must be the same as or after the Departure Date.")
-                                st.stop()
-                        
-                            # Track date changes to auto-populate date fields
-                            # Initialize session state for date tracking
-                            if 'travel_last_departure' not in st.session_state:
-                                st.session_state.travel_last_departure = departure_date
-                            if 'travel_last_return' not in st.session_state:
-                                st.session_state.travel_last_return = return_date
-                        
-                            # Check if dates changed
-                            dates_changed = (departure_date != st.session_state.travel_last_departure or 
-                                           return_date != st.session_state.travel_last_return)
-                        
-                            # Compute total days and generate full date range
-                            if departure_date and return_date and return_date >= departure_date:
-                                total_days = (return_date - departure_date).days + 1
-                                # Reasonable upper bound to avoid runaway UI
-                                total_days = min(total_days, 60)
-                            else:
-                                total_days = 7
-                            default_dates = generate_date_range(departure_date, return_date, max_days=total_days)
-                        
-                            # Update session state when dates change (this happens on rerun)
-                            if dates_changed:
-                                st.session_state.travel_last_departure = departure_date
-                                st.session_state.travel_last_return = return_date
-                                # Update all date fields with new defaults when dates change
-                                # Clear previous keys generously then set new defaults
-                                for i in range(0, 100):
-                                    if i < len(default_dates) and default_dates[i]:
-                                        st.session_state[f'travel_mileage_date_{i}'] = default_dates[i]
-                                        st.session_state[f'travel_expense_date_{i}'] = default_dates[i]
-                                        st.session_state[f'travel_per_diem_date_{i}'] = default_dates[i]
-                                    else:
-                                        # Clear if beyond date range
-                                        st.session_state[f'travel_mileage_date_{i}'] = ''
-                                        st.session_state[f'travel_expense_date_{i}'] = ''
-                                        st.session_state[f'travel_per_diem_date_{i}'] = ''
-                            else:
-                                # Initialize session state on first load if not exists
-                                for i in range(total_days):
-                                    if f'travel_mileage_date_{i}' not in st.session_state:
-                                        st.session_state[f'travel_mileage_date_{i}'] = default_dates[i] if i < len(default_dates) else ''
-                                    if f'travel_expense_date_{i}' not in st.session_state:
-                                        st.session_state[f'travel_expense_date_{i}'] = default_dates[i] if i < len(default_dates) else ''
-                                    if f'travel_per_diem_date_{i}' not in st.session_state:
-                                        st.session_state[f'travel_per_diem_date_{i}'] = default_dates[i] if i < len(default_dates) else ''
-                        
-                            with st.form("travel_form"):
-                                st.header("Traveler Information")
-                                col1, col2 = st.columns(2)
-                            
-                                with col1:
-                                    name = st.text_input("Name *", value=staff_name, key="travel_name")
-                                    organization = st.text_input("Organization", value="Georgetown University", key="travel_organization")
-                                    destination = st.text_input("Destination *", key="travel_destination")
-                                    email = st.text_input("Email Address *", value=user_email, key="travel_email")              
-                                
-                            
-                                with col2:
-                                    address1 = st.text_input("Address Line 1 *", key="travel_address1")
-                                    address2 = st.text_input("Address Line 2", key="travel_address2")
-                                    city = st.text_input("City *", key="travel_city")
-                                    state = st.text_input("State *", key="travel_state")
-                                    zip_code = st.text_input("Zip *", key="travel_zip")
-
-                                st.header("Purpose of Travel")
-                                col_purpose1, col_purpose2 = st.columns([1, 1])
-                                with col_purpose1:
-                                    purpose_of_travel = st.text_area("Purpose of Travel *", key="travel_purpose_of_travel", height=100)
-                                    attendees = st.text_area("Attendees *", key="travel_attendees", height=100)
-                                with col_purpose2:
-                                    objective = st.text_area("Objective *", key="travel_objective", height=100)
-                                    deliverables = st.text_area("Deliverables *", key="travel_deliverables", height=100)
-                                support_files = st.file_uploader(
-                                    "Upload Documents (i.e Agenda, TA Request, etc.)",accept_multiple_files=True, key="travel_document"
-                                )
-                            
-                                st.header("Mileage Expenses")
-                                st.markdown("**The Mileage (Per Day) should be rounded to the nearest mile.**")
-                                st.markdown("**Mileage rate for 2025: $0.70 per mile**")
-                            
-                                mileage_dates = []
-                                mileage_amounts = []
-                            
-                                # Render mileage inputs in chunks of 7 days per row
-                                for chunk_start in range(0, total_days, 7):
-                                    chunk_len = min(7, total_days - chunk_start)
-                                    cols = st.columns(chunk_len)
-                                    for offset in range(chunk_len):
-                                        i = chunk_start + offset
-                                        with cols[offset]:
-                                            mileage_dates.append(st.text_input(f"Day {i+1}", key=f"travel_mileage_date_{i}", placeholder="MM/DD/YY"))
-                                            mileage_amounts.append(number_text_input(f"Miles", key=f"travel_mileage_{i}", value=0.0, placeholder="0"))
-                            
-                                total_mileage = round(sum([m * 0.70 for m in mileage_amounts if m]),2)
-                            
-                                st.header("Travel Expenses")
-                                expense_dates = []
-                                airfare = []
-                                ground_transport = []
-                                parking = []
-                                lodging = []
-                                baggage = []
-                                misc = []
-                                misc2 = []
-                                # First pass: render Date, Airfare, Ground, Parking, Lodging, Baggage
-                                for chunk_start in range(0, total_days, 7):
-                                    chunk_len = min(7, total_days - chunk_start)
-                                    cols = st.columns(chunk_len)
-                                    for offset in range(chunk_len):
-                                        i = chunk_start + offset
-                                        with cols[offset]:
-                                            expense_dates.append(st.text_input(f"Day {i+1}", key=f"travel_expense_date_{i}", placeholder="MM/DD/YY"))
-                                            airfare.append(number_text_input(f"Airfare", key=f"travel_airfare_{i}", value=0.0, placeholder="0.00"))
-                                            ground_transport.append(number_text_input(f"Ground Transportation", key=f"travel_ground_{i}", value=0.0, placeholder="0.00"))
-                                            parking.append(number_text_input(f"Parking", key=f"travel_parking_{i}", value=0.0, placeholder="0.00"))
-                                            lodging.append(number_text_input(f"Lodging", key=f"travel_lodging_{i}", value=0.0, placeholder="0.00"))
-                                            baggage.append(number_text_input(f"Baggage Fees", key=f"travel_baggage_{i}", value=0.0, placeholder="0.00"))
-
-                                # Descriptions next (always shown above misc rows, once for the section)
-                                misc_desc1 = st.text_input("Miscellaneous/Other Description 1", key="travel_misc_desc1", placeholder="e.g., Registration")
-                                # Second pass: render Misc Row 1 and Misc Row 2 amounts
-                                for chunk_start in range(0, total_days, 7):
-                                    chunk_len = min(7, total_days - chunk_start)
-                                    cols = st.columns(chunk_len)
-                                    for offset in range(chunk_len):
-                                        i = chunk_start + offset
-                                        with cols[offset]:
-                                            misc.append(number_text_input(f"{misc_desc1} Day {i+1}", key=f"travel_misc_{i}", value=0.0, placeholder="0.00"))
-
-                                misc_desc2 = st.text_input("Miscellaneous/Other Description 2", key="travel_misc_desc2", placeholder="e.g., Supplies")
-
-                                # Second pass: render Misc Row 1 and Misc Row 2 amounts
-                                for chunk_start in range(0, total_days, 7):
-                                    chunk_len = min(7, total_days - chunk_start)
-                                    cols = st.columns(chunk_len)
-                                    for offset in range(chunk_len):
-                                        i = chunk_start + offset
-                                        with cols[offset]:
-                                            misc2.append(number_text_input(f"{misc_desc2} Day {i+1}", key=f"travel_misc2_{i}", value=0.0, placeholder="0.00"))
-                            
-                            
-                                st.header("Meals and Incidentals Per Diem")
-                                st.markdown("**Please confirm the official GSA per diem rate for your travel destination at https://www.gsa.gov/travel/plan-book/per-diem-rates and select the corresponding rate below.**")
-                                # Single per diem selection for all days
-                                selected_per_diem = st.selectbox("Per Diem Rate (applies to all days)", options=[68,74,80,86,92], index=2, key="travel_per_diem_base")
-                                per_diem_dates = []
-                                per_diem_amounts = []
-                                breakfast_checks = []
-                                lunch_checks = []
-                                dinner_checks = []
-                                st.markdown("**Check boxes if meals were provided**")
-                                # Render per diem inputs in chunks of 7 days per row
-                                for chunk_start in range(0, total_days, 7):
-                                    chunk_len = min(7, total_days - chunk_start)
-                                    cols = st.columns(chunk_len)
-                                    for offset in range(chunk_len):
-                                        i = chunk_start + offset
-                                        with cols[offset]:
-                                            per_diem_dates.append(st.text_input(f"Day {i+1}", key=f"travel_per_diem_date_{i}", placeholder="MM/DD/YY"))
-                                            per_diem_amounts.append(selected_per_diem) 
-                                            breakfast_checks.append(st.checkbox(f"Breakfast", key=f"travel_breakfast_{i}"))
-                                            lunch_checks.append(st.checkbox(f"Lunch", key=f"travel_lunch_{i}"))
-                                            dinner_checks.append(st.checkbox(f"Dinner", key=f"travel_dinner_{i}"))
-                            
-                                st.header("Additional Information")
-                            
-                                # E-Signature section
-                                st.subheader("Traveler Signature")
-                                col1, col2 = st.columns([2, 1])
-                                with col1:
-                                    signature_text = st.text_input("Type your full name", key="travel_signature_text", 
-                                                                  help="Your typed name will be automatically converted to a signature-style image")
-                                    if signature_text:
-                                        # Show preview of signature (use lower scale for preview to be faster)
-                                        try:
-                                            preview_img = generate_signature_image(signature_text, width=600, height=120, scale_factor=2)
-                                            if preview_img:
-                                                # Ensure it's RGB for display (should already be RGB now)
-                                                if preview_img.mode != 'RGB':
-                                                    rgb_preview = PILImage.new('RGB', preview_img.size, (255, 255, 255))
-                                                    if preview_img.mode == 'RGBA':
-                                                        rgb_preview.paste(preview_img, mask=preview_img.split()[3])
-                                                    else:
-                                                        rgb_preview.paste(preview_img)
-                                                    preview_img = rgb_preview
-                                                # Resize preview for display
-                                                preview_display = preview_img.resize((400, int(400 * preview_img.size[1] / preview_img.size[0])))
-                                                st.image(preview_display, caption="Signature Preview", width=400)
-                                        except Exception as e:
-                                            pass
-                                with col2:
-                                    signature_date = st.date_input("Signature Date", value=datetime.now().date(), key="travel_sig_date")
-                            
-                                signature = signature_text.strip() if signature_text else ""
-                            
-                                submitted = st.form_submit_button("Generate PDF")
-                        
-                            if submitted:
-                                # Validate required Traveler Information fields
-                                missing_fields = []
-                                if not name or not name.strip():
-                                    missing_fields.append("Name")
-                                if not address1 or not address1.strip():
-                                    missing_fields.append("Address Line 1")
-                                if not city or not city.strip():
-                                    missing_fields.append("City")
-                                if not state or not state.strip():
-                                    missing_fields.append("State")
-                                if not zip_code or not zip_code.strip():
-                                    missing_fields.append("Zip")
-                                if not destination or not destination.strip():
-                                    missing_fields.append("Destination")
-                                if not email or not email.strip():
-                                    missing_fields.append("Email Address")
-                                if not purpose_of_travel or not purpose_of_travel.strip():
-                                    missing_fields.append("Purpose of Travel")
-                                if not attendees or not attendees.strip():
-                                    missing_fields.append("Attendees")
-                                if not deliverables or not deliverables.strip():
-                                    missing_fields.append("Deliverables")
-                            
-                                if missing_fields:
-                                    st.warning(f"⚠️ Please fill in all required fields: {', '.join(missing_fields)}")
-                                    st.stop()
-                            
-                                # Check for any input validation errors (check all number inputs)
-                                has_validation_errors = False
-                                # Check all input keys that might have errors
-                                input_prefixes = ['travel_mileage_', 'travel_airfare_', 'travel_ground_', 'travel_parking_', 'travel_lodging_', 'travel_baggage_', 'travel_misc_', 'travel_misc2_']
-                                for key in st.session_state.keys():
-                                    if key.endswith('_has_error') and st.session_state[key]:
-                                        # Check if this is one of our input fields
-                                        base_key = key.replace('_has_error', '')
-                                        if any(base_key.startswith(prefix) for prefix in input_prefixes):
-                                            has_validation_errors = True
-                                            break
-                            
-                                if has_validation_errors:
-                                    st.warning("⚠️ **Cannot generate PDF: Please fix all invalid input fields above.**")
-                                    st.stop()
-                                # Calculate totals
-                                total_airfare = sum(airfare)
-                                total_ground_transport = sum(ground_transport)
-                                total_parking = sum(parking)
-                                total_lodging = sum(lodging)
-                                total_baggage = sum(baggage)
-                                total_misc = sum(misc) + sum(misc2)  # Include both misc rows in total
-                                # Calculate adjusted per diem with meal deductions
-                                days_with_dates = [i for i, d in enumerate(per_diem_dates) if d and str(d).strip()]
-                                num_days = len(days_with_dates)
-                                first_day_idx = days_with_dates[0] if days_with_dates else 0
-                                last_day_idx = days_with_dates[-1] if days_with_dates else 0
-                            
-                                meal_deductions = {
-                                    68: { 'breakfast': 16, 'lunch': 19, 'dinner': 28, 'incidental': 5, 'first_last': 51.00 },
-                                    74: { 'breakfast': 18, 'lunch': 20, 'dinner': 31, 'incidental': 5, 'first_last': 55.50 },
-                                    80: { 'breakfast': 20, 'lunch': 22, 'dinner': 33, 'incidental': 5, 'first_last': 60.00 },
-                                    86: { 'breakfast': 22, 'lunch': 23, 'dinner': 36, 'incidental': 5, 'first_last': 64.50 },
-                                    92: { 'breakfast': 23, 'lunch': 26, 'dinner': 38, 'incidental': 5, 'first_last': 69.00 },
-                                }
-                                adjusted_per_diem_daily = []
-                                for i in range(len(per_diem_dates)):
-                                    if i < len(per_diem_dates) and per_diem_dates[i] and str(per_diem_dates[i]).strip():
-                                        base_per_diem = int(per_diem_amounts[i]) if (i < len(per_diem_amounts) and per_diem_amounts[i]) else 80
-                                        deducts = meal_deductions.get(base_per_diem, meal_deductions[80])
-                                        deduction_total = 0.0
-                                        if i < len(breakfast_checks) and breakfast_checks[i]:
-                                            deduction_total += deducts['breakfast']
-                                        if i < len(lunch_checks) and lunch_checks[i]:
-                                            deduction_total += deducts['lunch']
-                                        if i < len(dinner_checks) and dinner_checks[i]:
-                                            deduction_total += deducts['dinner']
-                                        # Base already includes incidentals; do not add +$5 here
-                                        pre75_total = max(0.0, float(base_per_diem) - deduction_total)
-                                        # Apply 75% for first and last day
-                                        if i == first_day_idx or i == last_day_idx:
-                                            final_per_diem = round(pre75_total * 0.75, 2)
-                                        else:
-                                            final_per_diem = round(pre75_total, 2)
-                                    
-                                        adjusted_per_diem_daily.append(final_per_diem)
-                                    else:
-                                        adjusted_per_diem_daily.append(0.0)
-                            
-                                total_per_diem = sum(adjusted_per_diem_daily)
-                                total_amount_due = (total_mileage + total_airfare + total_ground_transport + 
-                                                  total_parking + total_lodging + total_baggage + 
-                                                  total_misc + total_per_diem)
-                            
-                                # Store support files in session state for later upload
-                                if support_files:
-                                    # Store file bytes and metadata in session state
-                                    file_data_list = []
-                                    for file in support_files:
-                                        file.seek(0)  # Reset file pointer
-                                        file_bytes = file.read()
-                                        file.seek(0)  # Reset again for potential reuse
-                                        file_data_list.append({
-                                            'name': file.name,
-                                            'bytes': file_bytes,
-                                            'type': file.type
-                                        })
-                                    st.session_state['travel_support_files_data'] = file_data_list
-                                else:
-                                    st.session_state['travel_support_files_data'] = []
-                            
-                                form_data = {
-                                    'name': name,
-                                    'address1': address1,
-                                    'address2': address2,
-                                    'city': city,
-                                    'state': state,
-                                    'zip': zip_code,
-                                    'organization': organization,
-                                    'destination': destination,
-                                    'departure_date': departure_date.strftime('%m/%d/%Y') if departure_date else '',
-                                    'return_date': return_date.strftime('%m/%d/%Y') if return_date else '',
-                                    'email': email,
-                                    'purpose_of_travel': purpose_of_travel,
-                                    'objective': objective,
-                                    'attendees': attendees,
-                                    'deliverables': deliverables,
-                                    'support_files': '',  # Will be updated after upload
-                                    'mileage_dates': mileage_dates,
-                                    'mileage_amounts': mileage_amounts,
-                                    'total_mileage': total_mileage,
-                                    'expense_dates': expense_dates,
-                                    'airfare': airfare,
-                                    'ground_transport': ground_transport,
-                                    'parking': parking,
-                                    'lodging': lodging,
-                                    'baggage': baggage,
-                                    'misc': misc,
-                                    'misc2': misc2,
-                                    'misc_desc1': misc_desc1,
-                                    'misc_desc2': misc_desc2,
-                                    'total_airfare': total_airfare,
-                                    'total_ground_transport': total_ground_transport,
-                                    'total_parking': total_parking,
-                                    'total_lodging': total_lodging,
-                                    'total_baggage': total_baggage,
-                                    'total_misc': total_misc,
-                                    'per_diem_dates': per_diem_dates,
-                                    'per_diem_amounts': per_diem_amounts,
-                                    'breakfast_checks': breakfast_checks,
-                                    'lunch_checks': lunch_checks,
-                                    'dinner_checks': dinner_checks,
-                                    'total_per_diem': total_per_diem,
-                                    'total_amount_due': total_amount_due,
-                                    'signature': signature,
-                                    'signature_date': signature_date.strftime('%m/%d/%Y') if signature_date else ''
-                                }
-                            
-                                # Store for review step
-                                st.session_state['travel_review_data'] = form_data
-                                st.info("Review the details below, then confirm to continue.")
-
-                            # Review & Approve pane
-                            if 'travel_review_data' in st.session_state:
-                                review = st.session_state['travel_review_data']
-                                st.subheader("Review & Approve")
-                                colA, colB = st.columns(2)
-                                with colA:
-                                    st.markdown("**Traveler**")
-                                    traveler_html = f"""
-                                    <div style='border:1px solid #e0e0e0;border-radius:8px;padding:12px;background:#fafafa;'>
-                                      <div style='display:flex;justify-content:space-between;padding:4px 0;'>
-                                        <span style='color:#555;'>Name</span><strong>{review.get('name','')}</strong>
-                                      </div>
-                                      <div style='display:flex;justify-content:space-between;padding:4px 0;'>
-                                        <span style='color:#555;'>Organization</span><strong>{review.get('organization','')}</strong>
-                                      </div>
-                                      <div style='display:flex;justify-content:space-between;padding:4px 0;'>
-                                        <span style='color:#555;'>Destination</span><strong>{review.get('destination','')}</strong>
-                                      </div>
-                                      <div style='display:flex;justify-content:space-between;padding:4px 0;'>
-                                        <span style='color:#555;'>Email</span><strong>{review.get('email','')}</strong>
-                                      </div>
-                                    </div>
-                                    """
-                                    st.markdown(traveler_html, unsafe_allow_html=True)
-                                with colB:
-                                    st.markdown("**Trip**")
-                                    trip_html = f"""
-                                    <div style='border:1px solid #e0e0e0;border-radius:8px;padding:12px;background:#fafafa;'>
-                                      <div style='display:flex;justify-content:space-between;padding:4px 0;'>
-                                        <span style='color:#555;'>Departure Date</span><strong>{review.get('departure_date','')}</strong>
-                                      </div>
-                                      <div style='display:flex;justify-content:space-between;padding:4px 0;'>
-                                        <span style='color:#555;'>Return Date</span><strong>{review.get('return_date','')}</strong>
-                                      </div>
-                                    </div>
-                                    """
-                                    st.markdown(trip_html, unsafe_allow_html=True)
-                                st.markdown("**Totals**")
-                                totals_html = f"""
-                                <table style='width:100%;border-collapse:collapse;border:1px solid #eee;'>
-                                  <thead>
-                                    <tr style='background:#f5f5f5;'>
-                                      <th style='text-align:left;padding:8px;border-bottom:1px solid #eee;'>Category</th>
-                                      <th style='text-align:right;padding:8px;border-bottom:1px solid #eee;'>Amount</th>
-                                    </tr>
-                                  </thead>
-                                  <tbody>
-                                    <tr><td style='padding:8px;border-bottom:1px solid #f0f0f0;'>Mileage</td><td style='padding:8px;text-align:right;'>${int(review.get('total_mileage',0))}</td></tr>
-                                    <tr><td style='padding:8px;border-bottom:1px solid #f0f0f0;'>Airfare</td><td style='padding:8px;text-align:right;'>${review.get('total_airfare',0):.2f}</td></tr>
-                                    <tr><td style='padding:8px;border-bottom:1px solid #f0f0f0;'>Ground Transport</td><td style='padding:8px;text-align:right;'>${review.get('total_ground_transport',0):.2f}</td></tr>
-                                    <tr><td style='padding:8px;border-bottom:1px solid #f0f0f0;'>Parking</td><td style='padding:8px;text-align:right;'>${review.get('total_parking',0):.2f}</td></tr>
-                                    <tr><td style='padding:8px;border-bottom:1px solid #f0f0f0;'>Lodging</td><td style='padding:8px;text-align:right;'>${review.get('total_lodging',0):.2f}</td></tr>
-                                    <tr><td style='padding:8px;border-bottom:1px solid #f0f0f0;'>Baggage</td><td style='padding:8px;text-align:right;'>${review.get('total_baggage',0):.2f}</td></tr>
-                                    <tr><td style='padding:8px;border-bottom:1px solid #f0f0f0;'>Miscellaneous</td><td style='padding:8px;text-align:right;'>${review.get('total_misc',0):.2f}</td></tr>
-                                    <tr><td style='padding:8px;border-bottom:1px solid #f0f0f0;'>Per Diem</td><td style='padding:8px;text-align:right;'>${review.get('total_per_diem',0):.2f}</td></tr>
-                                    <tr style='background:#fff8f8;font-weight:600;'>
-                                      <td style='padding:8px;border-top:1px solid #eee;'>Total Amount Due</td>
-                                      <td style='padding:8px;text-align:right;border-top:1px solid #eee;'>${review.get('total_amount_due',0):.2f}</td>
-                                    </tr>
-                                  </tbody>
-                                </table>
-                                """
-                                st.markdown(totals_html, unsafe_allow_html=True)
-                                approved = st.checkbox("I have reviewed and approve this travel form.", key="travel_approve_review")
-                                generate_now = st.button("✅ Finalize and Send for Approval", disabled=not approved, key="travel_generate_now", type="primary", use_container_width=True)
-                                if generate_now and approved:
-                                    # Upload support files to Google Drive if provided
-                                    support_files_links = ""
-                                    if 'travel_support_files_data' in st.session_state and st.session_state['travel_support_files_data']:
-                                        try:
-                                            folder_id_travel = "1aDE0N_duNN6w8rLDLX5HHeychyhLIqbo"
-                                            links = []
-                                            name_for_files = review.get('name', 'Unknown')
-                                            destination_for_files = review.get('destination', 'Unknown')
-                                        
-                                            for file_data in st.session_state['travel_support_files_data']:
-                                                # Create unique filename
-                                                renamed_filename = f"Travel_{name_for_files.replace(' ', '_')}_{destination_for_files.replace(' ', '_')}_{file_data['name']}"
-                                            
-                                                # Create a file-like object from bytes with required attributes
-                                                file_obj = io.BytesIO(file_data['bytes'])
-                                                file_obj.name = file_data['name']
-                                                file_obj.type = file_data.get('type', 'application/octet-stream')
-                                            
-                                                # Upload to Google Drive
-                                                link = upload_file_to_drive(
-                                                    file=file_obj,
-                                                    filename=renamed_filename,
-                                                    folder_id=folder_id_travel,
-                                                    creds_dict=st.secrets["gcp_service_account"]
-                                                )
-                                                links.append(link)
-                                        
-                                            support_files_links = ", ".join(links)
-                                            st.success("✅ Support files uploaded to Google Drive!")
-                                        
-                                            # Update review data with file links
-                                            review['support_files'] = support_files_links
-                                        
-                                            # Clear file data from session state to free memory
-                                            del st.session_state['travel_support_files_data']
-                                        
-                                        except Exception as e:
-                                            st.warning(f"⚠️ Error uploading support files: {str(e)}")
-                                
-                                    # Save to Google Sheets when PDF is generated
+                                    # Update Google Sheet
+                                    spreadsheet_travel = client.open('HRSA64_TA_Request')
                                     try:
-                                        df_travel = load_travel_sheet()
+                                        worksheet_travel = spreadsheet_travel.worksheet('Travel')
+                                    except:
+                                        # Create worksheet if it doesn't exist
+                                        worksheet_travel = spreadsheet_travel.add_worksheet(title='Travel', rows=1000, cols=20)
                                     
-                                        # Create new row for travel sheet
-                                        new_travel_row = {
-                                            'Name': review.get('name', ''),
-                                            'Email': review.get('email', ''),
-                                            'Destination': review.get('destination', ''),
-                                            'Purpose of Travel': review.get('purpose_of_travel', ''),
-                                            'Objective': review.get('objective', ''),
-                                            'Attendees': review.get('attendees', ''),
-                                            'Departure Date': review.get('departure_date', ''),
-                                            'Return Date': review.get('return_date', ''),
-                                            'Deliverables': review.get('deliverables', ''),
-                                            'Support Files': support_files_links,
-                                            'Submission Date': datetime.now().strftime('%Y-%m-%d'),
-                                            'PDF Link': '',  # Will be filled when sent for approval
-                                            # Traveler information
-                                            'Address1': review.get('address1', ''),
-                                            'Address2': review.get('address2', ''),
-                                            'City': review.get('city', ''),
-                                            'State': review.get('state', ''),
-                                            'Zip': review.get('zip', ''),
-                                            'Organization': review.get('organization', 'Georgetown University'),
-                                            'Signature': review.get('signature', ''),
-                                            'Signature Date': review.get('signature_date', ''),
-                                            # Expense details - stored as JSON strings
-                                            'Mileage Dates': json.dumps(review.get('mileage_dates', [])),
-                                            'Mileage Amounts': json.dumps(review.get('mileage_amounts', [])),
-                                            'Total Mileage': review.get('total_mileage', 0),
-                                            'Expense Dates': json.dumps(review.get('expense_dates', [])),
-                                            'Airfare': json.dumps(review.get('airfare', [])),
-                                            'Ground Transport': json.dumps(review.get('ground_transport', [])),
-                                            'Parking': json.dumps(review.get('parking', [])),
-                                            'Lodging': json.dumps(review.get('lodging', [])),
-                                            'Baggage': json.dumps(review.get('baggage', [])),
-                                            'Misc': json.dumps(review.get('misc', [])),
-                                            'Misc2': json.dumps(review.get('misc2', [])),
-                                            'Misc Desc1': review.get('misc_desc1', ''),
-                                            'Misc Desc2': review.get('misc_desc2', ''),
-                                            'Total Airfare': review.get('total_airfare', 0),
-                                            'Total Ground Transport': review.get('total_ground_transport', 0),
-                                            'Total Parking': review.get('total_parking', 0),
-                                            'Total Lodging': review.get('total_lodging', 0),
-                                            'Total Baggage': review.get('total_baggage', 0),
-                                            'Total Misc': review.get('total_misc', 0),
-                                            'Per Diem Dates': json.dumps(review.get('per_diem_dates', [])),
-                                            'Per Diem Amounts': json.dumps(review.get('per_diem_amounts', [])),
-                                            'Breakfast Checks': json.dumps(review.get('breakfast_checks', [])),
-                                            'Lunch Checks': json.dumps(review.get('lunch_checks', [])),
-                                            'Dinner Checks': json.dumps(review.get('dinner_checks', [])),
-                                            'Total Per Diem': review.get('total_per_diem', 0),
-                                            'Total Amount Due': review.get('total_amount_due', 0),
-                                            # Approval fields (all possible approvers)
-                                            'Kemisha Approval Status': '',
-                                            'Mabintou Approval Status': '',
-                                            'Jen Approval Status': '',
-                                            'Lauren Approval Status': '',
-                                            'Kemisha Approval Date': '',
-                                            'Mabintou Approval Date': '',
-                                            'Jen Approval Date': '',
-                                            'Lauren Approval Date': '',
-                                            'Kemisha Signature': '',
-                                            'Mabintou Signature': '',
-                                            'Jen Signature': '',
-                                            'Lauren Signature': '',
-                                            'Kemisha Note': '',
-                                            'Mabintou Note': '',
-                                            'Jen Note': '',
-                                            'Lauren Note': '',
-                                            'Travel Escalation Sent': '',
-                                        }
+                                    worksheet_travel.update([updated_travel_sheet.columns.values.tolist()] + updated_travel_sheet.values.tolist())
                                     
-                                        new_travel_data = pd.DataFrame([new_travel_row])
+                                    # Clear cache to refresh data
+                                    st.cache_data.clear()
                                     
-                                        # Append new data to existing travel sheet
-                                        updated_travel_sheet = pd.concat([df_travel, new_travel_data], ignore_index=True)
-                                        updated_travel_sheet = updated_travel_sheet.fillna("")
+                                    st.success("Saved.")
                                     
-                                        # Update Google Sheet
+                                except Exception as e:
+                                    st.warning(f"⚠️ Error saving to Google Sheets: {str(e)}")
+                                
+                                pdf_buffer = create_pdf(review, ws)
+                                pdf_filename = f"Travel_Authorization_Form_{review.get('name','')}_{review.get('departure_date','')}_{review.get('return_date','')}.pdf"
+                                
+                                st.success("✅ PDF generated successfully!")
+                                
+                                # Upload PDF to Google Drive and send for approval
+                                try:
+                                    folder_id_travel_pdf = "1_O_L-jPR7bldiryRNB3WxbAaG8VqvmCt"
+                                    pdf_file_obj = io.BytesIO(pdf_buffer.getvalue())
+                                    pdf_file_obj.name = pdf_filename
+                                    pdf_file_obj.type = 'application/pdf'
+                                    
+                                    pdf_link = upload_file_to_drive(
+                                        file=pdf_file_obj,
+                                        filename=pdf_filename,
+                                        folder_id=folder_id_travel_pdf,
+                                        creds_dict=st.secrets["gcp_service_account"]
+                                    )
+                                    
+                                    st.success("✅ PDF uploaded to Google Drive!")
+                                    
+                                    # Update Google Sheet with PDF link and status
+                                    # Reload the sheet to get the latest data
+                                    st.cache_data.clear()
+                                    df_travel = load_travel_sheet()
+                                    
+                                    if df_travel.empty:
+                                        st.error("❌ No travel forms found in the sheet. Please submit the form first.")
+                                        st.stop()
+                                    
+                                    # Find the row that matches this submission (by name and submission date)
+                                    submission_date = datetime.now().strftime('%Y-%m-%d')
+                                    traveler_name = review.get('name', '')
+                                    
+                                    # Try to find matching row
+                                    row_idx = None
+                                    if 'Name' in df_travel.columns and 'Submission Date' in df_travel.columns:
+                                        matching_rows = df_travel[
+                                            (df_travel['Name'].astype(str) == str(traveler_name)) &
+                                            (df_travel['Submission Date'].astype(str).str.contains(submission_date, na=False))
+                                        ]
+                                        
+                                        if not matching_rows.empty:
+                                            # Use the most recent matching row (last one)
+                                            row_idx = matching_rows.index[-1]
+                                    
+                                    # Fallback to last row if no match found
+                                    if row_idx is None:
+                                        row_idx = len(df_travel) - 1
+                                    
+                                    if row_idx >= 0 and row_idx < len(df_travel):
+                                        updated_df_travel = df_travel.copy()
+                                        
+                                        # Determine approval routing based on traveler.
+                                        route = travel_routing_from_traveler(
+                                            traveler_name,
+                                            review.get('email', ''),
+                                        )
+                                        approver1_email = route['approver1_email']
+                                        approver1_name = route['approver1_name']
+                                        approver1_status_col = route['approver1_status_col']
+                                        approver2_email = route['approver2_email']
+                                        approver2_name = route['approver2_name']
+                                        approver2_status_col = route['approver2_status_col']
+                                        
+                                        # Ensure required columns exist
+                                        required_cols = ['PDF Link', approver1_status_col, approver2_status_col]
+                                        for col in required_cols:
+                                            if col not in updated_df_travel.columns:
+                                                updated_df_travel[col] = ''
+                                        
+                                        updated_df_travel.loc[row_idx, 'PDF Link'] = pdf_link
+                                        updated_df_travel.loc[row_idx, approver1_status_col] = 'pending'
+                                        updated_df_travel.loc[row_idx, approver2_status_col] = 'pending'
+                                        
+                                        updated_df_travel = updated_df_travel.fillna("")
                                         spreadsheet_travel = client.open('HRSA64_TA_Request')
                                         try:
                                             worksheet_travel = spreadsheet_travel.worksheet('Travel')
                                         except:
-                                            # Create worksheet if it doesn't exist
                                             worksheet_travel = spreadsheet_travel.add_worksheet(title='Travel', rows=1000, cols=20)
-                                    
-                                        worksheet_travel.update([updated_travel_sheet.columns.values.tolist()] + updated_travel_sheet.values.tolist())
-                                    
-                                        # Clear cache to refresh data
-                                        st.cache_data.clear()
-                                    
+                                        
+                                        worksheet_travel.update([updated_df_travel.columns.values.tolist()] + updated_df_travel.values.tolist())
+                                        
                                         st.success("Saved.")
-                                    
-                                    except Exception as e:
-                                        st.warning(f"⚠️ Error saving to Google Sheets: {str(e)}")
-                                
-                                    pdf_buffer = create_pdf(review, ws)
-                                    pdf_filename = f"Travel_Authorization_Form_{review.get('name','')}_{review.get('departure_date','')}_{review.get('return_date','')}.pdf"
-                                
-                                    st.success("✅ PDF generated successfully!")
-                                
-                                    # Upload PDF to Google Drive and send for approval
-                                    try:
-                                        folder_id_travel_pdf = "1_O_L-jPR7bldiryRNB3WxbAaG8VqvmCt"
-                                        pdf_file_obj = io.BytesIO(pdf_buffer.getvalue())
-                                        pdf_file_obj.name = pdf_filename
-                                        pdf_file_obj.type = 'application/pdf'
-                                    
-                                        pdf_link = upload_file_to_drive(
-                                            file=pdf_file_obj,
-                                            filename=pdf_filename,
-                                            folder_id=folder_id_travel_pdf,
-                                            creds_dict=st.secrets["gcp_service_account"]
-                                        )
-                                    
-                                        st.success("✅ PDF uploaded to Google Drive!")
-                                    
-                                        # Update Google Sheet with PDF link and status
-                                        # Reload the sheet to get the latest data
-                                        st.cache_data.clear()
-                                        df_travel = load_travel_sheet()
-                                    
-                                        if df_travel.empty:
-                                            st.error("❌ No travel forms found in the sheet. Please submit the form first.")
-                                            st.stop()
-                                    
-                                        # Find the row that matches this submission (by name and submission date)
-                                        submission_date = datetime.now().strftime('%Y-%m-%d')
-                                        traveler_name = review.get('name', '')
-                                    
-                                        # Try to find matching row
-                                        row_idx = None
-                                        if 'Name' in df_travel.columns and 'Submission Date' in df_travel.columns:
-                                            matching_rows = df_travel[
-                                                (df_travel['Name'].astype(str) == str(traveler_name)) &
-                                                (df_travel['Submission Date'].astype(str).str.contains(submission_date, na=False))
-                                            ]
                                         
-                                            if not matching_rows.empty:
-                                                # Use the most recent matching row (last one)
-                                                row_idx = matching_rows.index[-1]
-                                    
-                                        # Fallback to last row if no match found
-                                        if row_idx is None:
-                                            row_idx = len(df_travel) - 1
-                                    
-                                        if row_idx >= 0 and row_idx < len(df_travel):
-                                            updated_df_travel = df_travel.copy()
+                                        # Send email notification to both approvers (determined dynamically above)
+                                        traveler_name = review.get('name', 'Unknown')
+                                        destination = review.get('destination', 'Unknown')
+                                        departure_date = review.get('departure_date', 'Unknown')
+                                        return_date = review.get('return_date', 'Unknown')
+                                        total_amount = review.get('total_amount_due', 0)
                                         
-                                            # Determine approval routing based on traveler.
-                                            route = travel_routing_from_traveler(
-                                                traveler_name,
-                                                review.get('email', ''),
-                                            )
-                                            approver1_email = route['approver1_email']
-                                            approver1_name = route['approver1_name']
-                                            approver1_status_col = route['approver1_status_col']
-                                            approver2_email = route['approver2_email']
-                                            approver2_name = route['approver2_name']
-                                            approver2_status_col = route['approver2_status_col']
-                                        
-                                            # Ensure required columns exist
-                                            required_cols = ['PDF Link', approver1_status_col, approver2_status_col]
-                                            for col in required_cols:
-                                                if col not in updated_df_travel.columns:
-                                                    updated_df_travel[col] = ''
-                                        
-                                            updated_df_travel.loc[row_idx, 'PDF Link'] = pdf_link
-                                            updated_df_travel.loc[row_idx, approver1_status_col] = 'pending'
-                                            updated_df_travel.loc[row_idx, approver2_status_col] = 'pending'
-                                        
-                                            updated_df_travel = updated_df_travel.fillna("")
-                                            spreadsheet_travel = client.open('HRSA64_TA_Request')
+                                        # Helper function to send email to an approver
+                                        def send_approval_email(approver_email, approver_name):
+                                            email_subject = f"Travel Authorization Form Pending Approval - {traveler_name}"
+                                            email_body = f"""
+Dear {approver_name},
+
+A new travel authorization form has been submitted and is pending your approval.
+
+Travel Details:
+- Traveler: {traveler_name}
+- Destination: {destination}
+- Departure Date: {departure_date}
+- Return Date: {return_date}
+- Total Amount Due: ${total_amount:.2f}
+
+PDF Link: {pdf_link}
+
+Please review and approve this travel authorization form via the GU-TAP System: https://hrsagutap.streamlit.app/
+
+Best regards,
+GU-TAP System
+                                            """
                                             try:
-                                                worksheet_travel = spreadsheet_travel.worksheet('Travel')
-                                            except:
-                                                worksheet_travel = spreadsheet_travel.add_worksheet(title='Travel', rows=1000, cols=20)
+                                                send_email_mailjet(
+                                                    to_email=approver_email,
+                                                    subject=email_subject,
+                                                    body=email_body.strip()
+                                                )
+                                                return True, f"✅ Email sent successfully to {approver_name} ({approver_email})"
+                                            except Exception as e:
+                                                return False, f"⚠️ Failed to send email to {approver_name}: {str(e)}"
                                         
-                                            worksheet_travel.update([updated_df_travel.columns.values.tolist()] + updated_df_travel.values.tolist())
+                                        # Send emails to both approvers
+                                        email_success_count = 0
+                                        email_messages = []
                                         
-                                            st.success("Saved.")
+                                        # Send to approver 1
+                                        success1, msg1 = send_approval_email(approver1_email, approver1_name)
+                                        if success1:
+                                            email_success_count += 1
+                                        email_messages.append(msg1)
                                         
-                                            # Send email notification to both approvers (determined dynamically above)
-                                            traveler_name = review.get('name', 'Unknown')
-                                            destination = review.get('destination', 'Unknown')
-                                            departure_date = review.get('departure_date', 'Unknown')
-                                            return_date = review.get('return_date', 'Unknown')
-                                            total_amount = review.get('total_amount_due', 0)
+                                        # Send to approver 2
+                                        success2, msg2 = send_approval_email(approver2_email, approver2_name)
+                                        if success2:
+                                            email_success_count += 1
+                                        email_messages.append(msg2)
                                         
-                                            # Helper function to send email to an approver
-                                            def send_approval_email(approver_email, approver_name):
-                                                email_subject = f"Travel Authorization Form Pending Approval - {traveler_name}"
-                                                email_body = f"""
-    Dear {approver_name},
-
-    A new travel authorization form has been submitted and is pending your approval.
-
-    Travel Details:
-    - Traveler: {traveler_name}
-    - Destination: {destination}
-    - Departure Date: {departure_date}
-    - Return Date: {return_date}
-    - Total Amount Due: ${total_amount:.2f}
-
-    PDF Link: {pdf_link}
-
-    Please review and approve this travel authorization form via the GU-TAP System: https://hrsagutap.streamlit.app/
-
-    Best regards,
-    GU-TAP System
-                                                """
-                                                try:
-                                                    send_email_mailjet(
-                                                        to_email=approver_email,
-                                                        subject=email_subject,
-                                                        body=email_body.strip()
-                                                    )
-                                                    return True, f"✅ Email sent successfully to {approver_name} ({approver_email})"
-                                                except Exception as e:
-                                                    return False, f"⚠️ Failed to send email to {approver_name}: {str(e)}"
+                                        # Display email results (failures only; one summary on success)
+                                        for msg in email_messages:
+                                            if not msg.startswith("✅"):
+                                                st.warning(msg)
                                         
-                                            # Send emails to both approvers
-                                            email_success_count = 0
-                                            email_messages = []
-                                        
-                                            # Send to approver 1
-                                            success1, msg1 = send_approval_email(approver1_email, approver1_name)
-                                            if success1:
-                                                email_success_count += 1
-                                            email_messages.append(msg1)
-                                        
-                                            # Send to approver 2
-                                            success2, msg2 = send_approval_email(approver2_email, approver2_name)
-                                            if success2:
-                                                email_success_count += 1
-                                            email_messages.append(msg2)
-                                        
-                                            # Display email results (failures only; one summary on success)
-                                            for msg in email_messages:
-                                                if not msg.startswith("✅"):
-                                                    st.warning(msg)
-                                        
-                                            if email_success_count == 2:
-                                                st.success("Success. Coordinators have been notified.")
-                                            elif email_success_count == 1:
-                                                st.warning("⚠️ PDF uploaded and one email sent, but one email failed. Please check the messages above.")
-                                            else:
-                                                st.error("❌ PDF uploaded but failed to send emails to coordinators. Please contact support.")
-                                        
-                                            # Clear session state
-                                            if 'travel_pdf_buffer' in st.session_state:
-                                                del st.session_state['travel_pdf_buffer']
-                                            if 'travel_pdf_filename' in st.session_state:
-                                                del st.session_state['travel_pdf_filename']
-                                            if 'travel_review_for_approval' in st.session_state:
-                                                del st.session_state['travel_review_for_approval']
-                                            if 'travel_review_data' in st.session_state:
-                                                del st.session_state['travel_review_data']
-                                            if 'travel_submission_date' in st.session_state:
-                                                del st.session_state['travel_submission_date']
-                                        
-                                            st.cache_data.clear()
-                                            time.sleep(3)
-                                            st.rerun()
+                                        if email_success_count == 2:
+                                            st.success("Success. Coordinators have been notified.")
+                                        elif email_success_count == 1:
+                                            st.warning("⚠️ PDF uploaded and one email sent, but one email failed. Please check the messages above.")
                                         else:
-                                            st.error("❌ Could not find the travel form entry to update. Please try again.")
-                                            st.stop()
+                                            st.error("❌ PDF uploaded but failed to send emails to coordinators. Please contact support.")
                                         
-                                    except Exception as e:
-                                        st.error(f"❌ Error sending for approval: {str(e)}")
-                                        st.exception(e)
+                                        # Clear session state
+                                        if 'travel_pdf_buffer' in st.session_state:
+                                            del st.session_state['travel_pdf_buffer']
+                                        if 'travel_pdf_filename' in st.session_state:
+                                            del st.session_state['travel_pdf_filename']
+                                        if 'travel_review_for_approval' in st.session_state:
+                                            del st.session_state['travel_review_for_approval']
+                                        if 'travel_review_data' in st.session_state:
+                                            del st.session_state['travel_review_data']
+                                        if 'travel_submission_date' in st.session_state:
+                                            del st.session_state['travel_submission_date']
+                                        
+                                        st.cache_data.clear()
+                                        time.sleep(3)
+                                        st.rerun()
+                                    else:
+                                        st.error("❌ Could not find the travel form entry to update. Please try again.")
+                                        st.stop()
+                                        
+                                except Exception as e:
+                                    st.error(f"❌ Error sending for approval: {str(e)}")
+                                    st.exception(e)
                     
-                        except Exception as e:
-                            st.error(f"Error: {str(e)}")
-                            st.exception(e)
+                    except Exception as e:
+                        st.error(f"Error: {str(e)}")
+                        st.exception(e)
 
 
-                    st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
+                st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
 
 
-                    with st.expander("📦 **CHECK & SUBMIT DELIVERY LOG**"):
-                        st.markdown("""
-                            <div class="gutap-hero">
-                                <div class="gutap-hero-title">
-                                    📦 Delivery Management Center
-                                </div>
-                                <div class="gutap-hero-sub">
-                                    Review your previous deliveries and submit new ones. Track all your completed work including reports, dashboards, and data.
-                                </div>
+                with st.expander("📦 **CHECK & SUBMIT DELIVERY LOG**"):
+                    st.markdown("""
+                        <div class="gutap-hero">
+                            <div class="gutap-hero-title">
+                                📦 Delivery Management Center
                             </div>
-                        """, unsafe_allow_html=True)
-
-                        # Upper section: Previous Deliveries
-                        st.markdown("""
-                            <div style='background: #f8f9fa; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); padding: 1.5em; margin-bottom: 2em;'>
-                                <h3 style='color: #1a237e; font-family: "Segoe UI", sans-serif; font-weight: 700; margin-bottom: 1em; text-align: center;'>
-                                    📊 Your Previous Deliveries
-                                </h3>
+                            <div class="gutap-hero-sub">
+                                Review your previous deliveries and submit new ones. Track all your completed work including reports, dashboards, and data.
                             </div>
-                        """, unsafe_allow_html=True)
+                        </div>
+                    """, unsafe_allow_html=True)
+
+                    # Upper section: Previous Deliveries
+                    st.markdown("""
+                        <div style='background: #f8f9fa; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); padding: 1.5em; margin-bottom: 2em;'>
+                            <h3 style='color: #1a237e; font-family: "Segoe UI", sans-serif; font-weight: 700; margin-bottom: 1em; text-align: center;'>
+                                📊 Your Previous Deliveries
+                            </h3>
+                        </div>
+                    """, unsafe_allow_html=True)
                     
-                        # Get delivery data properly
-                        df_del_staff = df_del[df_del["Submitted By"] == staff_name].copy()
-                        if not df_del_staff.empty:
-                            # Remove columns we don't want to display
-                            display_cols = [col for col in df_del_staff.columns if col not in ['Submitted By', 'Submission Date']]
-                            df_del_staff_display = df_del_staff[display_cols].copy()
+                    # Get delivery data properly
+                    df_del_staff = df_del[df_del["Submitted By"] == staff_name].copy()
+                    if not df_del_staff.empty:
+                        # Remove columns we don't want to display
+                        display_cols = [col for col in df_del_staff.columns if col not in ['Submitted By', 'Submission Date']]
+                        df_del_staff_display = df_del_staff[display_cols].copy()
                         
-                            # Sort by Date of Delivery (most recent first)
-                            df_del_staff_display["Date of Delivery"] = pd.to_datetime(df_del_staff_display["Date of Delivery"], errors="coerce")
-                            df_del_staff_display = df_del_staff_display.sort_values("Date of Delivery", ascending=True)
-                            df_del_staff_display["Date of Delivery"] = df_del_staff_display["Date of Delivery"].dt.strftime("%Y-%m-%d")
+                        # Sort by Date of Delivery (most recent first)
+                        df_del_staff_display["Date of Delivery"] = pd.to_datetime(df_del_staff_display["Date of Delivery"], errors="coerce")
+                        df_del_staff_display = df_del_staff_display.sort_values("Date of Delivery", ascending=True)
+                        df_del_staff_display["Date of Delivery"] = df_del_staff_display["Date of Delivery"].dt.strftime("%Y-%m-%d")
                         
-                            # Add summary stats
-                            total_deliveries = len(df_del_staff_display)
-                            recent_deliveries = len(df_del_staff_display[df_del_staff_display["Date of Delivery"] >= (datetime.now() - timedelta(days=30)).strftime("%Y-%m-%d")])
+                        # Add summary stats
+                        total_deliveries = len(df_del_staff_display)
+                        recent_deliveries = len(df_del_staff_display[df_del_staff_display["Date of Delivery"] >= (datetime.now() - timedelta(days=30)).strftime("%Y-%m-%d")])
                         
-                            st.markdown(f"""
-                                <div style='background: #e3f2fd; border-radius: 10px; padding: 1em; margin-top: 1em; text-align: center;'>
-                                    <div style='display: flex; justify-content: space-around;'>
-                                        <div>
-                                            <div style='font-size: 1.5em; font-weight: bold; color: #1976d2;'>{total_deliveries}</div>
-                                            <div style='font-size: 0.9em; color: #666;'>Total Deliveries</div>
-                                        </div>
-                                        <div>
-                                            <div style='font-size: 1.5em; font-weight: bold; color: #388e3c;'>{recent_deliveries}</div>
-                                            <div style='font-size: 0.9em; color: #666;'>Last 30 Days</div>
-                                        </div>
+                        st.markdown(f"""
+                            <div style='background: #e3f2fd; border-radius: 10px; padding: 1em; margin-top: 1em; text-align: center;'>
+                                <div style='display: flex; justify-content: space-around;'>
+                                    <div>
+                                        <div style='font-size: 1.5em; font-weight: bold; color: #1976d2;'>{total_deliveries}</div>
+                                        <div style='font-size: 0.9em; color: #666;'>Total Deliveries</div>
+                                    </div>
+                                    <div>
+                                        <div style='font-size: 1.5em; font-weight: bold; color: #388e3c;'>{recent_deliveries}</div>
+                                        <div style='font-size: 0.9em; color: #666;'>Last 30 Days</div>
                                     </div>
                                 </div>
-                            """, unsafe_allow_html=True)
-
-                            st.dataframe(df_del_staff_display.reset_index(drop=True), use_container_width=True)
-                        
-
-                        else:
-                            st.markdown("""
-                                <div style='background: #fff3e0; border-radius: 15px; padding: 2em; text-align: center; border: 2px dashed #ff9800;'>
-                                    <div style='font-size: 3em; margin-bottom: 0.5em;'>📦</div>
-                                    <h4 style='color: #e65100; margin-bottom: 0.5em;'>No Previous Deliveries</h4>
-                                    <p style='color: #666; margin: 0;'>You haven't logged any deliveries yet. Start by submitting your first delivery below!</p>
-                                </div>
-                            """, unsafe_allow_html=True)
-
-                        # Middle section: View Deliveries by Ticket ID
-                        st.markdown("""
-                            <div style='background: #f8f9fa; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); padding: 1.5em; margin-bottom: 2em; margin-top: 2em;'>
-                                <h3 style='color: #1a237e; font-family: "Segoe UI", sans-serif; font-weight: 700; margin-bottom: 1em; text-align: center;'>
-                                    🔍 View Deliveries by Ticket ID
-                                </h3>
                             </div>
                         """, unsafe_allow_html=True)
-                    
-                        # Get ticket IDs assigned to this staff member
-                        assigned_tickets_del = df[df["Assigned Coach"] == staff_name]["Ticket ID"].dropna().astype(str).unique().tolist()
-                        assigned_tickets_del_sorted = sorted(assigned_tickets_del)
-                    
-                        if assigned_tickets_del_sorted:
-                            selected_ticket_view_del = st.selectbox(
-                                "Select a Ticket ID to view all deliveries",
-                                options=[""] + assigned_tickets_del_sorted,
-                                index=0,
-                                key='view_deliveries_ticket_staff',
-                                help="Select a ticket ID from your assigned requests to view all deliveries for that ticket"
-                            )
+
+                        st.dataframe(df_del_staff_display.reset_index(drop=True), use_container_width=True)
                         
-                            if selected_ticket_view_del:
-                                # Get all deliveries for this ticket ID (regardless of who submitted)
-                                # Handle NaN values properly
-                                df_ticket_del = df_del[
-                                    (df_del["Ticket ID"].notna()) & 
-                                    (df_del["Ticket ID"].astype(str) == selected_ticket_view_del)
-                                ].copy()
+
+                    else:
+                        st.markdown("""
+                            <div style='background: #fff3e0; border-radius: 15px; padding: 2em; text-align: center; border: 2px dashed #ff9800;'>
+                                <div style='font-size: 3em; margin-bottom: 0.5em;'>📦</div>
+                                <h4 style='color: #e65100; margin-bottom: 0.5em;'>No Previous Deliveries</h4>
+                                <p style='color: #666; margin: 0;'>You haven't logged any deliveries yet. Start by submitting your first delivery below!</p>
+                            </div>
+                        """, unsafe_allow_html=True)
+
+                    # Middle section: View Deliveries by Ticket ID
+                    st.markdown("""
+                        <div style='background: #f8f9fa; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); padding: 1.5em; margin-bottom: 2em; margin-top: 2em;'>
+                            <h3 style='color: #1a237e; font-family: "Segoe UI", sans-serif; font-weight: 700; margin-bottom: 1em; text-align: center;'>
+                                🔍 View Deliveries by Ticket ID
+                            </h3>
+                        </div>
+                    """, unsafe_allow_html=True)
+                    
+                    # Get ticket IDs assigned to this staff member
+                    assigned_tickets_del = df[df["Assigned Coach"] == staff_name]["Ticket ID"].dropna().astype(str).unique().tolist()
+                    assigned_tickets_del_sorted = sorted(assigned_tickets_del)
+                    
+                    if assigned_tickets_del_sorted:
+                        selected_ticket_view_del = st.selectbox(
+                            "Select a Ticket ID to view all deliveries",
+                            options=[""] + assigned_tickets_del_sorted,
+                            index=0,
+                            key='view_deliveries_ticket_staff',
+                            help="Select a ticket ID from your assigned requests to view all deliveries for that ticket"
+                        )
+                        
+                        if selected_ticket_view_del:
+                            # Get all deliveries for this ticket ID (regardless of who submitted)
+                            # Handle NaN values properly
+                            df_ticket_del = df_del[
+                                (df_del["Ticket ID"].notna()) & 
+                                (df_del["Ticket ID"].astype(str) == selected_ticket_view_del)
+                            ].copy()
                             
-                                if not df_ticket_del.empty:
-                                    # Remove columns we don't want to display
-                                    display_cols_ticket_del = [col for col in df_ticket_del.columns if col not in ['Submission Date']]
-                                    df_ticket_del_display = df_ticket_del[display_cols_ticket_del].copy()
+                            if not df_ticket_del.empty:
+                                # Remove columns we don't want to display
+                                display_cols_ticket_del = [col for col in df_ticket_del.columns if col not in ['Submission Date']]
+                                df_ticket_del_display = df_ticket_del[display_cols_ticket_del].copy()
                                 
-                                    # Sort by Date of Delivery (most recent first)
-                                    df_ticket_del_display["Date of Delivery"] = pd.to_datetime(df_ticket_del_display["Date of Delivery"], errors="coerce")
-                                    df_ticket_del_display = df_ticket_del_display.sort_values("Date of Delivery", ascending=True)
-                                    df_ticket_del_display["Date of Delivery"] = df_ticket_del_display["Date of Delivery"].dt.strftime("%Y-%m-%d")
+                                # Sort by Date of Delivery (most recent first)
+                                df_ticket_del_display["Date of Delivery"] = pd.to_datetime(df_ticket_del_display["Date of Delivery"], errors="coerce")
+                                df_ticket_del_display = df_ticket_del_display.sort_values("Date of Delivery", ascending=True)
+                                df_ticket_del_display["Date of Delivery"] = df_ticket_del_display["Date of Delivery"].dt.strftime("%Y-%m-%d")
                                 
-                                    st.markdown(f"**All deliveries for Ticket ID: {selected_ticket_view_del}**")
-                                    st.dataframe(df_ticket_del_display.reset_index(drop=True), use_container_width=True)
-                                else:
-                                    st.info(f"No deliveries found for Ticket ID: {selected_ticket_view_del}")
-                        else:
-                            st.info("No assigned ticket IDs available to view deliveries.")
-
-                        # Lower section: Submit New Delivery
-                        st.markdown("""
-                            <div style='background: #f8f9fa; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); padding: 1.5em; margin-bottom: 1em;'>
-                                <h3 style='color: #1a237e; font-family: "Segoe UI", sans-serif; font-weight: 700; margin-bottom: 1em; text-align: center;'>
-                                    ✍️ Submit New Delivery
-                                </h3>
-                            </div>
-                        """, unsafe_allow_html=True)
-                    
-                        lis_ticket1 = df["Ticket ID"].unique().tolist()
-
-                        # Delivery Log form
-                        col1, col2 = st.columns(2)
-                        with col1:
-                            ticket_id_del = st.selectbox("Ticket ID *",lis_ticket1, index=None,
-                                placeholder="Select option...",key='delivery1')
-                        with col2:
-                            date_del = st.date_input("Date of Delivery *",value=datetime.today().date())
-
-                        list_delivery = [
-                            "Report", "Email Reply", "Dashboard", "New Data Points","Peer Learning Facilitation", "TA Meeting", "Other"
-                        ]
-
-                        type_delivery = st.selectbox(
-                            "Type of Delivery *",
-                            list_delivery,
-                            index=None,
-                            placeholder="Select option..."
-                        )
-
-                        # If "Other" is selected, show a text input for custom value
-                        if type_delivery == "Other":
-                            type_delivery_other = st.text_input("Please specify the Type of Delivery *")
-                            if type_delivery_other:
-                                type_delivery = type_delivery_other 
-                        delivery_description = st.text_area("Short Summary *", placeholder='Enter text', height=150,key='delivery_description1') 
-                        document_del = st.file_uploader(
-                            "Upload any files or attachments that are relevant to this delivery.",accept_multiple_files=True
-                        )
-
-                        # Submit button
-                        st.markdown("""
-                            <style>
-                            .stButton > button {
-                                width: 100%;
-                                background-color: #cdb4db;
-                                color: black;
-                                font-family: Arial, "Segoe UI", sans-serif;
-                                font-weight: 600;
-                                border-radius: 8px;
-                                padding: 0.6em;
-                                margin-top: 1em;
-                            }
-                            </style>
-                        """, unsafe_allow_html=True)
-
-                        # Submit logic
-                        if st.button("Submit",key='delivery_submit1'):
-                            errors = []
-                            drive_links_del = ""  # Ensure always defined
-                            # Required field checks
-                            if not ticket_id_del: errors.append("Ticket ID is required.")
-                            if not date_del: errors.append("Date of delivery is required.")
-                            if not type_delivery: errors.append("Type of delivery is required.")
-                            if not delivery_description: errors.append("Short summary is required.")
-
-                            # Show warnings or success
-                            if errors:
-                                for error in errors:
-                                    st.warning(error)
+                                st.markdown(f"**All deliveries for Ticket ID: {selected_ticket_view_del}**")
+                                st.dataframe(df_ticket_del_display.reset_index(drop=True), use_container_width=True)
                             else:
-                                # Only upload files if all validation passes
-                                if document_del:
-                                    try:
-                                        folder_id_del = "1gXfWxys2cxd67YDk8zKPmG_mLGID4qL2" 
-                                        links_del = []
-                                        upload_count = 0
-                                        for file in document_del:
-                                            # Rename file as: GU0001_filename.pdf
-                                            renamed_filename = f"{ticket_id_del}_{file.name}"
-                                            link = upload_file_to_drive(
-                                                file=file,
-                                                filename=renamed_filename,
-                                                folder_id=folder_id_del,
-                                                creds_dict=st.secrets["gcp_service_account"]
-                                            )
-                                            links_del.append(link)
-                                            upload_count += 1
-                                            st.success(f"✅ Successfully uploaded: {file.name}")
-                                        drive_links_del = ", ".join(links_del)
-                                        if upload_count > 0:
-                                            st.success(f"✅ All {upload_count} file(s) uploaded successfully to Google Drive!")    
-                                    except Exception as e:
-                                        st.error(f"❌ Error uploading file(s) to Google Drive: {str(e)}")
+                                st.info(f"No deliveries found for Ticket ID: {selected_ticket_view_del}")
+                    else:
+                        st.info("No assigned ticket IDs available to view deliveries.")
 
-                                new_row_del = {
-                                    'Ticket ID': ticket_id_del,
-                                    "Date of Delivery": date_del.strftime("%Y-%m-%d"),  # Convert to string
-                                    "Type of Delivery": type_delivery,
-                                    "Short Summary": delivery_description,
-                                    "Document": drive_links_del,
-                                    "Submitted By": staff_name,
-                                    "Submission Date": datetime.today().strftime("%Y-%m-%d %H:%M")
-                                }
-                                new_data_del = pd.DataFrame([new_row_del])
+                    # Lower section: Submit New Delivery
+                    st.markdown("""
+                        <div style='background: #f8f9fa; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); padding: 1.5em; margin-bottom: 1em;'>
+                            <h3 style='color: #1a237e; font-family: "Segoe UI", sans-serif; font-weight: 700; margin-bottom: 1em; text-align: center;'>
+                                ✍️ Submit New Delivery
+                            </h3>
+                        </div>
+                    """, unsafe_allow_html=True)
+                    
+                    lis_ticket1 = df["Ticket ID"].unique().tolist()
 
+                    # Delivery Log form
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        ticket_id_del = st.selectbox("Ticket ID *",lis_ticket1, index=None,
+                            placeholder="Select option...",key='delivery1')
+                    with col2:
+                        date_del = st.date_input("Date of Delivery *",value=datetime.today().date())
+
+                    list_delivery = [
+                        "Report", "Email Reply", "Dashboard", "New Data Points","Peer Learning Facilitation", "TA Meeting", "Other"
+                    ]
+
+                    type_delivery = st.selectbox(
+                        "Type of Delivery *",
+                        list_delivery,
+                        index=None,
+                        placeholder="Select option..."
+                    )
+
+                    # If "Other" is selected, show a text input for custom value
+                    if type_delivery == "Other":
+                        type_delivery_other = st.text_input("Please specify the Type of Delivery *")
+                        if type_delivery_other:
+                            type_delivery = type_delivery_other 
+                    delivery_description = st.text_area("Short Summary *", placeholder='Enter text', height=150,key='delivery_description1') 
+                    document_del = st.file_uploader(
+                        "Upload any files or attachments that are relevant to this delivery.",accept_multiple_files=True
+                    )
+
+                    # Submit button
+                    st.markdown("""
+                        <style>
+                        .stButton > button {
+                            width: 100%;
+                            background-color: #cdb4db;
+                            color: black;
+                            font-family: Arial, "Segoe UI", sans-serif;
+                            font-weight: 600;
+                            border-radius: 8px;
+                            padding: 0.6em;
+                            margin-top: 1em;
+                        }
+                        </style>
+                    """, unsafe_allow_html=True)
+
+                    # Submit logic
+                    if st.button("Submit",key='delivery_submit1'):
+                        errors = []
+                        drive_links_del = ""  # Ensure always defined
+                        # Required field checks
+                        if not ticket_id_del: errors.append("Ticket ID is required.")
+                        if not date_del: errors.append("Date of delivery is required.")
+                        if not type_delivery: errors.append("Type of delivery is required.")
+                        if not delivery_description: errors.append("Short summary is required.")
+
+                        # Show warnings or success
+                        if errors:
+                            for error in errors:
+                                st.warning(error)
+                        else:
+                            # Only upload files if all validation passes
+                            if document_del:
                                 try:
-                                    # Append new data to Google Sheet
-                                    updated_sheet2 = pd.concat([df_del, new_data_del], ignore_index=True)
-                                    updated_sheet2= updated_sheet2.applymap(
-                                        lambda x: x.strftime("%Y-%m-%d") if isinstance(x, (datetime, pd.Timestamp)) else x
-                                    )
-                                    # Replace NaN with empty strings to ensure JSON compatibility
-                                    updated_sheet2 = updated_sheet2.fillna("")
-                                    spreadsheet3 = client.open('HRSA64_TA_Request')
-                                    worksheet3 = spreadsheet3.worksheet('Delivery')
-                                    worksheet3.update([updated_sheet2.columns.values.tolist()] + updated_sheet2.values.tolist())
-
-                                    # Clear cache to refresh data
-                                    st.cache_data.clear()
-                                
-                                    st.success("✅ Submission successful!")
-                                    time.sleep(2)
-                                    st.rerun()
-
+                                    folder_id_del = "1gXfWxys2cxd67YDk8zKPmG_mLGID4qL2" 
+                                    links_del = []
+                                    upload_count = 0
+                                    for file in document_del:
+                                        # Rename file as: GU0001_filename.pdf
+                                        renamed_filename = f"{ticket_id_del}_{file.name}"
+                                        link = upload_file_to_drive(
+                                            file=file,
+                                            filename=renamed_filename,
+                                            folder_id=folder_id_del,
+                                            creds_dict=st.secrets["gcp_service_account"]
+                                        )
+                                        links_del.append(link)
+                                        upload_count += 1
+                                        st.success(f"✅ Successfully uploaded: {file.name}")
+                                    drive_links_del = ", ".join(links_del)
+                                    if upload_count > 0:
+                                        st.success(f"✅ All {upload_count} file(s) uploaded successfully to Google Drive!")    
                                 except Exception as e:
-                                    st.error(f"Error updating Google Sheets: {str(e)}")
+                                    st.error(f"❌ Error uploading file(s) to Google Drive: {str(e)}")
 
-                    st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
+                            new_row_del = {
+                                'Ticket ID': ticket_id_del,
+                                "Date of Delivery": date_del.strftime("%Y-%m-%d"),  # Convert to string
+                                "Type of Delivery": type_delivery,
+                                "Short Summary": delivery_description,
+                                "Document": drive_links_del,
+                                "Submitted By": staff_name,
+                                "Submission Date": datetime.today().strftime("%Y-%m-%d %H:%M")
+                            }
+                            new_data_del = pd.DataFrame([new_row_del])
+
+                            try:
+                                # Append new data to Google Sheet
+                                updated_sheet2 = pd.concat([df_del, new_data_del], ignore_index=True)
+                                updated_sheet2= updated_sheet2.applymap(
+                                    lambda x: x.strftime("%Y-%m-%d") if isinstance(x, (datetime, pd.Timestamp)) else x
+                                )
+                                # Replace NaN with empty strings to ensure JSON compatibility
+                                updated_sheet2 = updated_sheet2.fillna("")
+                                spreadsheet3 = client.open('HRSA64_TA_Request')
+                                worksheet3 = spreadsheet3.worksheet('Delivery')
+                                worksheet3.update([updated_sheet2.columns.values.tolist()] + updated_sheet2.values.tolist())
+
+                                # Clear cache to refresh data
+                                st.cache_data.clear()
+                                
+                                st.success("✅ Submission successful!")
+                                time.sleep(2)
+                                st.rerun()
+
+                            except Exception as e:
+                                st.error(f"Error updating Google Sheets: {str(e)}")
+
+                st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
                 with st.expander("🧳 **GENERATE GSA LODGING RATE EXEMPTION FORM**"):
                     st.markdown("""
                         <div class="gutap-hero">
@@ -8692,11 +8665,9 @@ GU-TAP System
                                 'other_reason': other_reason,
                                 'supporting_drive_links': supporting_drive_links,
                                 'supporting_materials': '',
-                                'mabintou_signature': '',
                                 'jen_signature': '',
                                 'kemisha_signature': '',
                                 'lauren_signature': '',
-                                'mabintou_approval_date': '',
                                 'jen_approval_date': '',
                                 'kemisha_approval_date': '',
                                 'lauren_approval_date': '',
@@ -8874,150 +8845,149 @@ GU-TAP System
                                 st.cache_data.clear()
                                 time.sleep(1)
                                 st.rerun()
-                if not staff_gsa_only:
-                    st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
+                st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
 
-                    # --- Section 1: Mark as Completed
-                    with st.expander("✅ **MARK REQUESTS AS COMPLETED**"):
-                        st.markdown("""
-                            <div class="gutap-hero">
-                                <div class="gutap-hero-title">
-                                    ✅ Request Completion Center
-                                </div>
-                                <div class="gutap-hero-sub">
-                                    Mark your assigned requests as completed when finished. Review request details and finalize your work efficiently.
-                                </div>
+                # --- Section 1: Mark as Completed
+                with st.expander("✅ **MARK REQUESTS AS COMPLETED**"):
+                    st.markdown("""
+                        <div class="gutap-hero">
+                            <div class="gutap-hero-title">
+                                ✅ Request Completion Center
                             </div>
-                        """, unsafe_allow_html=True)
-                        if staff_df.empty:
-                            st.info("No requests currently in progress to mark as completed.")
-                        else:
-                            # Ensure datetime before using .dt
-                            staff_df["Assigned Date"] = pd.to_datetime(staff_df["Assigned Date"], errors="coerce")
-                            staff_df["Targeted Due Date"] = pd.to_datetime(staff_df["Targeted Due Date"], errors="coerce")
+                            <div class="gutap-hero-sub">
+                                Mark your assigned requests as completed when finished. Review request details and finalize your work efficiently.
+                            </div>
+                        </div>
+                    """, unsafe_allow_html=True)
+                    if staff_df.empty:
+                        st.info("No requests currently in progress to mark as completed.")
+                    else:
+                        # Ensure datetime before using .dt
+                        staff_df["Assigned Date"] = pd.to_datetime(staff_df["Assigned Date"], errors="coerce")
+                        staff_df["Targeted Due Date"] = pd.to_datetime(staff_df["Targeted Due Date"], errors="coerce")
 
-                            # Format dates
-                            staff_df["Assigned Date"] = staff_df["Assigned Date"].dt.strftime("%Y-%m-%d")
-                            staff_df["Targeted Due Date"] = staff_df["Targeted Due Date"].dt.strftime("%Y-%m-%d")
+                        # Format dates
+                        staff_df["Assigned Date"] = staff_df["Assigned Date"].dt.strftime("%Y-%m-%d")
+                        staff_df["Targeted Due Date"] = staff_df["Targeted Due Date"].dt.strftime("%Y-%m-%d")
 
-                            # Display clean table (exclude PriorityOrder column)
-                            st.dataframe(staff_df[[
-                                "Ticket ID","Jurisdiction", "Organization", "Name", "Title/Position", "Email Address", "Phone Number",
-                                "Focus Area", "TA Type", "Assigned Date", "Targeted Due Date", "Priority", "TA Description","Document","Coordinator Comment History"
-                            ]].reset_index(drop=True))
+                        # Display clean table (exclude PriorityOrder column)
+                        st.dataframe(staff_df[[
+                            "Ticket ID","Jurisdiction", "Organization", "Name", "Title/Position", "Email Address", "Phone Number",
+                            "Focus Area", "TA Type", "Assigned Date", "Targeted Due Date", "Priority", "TA Description","Document","Coordinator Comment History"
+                        ]].reset_index(drop=True))
 
-                            # Select request by index (row number in submitted_requests)
-                            request_indices = staff_df.index.tolist()
-                            selected_request_index = st.selectbox(
-                                "Select a request to marked as completed",
-                                options=request_indices,
-                                format_func=lambda idx: f"{staff_df.at[idx, 'Ticket ID']} | {staff_df.at[idx, 'Name']} | {staff_df.at[idx, 'Jurisdiction']}",
-                            )
+                        # Select request by index (row number in submitted_requests)
+                        request_indices = staff_df.index.tolist()
+                        selected_request_index = st.selectbox(
+                            "Select a request to marked as completed",
+                            options=request_indices,
+                            format_func=lambda idx: f"{staff_df.at[idx, 'Ticket ID']} | {staff_df.at[idx, 'Name']} | {staff_df.at[idx, 'Jurisdiction']}",
+                        )
 
 
-                            # Submit completion
-                            if st.button("✅ Mark as Completed"):
-                                try:
-                                    # Map back to original df index
-                                    global_index = staff_df.loc[selected_request_index].name
+                        # Submit completion
+                        if st.button("✅ Mark as Completed"):
+                            try:
+                                # Map back to original df index
+                                global_index = staff_df.loc[selected_request_index].name
 
-                                    # Copy + update
-                                    updated_df = df.copy()
-                                    updated_df.loc[global_index, "Status"] = "Completed"
-                                    updated_df.loc[global_index, "Close Date"] = datetime.today().strftime("%Y-%m-%d")
+                                # Copy + update
+                                updated_df = df.copy()
+                                updated_df.loc[global_index, "Status"] = "Completed"
+                                updated_df.loc[global_index, "Close Date"] = datetime.today().strftime("%Y-%m-%d")
 
-                                    updated_df = updated_df.applymap(
-                                        lambda x: x.strftime("%Y-%m-%d") if isinstance(x, (pd.Timestamp, datetime)) and not pd.isna(x) else x
-                                    )
-                                    updated_df = updated_df.fillna("") 
-                                    spreadsheet1 = client.open('HRSA64_TA_Request')
-                                    worksheet1 = spreadsheet1.worksheet('Main')
+                                updated_df = updated_df.applymap(
+                                    lambda x: x.strftime("%Y-%m-%d") if isinstance(x, (pd.Timestamp, datetime)) and not pd.isna(x) else x
+                                )
+                                updated_df = updated_df.fillna("") 
+                                spreadsheet1 = client.open('HRSA64_TA_Request')
+                                worksheet1 = spreadsheet1.worksheet('Main')
 
-                                    # Push to Google Sheet
-                                    worksheet1.update([updated_df.columns.values.tolist()] + updated_df.values.tolist())
+                                # Push to Google Sheet
+                                worksheet1.update([updated_df.columns.values.tolist()] + updated_df.values.tolist())
 
-                                    # Clear cache to refresh data
-                                    st.cache_data.clear()
+                                # Clear cache to refresh data
+                                st.cache_data.clear()
                                 
-                                    st.success("✅ Request marked as completed.")
-                                    time.sleep(2)
-                                    st.rerun()
+                                st.success("✅ Request marked as completed.")
+                                time.sleep(2)
+                                st.rerun()
 
-                                except Exception as e:
-                                    st.error(f"Error updating Google Sheets: {str(e)}")
+                            except Exception as e:
+                                st.error(f"Error updating Google Sheets: {str(e)}")
 
-                        # --- Submit button styling (CSS injection)
-                        st.markdown("""
-                            <style>
-                            .stButton > button {
-                                width: 100%;
-                                background-color: #cdb4db;
-                                color: black;
-                                font-weight: 600;
-                                border-radius: 8px;
-                                padding: 0.6em;
-                                margin-top: 1em;
-                            }
-                            </style>
-                        """, unsafe_allow_html=True)
+                    # --- Submit button styling (CSS injection)
+                    st.markdown("""
+                        <style>
+                        .stButton > button {
+                            width: 100%;
+                            background-color: #cdb4db;
+                            color: black;
+                            font-weight: 600;
+                            border-radius: 8px;
+                            padding: 0.6em;
+                            margin-top: 1em;
+                        }
+                        </style>
+                    """, unsafe_allow_html=True)
 
-                    st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
+                st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
 
-                    # --- Section: View Completed Requests (Staff)
-                    with st.expander("✅ **COMPLETED REQUESTS**"):
-                        st.markdown("""
-                            <div class="gutap-hero">
-                                <div class="gutap-hero-title">
-                                    ✅ Completed Requests
-                                </div>
-                                <div class="gutap-hero-sub">
-                                    View your completed TA requests.
-                                </div>
+                # --- Section: View Completed Requests (Staff)
+                with st.expander("✅ **COMPLETED REQUESTS**"):
+                    st.markdown("""
+                        <div class="gutap-hero">
+                            <div class="gutap-hero-title">
+                                ✅ Completed Requests
                             </div>
-                        """, unsafe_allow_html=True)
-
-                        staff_completed_df = com_df.copy()
-                        if staff_completed_df.empty:
-                            st.info("You have no completed requests yet.")
-                        else:
-                            staff_completed_df["Assigned Date"] = pd.to_datetime(staff_completed_df["Assigned Date"], errors="coerce")
-                            staff_completed_df["Targeted Due Date"] = pd.to_datetime(staff_completed_df["Targeted Due Date"], errors="coerce")
-                            staff_completed_df["Close Date"] = pd.to_datetime(staff_completed_df["Close Date"], errors="coerce")
-
-                            staff_completed_df["Assigned Date"] = staff_completed_df["Assigned Date"].dt.strftime("%Y-%m-%d")
-                            staff_completed_df["Targeted Due Date"] = staff_completed_df["Targeted Due Date"].dt.strftime("%Y-%m-%d")
-                            staff_completed_df["Close Date"] = staff_completed_df["Close Date"].dt.strftime("%Y-%m-%d")
-
-                            st.dataframe(staff_completed_df[[
-                                "Ticket ID","Jurisdiction", "Organization", "Name", "Title/Position", "Email Address", "Phone Number",
-                                "Focus Area", "TA Type", "Priority", "Assigned Coach", "TA Description","Document",
-                                "Assigned Date", "Targeted Due Date", "Close Date",
-                                "Coordinator Comment History", "Staff Comment History", "Transfer History"
-                            ]].reset_index(drop=True))
-
-                    st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
-
-                    # --- Section: Media Request System
-                    with st.expander("📺 **MEDIA REQUEST SYSTEM**"):
-                        st.markdown("""
-                            <div class="gutap-hero">
-                                <div class="gutap-hero-title">
-                                    📺 Media Request System
-                                </div>
-                                <div class="gutap-hero-sub">
-                                    Submit media requests for your projects and communications.
-                                </div>
+                            <div class="gutap-hero-sub">
+                                View your completed TA requests.
                             </div>
-                        """, unsafe_allow_html=True)
-                        st.markdown("""
-                            <div style='background: #f8f9fa; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); padding: 2em; margin-bottom: 1em;'>
-                                <p style='font-size: 1.1em; color: #333; line-height: 1.6;'>
-                                    Please check: to submit your request: <a href="https://cghpirequest.streamlit.app/" target="_blank" rel="noopener noreferrer" style="color: #1a237e; font-weight: 600;">https://cghpirequest.streamlit.app/</a>
-                                </p>
-                            </div>
-                        """, unsafe_allow_html=True)
+                        </div>
+                    """, unsafe_allow_html=True)
 
-                    st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
+                    staff_completed_df = com_df.copy()
+                    if staff_completed_df.empty:
+                        st.info("You have no completed requests yet.")
+                    else:
+                        staff_completed_df["Assigned Date"] = pd.to_datetime(staff_completed_df["Assigned Date"], errors="coerce")
+                        staff_completed_df["Targeted Due Date"] = pd.to_datetime(staff_completed_df["Targeted Due Date"], errors="coerce")
+                        staff_completed_df["Close Date"] = pd.to_datetime(staff_completed_df["Close Date"], errors="coerce")
+
+                        staff_completed_df["Assigned Date"] = staff_completed_df["Assigned Date"].dt.strftime("%Y-%m-%d")
+                        staff_completed_df["Targeted Due Date"] = staff_completed_df["Targeted Due Date"].dt.strftime("%Y-%m-%d")
+                        staff_completed_df["Close Date"] = staff_completed_df["Close Date"].dt.strftime("%Y-%m-%d")
+
+                        st.dataframe(staff_completed_df[[
+                            "Ticket ID","Jurisdiction", "Organization", "Name", "Title/Position", "Email Address", "Phone Number",
+                            "Focus Area", "TA Type", "Priority", "Assigned Coach", "TA Description","Document",
+                            "Assigned Date", "Targeted Due Date", "Close Date",
+                            "Coordinator Comment History", "Staff Comment History", "Transfer History"
+                        ]].reset_index(drop=True))
+
+                st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
+
+                # --- Section: Media Request System
+                with st.expander("📺 **MEDIA REQUEST SYSTEM**"):
+                    st.markdown("""
+                        <div class="gutap-hero">
+                            <div class="gutap-hero-title">
+                                📺 Media Request System
+                            </div>
+                            <div class="gutap-hero-sub">
+                                Submit media requests for your projects and communications.
+                            </div>
+                        </div>
+                    """, unsafe_allow_html=True)
+                    st.markdown("""
+                        <div style='background: #f8f9fa; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); padding: 2em; margin-bottom: 1em;'>
+                            <p style='font-size: 1.1em; color: #333; line-height: 1.6;'>
+                                Please check: to submit your request: <a href="https://cghpirequest.streamlit.app/" target="_blank" rel="noopener noreferrer" style="color: #1a237e; font-weight: 600;">https://cghpirequest.streamlit.app/</a>
+                            </p>
+                        </div>
+                    """, unsafe_allow_html=True)
+
+                st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
 
             elif st.session_state.role == "Research Assistant":
                 # Add staff content here
