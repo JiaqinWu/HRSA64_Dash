@@ -3198,6 +3198,13 @@ def load_delivery_sheet():
 
 df_del = load_delivery_sheet()
 
+# 'Entered By' records the research assistant who typed an entry in on a TA provider's
+# behalf. 'Submitted By' stays the provider, so reporting still credits the right person.
+if "Entered By" not in df_int.columns:
+    df_int["Entered By"] = ""
+if "Entered By" not in df_del.columns:
+    df_del["Entered By"] = ""
+
 @st.cache_data(ttl=600)
 def load_support_sheet():
     return pd.DataFrame(_get_records_with_retry('HRSA64_TA_Request', 'GA_Support'))
@@ -3310,6 +3317,145 @@ GU-TAP
             spreadsheet_gsa = client.open('HRSA64_TA_Request')
             worksheet_gsa = spreadsheet_gsa.worksheet('GSA_exemption')
             worksheet_gsa.update([df_out.columns.values.tolist()] + df_out.values.tolist())
+            st.cache_data.clear()
+        except Exception:
+            pass
+
+
+# --- Targeted Due Date reminders for TA providers ---------------------------------------
+TA_DUE_REMINDER_COL = 'Due Reminder Sent'   # stores which stages already fired, e.g. "due7|overdue30"
+TA_DUE_SOON_DAYS = 7                        # warn when the due date is this close
+TA_OVERDUE_DAYS = 30                        # chase when the due date passed this long ago
+TA_DUE_CONTACT_EMAIL = 'jw2104@georgetown.edu'
+TA_DUE_CONTACT_NAME = 'Jiaqin Wu'
+
+
+def staff_email_by_name(name):
+    """Look up an Assignee/Staff email from their display name. None if not found."""
+    n = str(name or '').strip().lower()
+    if not n or n == 'nan':
+        return None
+    for email, roles in USERS.items():
+        if 'Assignee/Staff' in roles:
+            if str(roles['Assignee/Staff'].get('name', '')).strip().lower() == n:
+                return email
+    return None
+
+
+def maybe_send_ta_due_date_reminders():
+    """
+    Two one-off nudges to the assigned TA provider on requests that are still In Progress:
+
+      * due7      - Targeted Due Date falls within the next TA_DUE_SOON_DAYS days.
+                    Asks whether more time is needed.
+      * overdue30 - Targeted Due Date passed TA_OVERDUE_DAYS or more days ago and the
+                    request still isn't closed. Asks whether it is actually complete.
+
+    Each stage fires at most once per ticket, tracked in the TA_DUE_REMINDER_COL column.
+    Both emails point the provider at TA_DUE_CONTACT_NAME to revise the due date.
+    """
+    today = datetime.today().date()
+    try:
+        df_due = pd.DataFrame(_get_records_with_retry('HRSA64_TA_Request', 'Main'))
+    except Exception:
+        return
+    if df_due.empty or 'Targeted Due Date' not in df_due.columns:
+        return
+    if TA_DUE_REMINDER_COL not in df_due.columns:
+        df_due[TA_DUE_REMINDER_COL] = ''
+
+    sheet_updated = False
+    for idx, row in df_due.iterrows():
+        if str(row.get('Status', '') or '').strip() != 'In Progress':
+            continue
+        # Defensive: skip anything that already carries a close date.
+        close_raw = row.get('Close Date')
+        if close_raw is not None and str(close_raw).strip() not in ('', 'nan', 'NaT', 'None'):
+            continue
+
+        due = _travel_sheet_date_to_date(row.get('Targeted Due Date'))
+        if due is None:
+            continue
+        days_left = (due - today).days
+
+        if 0 <= days_left <= TA_DUE_SOON_DAYS:
+            stage = 'due7'
+        elif days_left <= -TA_OVERDUE_DAYS:
+            stage = 'overdue30'
+        else:
+            continue
+
+        already = {s for s in str(row.get(TA_DUE_REMINDER_COL, '') or '').split('|') if s}
+        if stage in already:
+            continue
+
+        coach = str(row.get('Assigned Coach', '') or '').strip()
+        to_email = staff_email_by_name(coach)
+        if not to_email:
+            continue
+
+        ticket = str(row.get('Ticket ID', '') or '')
+        first = coach.split()[0] if coach else 'there'
+        due_str = due.strftime('%Y-%m-%d')
+        details = f"""Ticket ID: {ticket}
+Jurisdiction: {row.get('Jurisdiction', 'N/A')}
+Organization: {row.get('Organization', 'N/A')}
+Focus Area: {row.get('Focus Area', 'N/A')}
+TA Type: {row.get('TA Type', 'N/A')}
+Targeted Due Date: {due_str}"""
+
+        if stage == 'due7':
+            subj = f"[GU-TAP] Due in {days_left} day(s): {ticket}"
+            body = f"""Hi {first},
+
+A technical assistance request assigned to you is due on {due_str}, which is {days_left} day(s) from today.
+
+{details}
+
+If you are on track, no action is needed — just close the request in GU-TAP when it is done.
+
+If you need more time, please email {TA_DUE_CONTACT_NAME} at {TA_DUE_CONTACT_EMAIL} and the targeted due date can be revised.
+
+GU-TAP: https://hrsagutap.streamlit.app/
+
+Thanks,
+GU-TAP System
+"""
+        else:
+            days_over = abs(days_left)
+            subj = f"[GU-TAP] Past due by {days_over} day(s): {ticket}"
+            body = f"""Hi {first},
+
+A technical assistance request assigned to you passed its targeted due date {days_over} day(s) ago and is still marked In Progress in GU-TAP.
+
+{details}
+
+If the work is already finished, please log into GU-TAP and mark the request as completed so the record is up to date.
+
+If it is still ongoing, please email {TA_DUE_CONTACT_NAME} at {TA_DUE_CONTACT_EMAIL} so the targeted due date can be revised.
+
+GU-TAP: https://hrsagutap.streamlit.app/
+
+Thanks,
+GU-TAP System
+"""
+
+        try:
+            ok = send_email_mailjet(to_email=to_email, subject=subj, body=body.strip())
+        except Exception:
+            ok = False
+
+        if ok:
+            already.add(stage)
+            df_due.at[idx, TA_DUE_REMINDER_COL] = '|'.join(sorted(already))
+            sheet_updated = True
+
+    if sheet_updated:
+        try:
+            df_out = df_due.fillna('')
+            spreadsheet_main = client.open('HRSA64_TA_Request')
+            worksheet_main = spreadsheet_main.worksheet('Main')
+            worksheet_main.update([df_out.columns.values.tolist()] + df_out.values.tolist())
             st.cache_data.clear()
         except Exception:
             pass
@@ -3903,6 +4049,7 @@ else:
         else:
             maybe_send_ga_unassigned_reminders()
             maybe_send_gsa_exemption_reminders()
+            maybe_send_ta_due_date_reminders()
             if st.session_state.role == "Coordinator":
                 user_info = USERS.get(st.session_state.user_email)
                 coordinator_name = user_info["Coordinator"]["name"]
@@ -9682,3 +9829,279 @@ GU-TAP System
                             "Date", "Time request needed", "Request description", "Anticipated Deliverable", 
                             "TAP Name", "TAP email", "Request status"
                         ]].reset_index(drop=True))
+
+                st.markdown("<hr style='margin:2em 0; border:1px solid #dee2e6;'>", unsafe_allow_html=True)
+
+                with st.expander("🗒️ **LOG INTERACTION / DELIVERY FOR A TA PROVIDER**"):
+                    st.markdown("""
+                        <div class="gutap-hero">
+                            <div class="gutap-hero-title">
+                                🗒️ Proxy Logging Center
+                            </div>
+                            <div class="gutap-hero-sub">
+                                Record an interaction or delivery on behalf of a TA provider. The entry is credited to the provider; your name is stored separately as the person who entered it.
+                            </div>
+                        </div>
+                    """, unsafe_allow_html=True)
+
+                    # Every account that can be assigned as a TA provider (Assignee/Staff role).
+                    ra_provider_names = sorted({
+                        str(roles["Assignee/Staff"]["name"]).strip()
+                        for roles in USERS.values()
+                        if "Assignee/Staff" in roles and str(roles["Assignee/Staff"].get("name", "")).strip()
+                    })
+
+                    ra_provider = st.selectbox(
+                        "TA Provider *",
+                        ra_provider_names,
+                        index=None,
+                        placeholder="Select the provider you are logging for...",
+                        key="ra_proxy_provider",
+                    )
+
+                    if not ra_provider:
+                        st.info("Select a TA provider to continue.")
+                    else:
+                        # Only that provider's tickets, so work can't be logged against someone else's.
+                        ra_provider_tickets = sorted(
+                            df[df["Assigned Coach"] == ra_provider]["Ticket ID"]
+                            .dropna().astype(str).unique().tolist()
+                        )
+                        ra_ticket_options = ["No Ticket ID"] + ra_provider_tickets
+                        if not ra_provider_tickets:
+                            st.warning(
+                                f"{ra_provider} has no assigned tickets. You can still log an entry "
+                                "under **No Ticket ID**."
+                            )
+
+                        ra_tab_int, ra_tab_del = st.tabs(["🗒️ Interaction", "📦 Delivery"])
+
+                        # ---------------- Interaction ----------------
+                        with ra_tab_int:
+                            ra_c1, ra_c2 = st.columns(2)
+                            with ra_c1:
+                                ra_ticket_int = st.selectbox(
+                                    "Ticket ID *", ra_ticket_options, index=None,
+                                    placeholder="Select option...", key="ra_int_ticket",
+                                )
+                            with ra_c2:
+                                ra_date_int = st.date_input(
+                                    "Date of Interaction *", value=datetime.today().date(),
+                                    key="ra_int_date",
+                                )
+
+                            ra_type_int = st.selectbox(
+                                "Type of Interaction *",
+                                ["Email", "Phone Call", "In-Person Meeting", "Online Meeting",
+                                 "Peer Learning Meetings (PLNs)", "Other"],
+                                index=None, placeholder="Select option...", key="ra_int_type",
+                            )
+
+                            ra_is_pln = ra_type_int == "Peer Learning Meetings (PLNs)"
+                            ra_juris_no_ticket = None
+                            ra_pln_juris = []
+
+                            if ra_is_pln:
+                                ra_pln_juris = st.multiselect(
+                                    "Jurisdiction(s) for PLN *", lis_location, default=[],
+                                    key="ra_int_juris_pln",
+                                )
+                            elif ra_ticket_int == "No Ticket ID":
+                                ra_juris_no_ticket = st.selectbox(
+                                    "Jurisdiction *", lis_location, index=None,
+                                    placeholder="Select option...", key="ra_int_juris",
+                                )
+
+                            if ra_type_int == "Other":
+                                ra_type_int_other = st.text_input(
+                                    "Please specify the Type of Interaction *", key="ra_int_type_other",
+                                )
+                                if ra_type_int_other:
+                                    ra_type_int = ra_type_int_other
+
+                            ra_summary_int = st.text_area(
+                                "Short Summary *", placeholder="Enter text", height=150,
+                                key="ra_int_summary",
+                            )
+                            ra_docs_int = st.file_uploader(
+                                "Supporting Document(s)", accept_multiple_files=True, key="ra_int_docs",
+                            )
+
+                            if st.button("Submit Interaction", key="ra_int_submit"):
+                                ra_missing = []
+                                if not ra_ticket_int:
+                                    ra_missing.append("Ticket ID")
+                                if not ra_type_int:
+                                    ra_missing.append("Type of Interaction")
+                                if not ra_summary_int or not ra_summary_int.strip():
+                                    ra_missing.append("Short Summary")
+                                if ra_is_pln and not ra_pln_juris:
+                                    ra_missing.append("Jurisdiction(s) for PLN")
+                                if (not ra_is_pln) and ra_ticket_int == "No Ticket ID" and not ra_juris_no_ticket:
+                                    ra_missing.append("Jurisdiction")
+
+                                if ra_missing:
+                                    st.error("Please complete: " + ", ".join(ra_missing))
+                                else:
+                                    ra_links_int = ""
+                                    if ra_docs_int:
+                                        try:
+                                            folder_id_int = "19-Sm8W151tg1zyDN0Nh14DUvOVUieqq7"
+                                            ra_uploaded = []
+                                            for ra_file in ra_docs_int:
+                                                ra_uploaded.append(upload_file_to_drive(
+                                                    file=ra_file,
+                                                    filename=f"{ra_ticket_int}_{ra_file.name}",
+                                                    folder_id=folder_id_int,
+                                                    creds_dict=st.secrets["gcp_service_account"],
+                                                ))
+                                            ra_links_int = ", ".join(ra_uploaded)
+                                            st.success(f"✅ Uploaded {len(ra_uploaded)} file(s).")
+                                        except Exception as e:
+                                            st.error(f"❌ Error uploading file(s): {str(e)}")
+
+                                    # PLNs span jurisdictions -> one row per jurisdiction.
+                                    if ra_is_pln and ra_pln_juris:
+                                        ra_juris_values = list(dict.fromkeys(ra_pln_juris))
+                                    else:
+                                        ra_tj = df.loc[
+                                            df["Ticket ID"].astype(str) == str(ra_ticket_int), "Jurisdiction"
+                                        ]
+                                        if ra_ticket_int != "No Ticket ID" and not ra_tj.empty:
+                                            ra_juris_values = [str(ra_tj.iloc[0])]
+                                        else:
+                                            ra_juris_values = [ra_juris_no_ticket or ""]
+
+                                    ra_rows_int = [
+                                        {
+                                            "Ticket ID": ra_ticket_int,
+                                            "Date of Interaction": ra_date_int.strftime("%Y-%m-%d"),
+                                            "Type of Interaction": ra_type_int,
+                                            "Short Summary": ra_summary_int,
+                                            "Document": ra_links_int,
+                                            "Jurisdiction": ra_juris,
+                                            # Credited to the provider; student kept as audit trail.
+                                            "Submitted By": ra_provider,
+                                            "Entered By": ga_support_name,
+                                            "Submission Date": datetime.today().strftime("%Y-%m-%d %H:%M"),
+                                        }
+                                        for ra_juris in ra_juris_values
+                                    ]
+
+                                    try:
+                                        ra_updated_int = pd.concat(
+                                            [df_int, pd.DataFrame(ra_rows_int)], ignore_index=True
+                                        )
+                                        ra_updated_int = ra_updated_int.applymap(
+                                            lambda x: x.strftime("%Y-%m-%d")
+                                            if isinstance(x, (datetime, pd.Timestamp)) else x
+                                        ).fillna("")
+                                        ra_ws_int = client.open("HRSA64_TA_Request").worksheet("Interaction")
+                                        ra_ws_int.update(
+                                            [ra_updated_int.columns.values.tolist()]
+                                            + ra_updated_int.values.tolist()
+                                        )
+                                        st.cache_data.clear()
+                                        st.success(
+                                            f"✅ Logged {len(ra_rows_int)} interaction row(s) for {ra_provider}."
+                                        )
+                                        time.sleep(2)
+                                        st.rerun()
+                                    except Exception as e:
+                                        st.error(f"Error updating Google Sheets: {str(e)}")
+
+                        # ---------------- Delivery ----------------
+                        with ra_tab_del:
+                            ra_d1, ra_d2 = st.columns(2)
+                            with ra_d1:
+                                ra_ticket_del = st.selectbox(
+                                    "Ticket ID *", ra_ticket_options, index=None,
+                                    placeholder="Select option...", key="ra_del_ticket",
+                                )
+                            with ra_d2:
+                                ra_date_del = st.date_input(
+                                    "Date of Delivery *", value=datetime.today().date(),
+                                    key="ra_del_date",
+                                )
+
+                            ra_type_del = st.selectbox(
+                                "Type of Delivery *",
+                                ["Report", "Email Reply", "Dashboard", "New Data Points",
+                                 "Peer Learning Facilitation", "TA Meeting", "Other"],
+                                index=None, placeholder="Select option...", key="ra_del_type",
+                            )
+                            if ra_type_del == "Other":
+                                ra_type_del_other = st.text_input(
+                                    "Please specify the Type of Delivery *", key="ra_del_type_other",
+                                )
+                                if ra_type_del_other:
+                                    ra_type_del = ra_type_del_other
+
+                            ra_summary_del = st.text_area(
+                                "Short Summary *", placeholder="Enter text", height=150,
+                                key="ra_del_summary",
+                            )
+                            ra_docs_del = st.file_uploader(
+                                "Supporting Document(s)", accept_multiple_files=True, key="ra_del_docs",
+                            )
+
+                            if st.button("Submit Delivery", key="ra_del_submit"):
+                                ra_missing_d = []
+                                if not ra_ticket_del:
+                                    ra_missing_d.append("Ticket ID")
+                                if not ra_type_del:
+                                    ra_missing_d.append("Type of Delivery")
+                                if not ra_summary_del or not ra_summary_del.strip():
+                                    ra_missing_d.append("Short Summary")
+
+                                if ra_missing_d:
+                                    st.error("Please complete: " + ", ".join(ra_missing_d))
+                                else:
+                                    ra_links_del = ""
+                                    if ra_docs_del:
+                                        try:
+                                            folder_id_del = "1gXfWxys2cxd67YDk8zKPmG_mLGID4qL2"
+                                            ra_uploaded_d = []
+                                            for ra_file in ra_docs_del:
+                                                ra_uploaded_d.append(upload_file_to_drive(
+                                                    file=ra_file,
+                                                    filename=f"{ra_ticket_del}_{ra_file.name}",
+                                                    folder_id=folder_id_del,
+                                                    creds_dict=st.secrets["gcp_service_account"],
+                                                ))
+                                            ra_links_del = ", ".join(ra_uploaded_d)
+                                            st.success(f"✅ Uploaded {len(ra_uploaded_d)} file(s).")
+                                        except Exception as e:
+                                            st.error(f"❌ Error uploading file(s): {str(e)}")
+
+                                    ra_row_del = {
+                                        "Ticket ID": ra_ticket_del,
+                                        "Date of Delivery": ra_date_del.strftime("%Y-%m-%d"),
+                                        "Type of Delivery": ra_type_del,
+                                        "Short Summary": ra_summary_del,
+                                        "Document": ra_links_del,
+                                        # Credited to the provider; student kept as audit trail.
+                                        "Submitted By": ra_provider,
+                                        "Entered By": ga_support_name,
+                                        "Submission Date": datetime.today().strftime("%Y-%m-%d %H:%M"),
+                                    }
+
+                                    try:
+                                        ra_updated_del = pd.concat(
+                                            [df_del, pd.DataFrame([ra_row_del])], ignore_index=True
+                                        )
+                                        ra_updated_del = ra_updated_del.applymap(
+                                            lambda x: x.strftime("%Y-%m-%d")
+                                            if isinstance(x, (datetime, pd.Timestamp)) else x
+                                        ).fillna("")
+                                        ra_ws_del = client.open("HRSA64_TA_Request").worksheet("Delivery")
+                                        ra_ws_del.update(
+                                            [ra_updated_del.columns.values.tolist()]
+                                            + ra_updated_del.values.tolist()
+                                        )
+                                        st.cache_data.clear()
+                                        st.success(f"✅ Logged delivery for {ra_provider}.")
+                                        time.sleep(2)
+                                        st.rerun()
+                                    except Exception as e:
+                                        st.error(f"Error updating Google Sheets: {str(e)}")
