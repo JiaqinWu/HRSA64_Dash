@@ -3484,117 +3484,48 @@ def format_phone(phone_str):
 # Apply formatting
 df["Phone Number"] = df["Phone Number"].astype(str).apply(format_phone)
 
-# --- Demo user database
-USERS = {
-    "jw2104@georgetown.edu": {
-        "Coordinator": {"password": "Qin88251216", "name": "Jiaqin Wu"},
-        "Assignee/Staff": {"password": "Qin88251216", "name": "Jiaqin Wu"}
-    },
-    "jenevieve.opoku@georgetown.edu": {
-        "Coordinator": {"password": "Tootles82!", "name": "Jenevieve Opoku"},
-        "Assignee/Staff": {"password": "Tootles82!", "name": "Jenevieve Opoku"}
-    },
-    "me735@georgetown.edu": {
-        "Coordinator": {"password": "me735hrsa64", "name": "Martine Etienne-Mesubi"},
-        "Assignee/Staff": {"password": "me735hrsa64", "name": "Martine Etienne-Mesubi"}
-    },
-    "kd802@georgetown.edu": {
-        "Coordinator": {"password": "kd802hrsa!!", "name": "Kemisha Denny"},
-        "Assignee/Staff": {"password": "kd802hrsa!!", "name": "Kemisha Denny"}
-    },
-    "lm1353@georgetown.edu": {
-        "Coordinator": {"password": "LM1353hrsa64?", "name": "Lauren Mathae"},
-        "Assignee/Staff": {"password": "LM1353hrsa64?", "name": "Lauren Mathae"}
-    },
-    "katherine.robsky@georgetown.edu": {
-        "Coordinator": {"password": "Georgetown1", "name": "Katherine Robsky"},
-        "Assignee/Staff": {"password": "Georgetown1", "name": "Katherine Robsky"}
-    },
-    "db1432@georgetown.edu": {
-        "Assignee/Staff": {"password": "Deus123!", "name": "Deus Bazira"}
-    },
-    "sk2046@georgetown.edu": {
-        "Assignee/Staff": {"password": "Sharon123!", "name": "Sharon Kibwana"}
-    },
-    "sgk23@georgetown.edu": {
-        "Assignee/Staff": {"password": "Seble123!", "name": "Seble Kassaye"}
-    },
-    "weijun.yu@georgetown.edu": {
-        "Assignee/Staff": {"password": "Weijun123!", "name": "Weijun Yu"}
-    },
-    "temesgen.zelalem@mayo.edu": {
-        "Assignee/Staff": {"password": "Zelalem123!", "name": "Zelalem Temesgen"}
-    },
-    "carod@bu.edu": {
-        "Assignee/Staff": {"password": "Carlos123!", "name": "Carlos Rodriguez-Diaz"}
-    },
-    "km2079@georgetown.edu": {
-        "Assignee/Staff": {"password": "Kiah123!", "name": "Kiah Moorehead"}
-    },
-    "vd294@georgetown.edu": {
-        "Assignee/Staff": {"password": "Vanessa123!", "name": "Vanessa Da Costa"}
-    },
-    "tm1649@georgetown.edu": {
-        "Assignee/Staff": {"password": "Trena123!", "name": "Trena Mukherjee"}
-    },
-    "aj1202@georgetown.edu": {
-        "Assignee/Staff": {"password": "Abby123!", "name": "Abby Jordan"}
-    },
-    "mh2504@georgetown.edu": {
-        "Assignee/Staff": {"password": "Megan123!", "name": "Megan Highland"}
-    },
-    "jh2861@georgetown.edu": {
-        "Assignee/Staff": {"password": "Jesus123!", "name": "Jesus Hernandez Burgos"}
-    },
-    "sc2710@georgetown.edu": {
-        "Assignee/Staff": {"password": "Samantha123!", "name": "Samantha Cinnick"}
-    },
-    "bryan.shaw@georgetown.edu": {
-        "Assignee/Staff": {"password": "Bryan123!", "name": "Bryan Shaw"}
-    },
-    "th1089@georgetown.edu": {
-        "Assignee/Staff": {"password": "Tara123!", "name": "Tara Hixson"}
-    },
-    "da988@georgetown.edu":{
-        "Assignee/Staff": {"password": "Dzifa123!", "name": "Dzifa Awunyo-Akaba"}
-    },
-    "mm5674@georgetown.edu":{
-        "Assignee/Staff": {"password": "Masill123!", "name": "Masill Miranda"}
-    },
-    'jb3512@georgetown.edu':{
-        "Assignee/Staff": {"password": "Joy123!", "name": "Joy Berry"}
-    },
-    'ac2992@georgetown.edu':{
-        "Assignee/Staff": {"password": "Ashley123!", "name": "Ashley Clonchmore"}
-    },
-    'gh674@georgetown.edu':{
-        "Assignee/Staff": {"password": "Grace123!", "name": "Grace Hazlett"}
-    },
-    'lw1035@georgetown.edu':{
-        "Assignee/Staff": {"password": "Lauren123!", "name": "Lauren Wagner"}
-    },
-    'ew898@georgetown.edu':{
-        "Assignee/Staff": {"password": "Eric123!", "name": "Eric Wagner"}
-    },
-    'htn16@georgetown.edu':{
-        "Research Assistant": {"password": "Hang123!", "name": "Hang Nguyen"}
-    },
-    'ap2349@georgetown.edu':{
-        "Research Assistant": {"password": "Asha123!", "name": "Asha Patel"}
-    },
-    'jo903@georgetown.edu':{
-        "Research Assistant": {"password": "Japhet123!", "name": "Japhet Osuji"}
-    },
-    'jd2262@georgetown.edu':{
-        "Research Assistant": {"password": "Jocelin123!", "name": "Jocelin Diaz"}
-    },
-    'ssv23@georgetown.edu':{
-        "Research Assistant": {"password": "Spoorthi123!", "name": "Spoorthi Vallamkonda"}
-    },
-    'db1718@georgetown.edu':{
-        "Research Assistant": {"password": "Desiree123!", "name": "Desiree Butler"}
-    },
-}
+# --- User database (logins live in Streamlit secrets, never in this file) ---
+# Expected secrets layout, one table per account+role:
+#
+#   [users."someone@georgetown.edu"."Coordinator"]
+#   password = "..."
+#   name = "Some One"
+#
+# Shape matches the old hardcoded dict, so USERS[email][role]["password"] still works.
+def _load_users_from_secrets():
+    try:
+        raw = st.secrets["users"]
+    except Exception:
+        st.error(
+            "Login configuration is missing. Add a [users] section to Streamlit secrets "
+            "(Manage app -> Settings -> Secrets)."
+        )
+        st.stop()
+
+    users = {}
+    for email, roles in raw.items():
+        email = str(email).strip()
+        if not email:
+            continue
+        parsed_roles = {}
+        for role, info in dict(roles).items():
+            info = dict(info)
+            if "password" not in info:
+                continue
+            parsed_roles[str(role).strip()] = {
+                "password": str(info.get("password", "")),
+                "name": str(info.get("name", "")).strip(),
+            }
+        if parsed_roles:
+            users[email] = parsed_roles
+
+    if not users:
+        st.error("No usable accounts found in the [users] secrets section.")
+        st.stop()
+    return users
+
+
+USERS = _load_users_from_secrets()
 
 lis_location = ["Alabama (AL)", "Arkansas (AR)", "Atlanta (Fulton County, GA)", "Austin (Travis County, TX)", "Baltimore (MD)", "Baton Rouge (East Baton Rouge, LA)", \
                 "Boston (Suffolk County, MA)", "Charlotte (Mecklenburg County, NC)", "Chicago (Cook County, IL)", "Cleveland (Cuyahoga County, OH)", \
@@ -4144,10 +4075,9 @@ else:
                                 st.info("No requests with coming dues to show.")
 
 
-                        staff_list = ["Jenevieve Opoku", "Deus Bazira", "Kemisha Denny", "Katherine Robsky", 
-                        "Martine Etienne-Mesubi", "Seble Kassaye", "Weijun Yu", "Jiaqin Wu", "Zelalem Temesgen", "Carlos Rodriguez-Diaz",
-                        "Kiah Moorehead","Vanessa Da Costa","Trena Mukherjee","Abby Jordan","Megan Highland","Jesus Hernandez Burgos",
-                        "Samantha Cinnick","Bryan Shaw","Tara Hixson","Dzifa Awunyo-Akaba","Masill Miranda","Joy Berry","Ashley Clonchmore",
+                        staff_list = ["Jenevieve Opoku", "Kemisha Denny", "Katherine Robsky", "Jiaqin Wu", 
+                        "Kiah Moorehead","Vanessa Da Costa","Abby Jordan","Megan Highland","Jesus Hernandez Burgos",
+                        "Samantha Cinnick","Tara Hixson","Dzifa Awunyo-Akaba","Masill Miranda","Joy Berry","Ashley Clonchmore",
                         "Grace Hazlett","Lauren Wagner"]
 
                         staff_list_sorted = sorted(staff_list, key=lambda x: x.split()[0])

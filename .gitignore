@@ -1,0 +1,19 @@
+# Streamlit secrets — never commit these
+.streamlit/secrets.toml
+secrets.toml
+*.secrets.toml
+
+# Service account / key material
+*.pem
+*.key
+service_account*.json
+credentials*.json
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# OS
+.DS_Store
